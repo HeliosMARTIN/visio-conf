@@ -12,7 +12,7 @@ class Controleur {
             } else {
                 if (this.verboseall || this.verbose) {
                     console.log(
-                        "INFO(controleur: liste des instances qui ont déjà enegistré ce message en émission:"
+                        "INFO(controleur: liste des instances qui ont déjà enregistré ce message en émission:"
                     )
                     console.log(this.listeEmission[liste_emission[key]])
                 }
@@ -26,7 +26,8 @@ class Controleur {
                     "ERREUR(controleur: " +
                         emetteur.nomDInstance +
                         " essaie de s'enregistrer une nouvelle fois pour le message en émission: " +
-                        liste_emission[key]
+                        liste_emission[key] +
+                        ")"
                 )
             } else {
                 this.listeEmission[liste_emission[key]][emetteur.nomDInstance] =
@@ -42,7 +43,7 @@ class Controleur {
             } else {
                 if (this.verboseall || this.verbose) {
                     console.log(
-                        "INFO(controleur: liste des instances qui ont déjà enegistré ce message en émission:"
+                        "INFO(controleur: liste des instances qui ont déjà enregistré ce message en abonnement:"
                     )
                     console.log(this.listeAbonnement[liste_abonnement[key]])
                 }
@@ -55,8 +56,9 @@ class Controleur {
                 console.log(
                     "ERREUR(controleur: " +
                         emetteur.nomDInstance +
-                        " essaie de s'enregistrer une nouvelle fois pour le message en émission: " +
-                        liste_abonnement[key]
+                        " essaie de s'enregistrer une nouvelle fois pour le message en abonnement: " +
+                        liste_abonnement[key] +
+                        ")"
                 )
             } else {
                 this.listeAbonnement[liste_abonnement[key]][
