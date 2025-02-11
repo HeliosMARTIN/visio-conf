@@ -6,8 +6,6 @@ const port = 3220
 const server = require("http").createServer(app)
 const io = require("socket.io")(server, { cors: { origin: "*" } })
 const mongoose = require("mongoose")
-const MongoClient = require("mongodb")
-var uri = "mongodb://root:root@localhost:27017"
 
 const CanalSocketio = require("./canalsocketio/canalsocketio.js")
 const Controleur = require("./controleur.js")

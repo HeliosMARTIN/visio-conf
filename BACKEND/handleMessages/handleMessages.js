@@ -72,7 +72,7 @@ class HandleMessages {
             try {
                 const { userEmail, otherUserEmail, text } =
                     mesg.message_send_request
-                const discussion = await Discussion.findOneAndUpdate(
+                await Discussion.findOneAndUpdate(
                     {
                         discussion_members: {
                             $all: [userEmail, otherUserEmail],
