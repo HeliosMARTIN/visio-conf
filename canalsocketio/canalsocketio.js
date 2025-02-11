@@ -1,18 +1,11 @@
+const { ListeMessagesEmis, ListeMessagesRecus } = require("../ListeMessages")
+
 class CanalSocketio {
     controleur
     nomDInstance
     socket
-    listeDesMessagesEmis = new Array(
-        "connexion_requete",
-        "inscription_requete",
-        "liste_utilisateurs_requete",
-        "client_deconnexion"
-    )
-    listeDesMessagesRecus = new Array(
-        "connexion_reponse",
-        "inscription_reponse",
-        "liste_utilisateurs_reponse"
-    )
+    listeDesMessagesEmis = ListeMessagesEmis
+    listeDesMessagesRecus = ListeMessagesRecus
     verbose = false
 
     constructor(s, c, nom) {

@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import styles from "./LoginForm.module.css"
-import getControleurInstance from "../singletonControleur"
 import CanalSocketio from "../app/canalsocketio/canalsocketio"
 import io from "socket.io-client"
 import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
+import Controleur from "@/controleur"
 
-const controleur = getControleurInstance()
+const controleur = new Controleur()
 const socket = io
 const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 

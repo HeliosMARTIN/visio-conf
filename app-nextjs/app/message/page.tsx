@@ -4,9 +4,13 @@ import io from "socket.io-client"
 import Cookies from "js-cookie"
 import { useEffect, useRef, useState } from "react"
 import styles from "./MessagePage.module.css"
-import getControleurInstance from "../../singletonControleur"
 import CanalSocketio from "../canalsocketio/canalsocketio"
 import { Message } from "../types/Message"
+import Controleur from "@/controleur"
+
+const controleur = new Controleur()
+const socket = io
+const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 
 export default function MessagePage() {
     const searchParams = useSearchParams()
@@ -29,10 +33,6 @@ export default function MessagePage() {
             setEmail(email)
         }
     }, [searchParams])
-
-    const controleur = getControleurInstance()
-    const socket = io
-    const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 
     const nomDInstance = "MessagePage"
     const verbose = false
