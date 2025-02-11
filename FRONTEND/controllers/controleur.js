@@ -196,4 +196,5 @@ class Controleur {
         }
     }
 }
-module.exports = Controleur
+
+export default Controleur;
