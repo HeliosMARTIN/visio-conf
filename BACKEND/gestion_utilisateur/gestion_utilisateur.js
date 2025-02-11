@@ -5,14 +5,14 @@ class GestionUtilisateur {
     controleur
     verbose = false
     listeDesMessagesEmis = new Array(
-        "connexion_reponse",
-        "inscription_reponse",
-        "liste_utilisateurs_reponse"
+        "login_response",
+        "signup_response",
+        "users_list_response"
     )
     listeDesMessagesRecus = new Array(
-        "connexion_requete",
-        "inscription_requete",
-        "liste_utilisateurs_requete"
+        "login_request",
+        "signup_request",
+        "users_list_request"
     )
     listeJoueurs = new Object()
 
@@ -42,18 +42,18 @@ class GestionUtilisateur {
             console.log(mesg)
         }
 
-        if (mesg.connexion_requete) {
+        if (mesg.login_request) {
             var u = await User.findOne(
-                { email: mesg.connexion_requete.login },
+                { email: mesg.login_request.login },
                 "user_firstname user_lastname user_email user_picture user_password"
             )
             if (u != null) {
-                var mdp = await this.sha256(mesg.connexion_requete.mdp)
+                var mdp = await this.sha256(mesg.login_request.mdp)
                 if (mdp == u.user_password) {
                     const message = new Object()
-                    message.connexion_reponse = new Object()
-                    message.connexion_reponse.etat = true
-                    message.connexion_reponse.user = {
+                    message.login_response = new Object()
+                    message.login_response.etat = true
+                    message.login_response.user = {
                         firstname: u.user_firstname,
                         lastname: u.user_lastname,
                         email: u.user_email,
@@ -74,8 +74,8 @@ class GestionUtilisateur {
             }
         }
 
-        if (mesg.inscription_requete) {
-            console.log("DEMANDE INSC", mesg.inscription_requete)
+        if (mesg.signup_request) {
+            console.log("DEMANDE INSC", mesg.signup_request)
 
             try {
                 const {
@@ -86,7 +86,7 @@ class GestionUtilisateur {
                     user_phone,
                     user_job,
                     user_desc,
-                } = mesg.inscription_requete
+                } = mesg.signup_request
 
                 const existingUser = await User.findOne({ email })
                 console.log("existingUser", existingUser)
@@ -110,7 +110,7 @@ class GestionUtilisateur {
                 await newUser.save()
 
                 const message = {
-                    inscription_reponse: {
+                    signup_response: {
                         etat: true,
                         user: { firstname, lastname, email },
                     },
@@ -119,7 +119,7 @@ class GestionUtilisateur {
                 this.controleur.envoie(this, message)
             } catch (error) {
                 const message = {
-                    inscription_reponse: {
+                    signup_response: {
                         etat: false,
                         error: error.message,
                     },
@@ -129,11 +129,11 @@ class GestionUtilisateur {
             }
         }
 
-        if (mesg.liste_utilisateurs_requete) {
+        if (mesg.users_list_request) {
             try {
                 const users = await User.find({}, "firstname lastname email")
                 const message = {
-                    liste_utilisateurs_reponse: {
+                    users_list_response: {
                         etat: true,
                         users: users,
                     },
@@ -142,7 +142,7 @@ class GestionUtilisateur {
                 this.controleur.envoie(this, message)
             } catch (error) {
                 const message = {
-                    liste_utilisateurs_reponse: {
+                    users_list_response: {
                         etat: false,
                         error: error.message,
                     },

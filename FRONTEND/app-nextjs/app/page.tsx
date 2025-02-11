@@ -21,8 +21,8 @@ export default function Home() {
     const verbose = false
 
     // Messages
-    const listeMessageEmis = ["liste_utilisateurs_requete"]
-    const listeMessageRecus = ["liste_utilisateurs_reponse"]
+    const listeMessageEmis = ["users_list_request"]
+    const listeMessageRecus = ["users_list_response"]
 
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
@@ -31,7 +31,7 @@ export default function Home() {
     const { current } = useRef({
         nomDInstance,
         traitementMessage: (msg: {
-            liste_utilisateurs_reponse?: {
+            users_list_response?: {
                 etat: boolean
                 users?: User[]
                 error?: string
@@ -43,13 +43,13 @@ export default function Home() {
                     msg
                 )
 
-            if (msg.liste_utilisateurs_reponse) {
-                if (!msg.liste_utilisateurs_reponse.etat) {
+            if (msg.users_list_response) {
+                if (!msg.users_list_response.etat) {
                     setError(
-                        `Fetching users failed: ${msg.liste_utilisateurs_reponse.error}`
+                        `Fetching users failed: ${msg.users_list_response.error}`
                     )
                 } else {
-                    setUsers(msg.liste_utilisateurs_reponse.users || [])
+                    setUsers(msg.users_list_response.users || [])
                 }
             }
         },
@@ -82,9 +82,9 @@ export default function Home() {
     const fetchUsersList = () => {
         try {
             let T: {
-                liste_utilisateurs_requete: {}
+                users_list_request: {}
             } = {
-                liste_utilisateurs_requete: {},
+                users_list_request: {},
             }
             controleur.envoie(canalSocketio, T)
         } catch (err) {
