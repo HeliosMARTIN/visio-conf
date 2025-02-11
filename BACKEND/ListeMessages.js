@@ -4,10 +4,11 @@
  */
 const ListeMessagesEmis = [
     "client_deconnexion", // No data
-    "connexion_requete", // { login: string, mdp: string }
-    "inscription_requete", // { login: string, mdp: string, firstname: string, lastname: string, user_phone: string, user_job: string, user_desc: string }
-    "liste_utilisateurs_requete", // No data
-    "messages_requete", // { userEmail: string | undefined, otherUserEmail: string }
+    "login_request", // { login: string, mdp: string }
+    "signup_request", // { login: string, mdp: string, firstname: string, lastname: string, user_phone: string, user_job: string, user_desc: string }
+    "users_list_request", // No data
+    "messages_get_request", // { userEmail: string | undefined, otherUserEmail: string }
+    "message_send_request", // { userEmail: string, otherUserEmail: string, text: string }
 ]
 
 /**
@@ -16,10 +17,11 @@ const ListeMessagesEmis = [
  */
 const ListeMessagesRecus = [
     "client_deconnexion", // No data
-    "connexion_reponse", // { etat: string, user?: { firstname: string, lastname: string, email: string } }
-    "inscription_reponse", // { etat: string, user?: { firstname: string, lastname: string, email: string } }
-    "liste_utilisateurs_reponse", // { etat: boolean, users?: User[], error?: string }
-    "messages_reponse", // { etat: boolean, messages?: Message[], error?: string }
+    "login_response", // { etat: string, user?: { firstname: string, lastname: string, email: string } }
+    "signup_response", // { etat: string, user?: { firstname: string, lastname: string, email: string } }
+    "users_list_response", // { etat: boolean, users?: User[], error?: string }
+    "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
+    "message_send_response", // { etat: boolean, error?: string }
 ]
 
 module.exports = {

@@ -14,8 +14,8 @@ const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 
 export default function LoginForm() {
     // Messages
-    const listeMessageEmis = ["connexion_requete"]
-    const listeMessageRecus = ["connexion_reponse"]
+    const listeMessageEmis = ["login_request"]
+    const listeMessageRecus = ["login_response"]
 
     const nomDInstance = "LoginForm"
     const verbose = false
@@ -25,7 +25,7 @@ export default function LoginForm() {
     const { current } = useRef({
         nomDInstance,
         traitementMessage: (msg: {
-            connexion_reponse?: {
+            login_response?: {
                 etat: string
                 user?: { firstname: string; lastname: string; email: string }
             }
@@ -36,15 +36,15 @@ export default function LoginForm() {
                     msg
                 )
 
-            if (msg.connexion_reponse) {
-                if (msg.connexion_reponse.etat === "false") {
+            if (msg.login_response) {
+                if (msg.login_response.etat === "false") {
                     setError("Login failed. Please try again.")
                 } else {
                     // Set cookies to stay logged in and store user info
                     Cookies.set("loggedIn", "true", { expires: 7 })
                     Cookies.set(
                         "userInfo",
-                        JSON.stringify(msg.connexion_reponse.user),
+                        JSON.stringify(msg.login_response.user),
                         { expires: 7 }
                     )
                     router.push("/")
@@ -75,10 +75,10 @@ export default function LoginForm() {
         setLoading(true)
         setError("")
         try {
-            let T: { connexion_requete: { login: string; mdp: string } } = {
-                connexion_requete: { login: "", mdp: "" },
+            let T: { login_request: { login: string; mdp: string } } = {
+                login_request: { login: "", mdp: "" },
             }
-            T.connexion_requete = { login: email, mdp: password }
+            T.login_request = { login: email, mdp: password }
             controleur.envoie(canalSocketio, T)
         } catch (err) {
             setError("Login failed. Please try again.")

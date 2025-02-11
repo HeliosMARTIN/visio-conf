@@ -14,8 +14,8 @@ const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 
 export default function SignupForm() {
     // Messages
-    const listeMessageEmis = ["inscription_requete"]
-    const listeMessageRecus = ["inscription_reponse"]
+    const listeMessageEmis = ["signup_request"]
+    const listeMessageRecus = ["signup_response"]
 
     const nomDInstance = "SignupForm"
     const verbose = false
@@ -25,7 +25,7 @@ export default function SignupForm() {
     const { current } = useRef({
         nomDInstance,
         traitementMessage: (msg: {
-            inscription_reponse?: {
+            signup_response?: {
                 etat: string
                 user?: { firstname: string; lastname: string; email: string }
             }
@@ -36,17 +36,16 @@ export default function SignupForm() {
                     msg
                 )
 
-            if (msg.inscription_reponse) {
-                if (msg.inscription_reponse.etat === "false") {
+            if (msg.signup_response) {
+                if (msg.signup_response.etat === "false") {
                     setError("Signup failed. Please try again.")
                 } else {
                     // Set cookies to stay logged in and store user info
                     Cookies.set("loggedIn", "true", { expires: 7 })
-                    console.log("lalalalala", msg.inscription_reponse.user)
 
                     Cookies.set(
                         "userInfo",
-                        JSON.stringify(msg.inscription_reponse.user),
+                        JSON.stringify(msg.signup_response.user),
                         { expires: 7 }
                     )
                     router.push("/")
@@ -83,7 +82,7 @@ export default function SignupForm() {
         setError("")
         try {
             let T: {
-                inscription_requete: {
+                signup_request: {
                     login: string
                     mdp: string
                     firstname: string
@@ -93,7 +92,7 @@ export default function SignupForm() {
                     user_desc: string
                 }
             } = {
-                inscription_requete: {
+                signup_request: {
                     login: "",
                     mdp: "",
                     firstname: "",
@@ -103,7 +102,7 @@ export default function SignupForm() {
                     user_desc: "",
                 },
             }
-            T.inscription_requete = {
+            T.signup_request = {
                 login: email,
                 mdp: password,
                 firstname,
