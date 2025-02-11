@@ -1,95 +1,109 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+import styles from "./page.module.css"
+import getControleurInstance from "./singletonControleur"
+import CanalSocketio from "./canalsocketio/canalsocketio"
+import io from "socket.io-client"
+import UsersList from "./components/UsersList"
+import CurrentUser from "./components/CurrentUser"
+import { User } from "./types/User"
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const controleur = getControleurInstance()
+    const socket = io
+    const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
+    const router = useRouter()
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    const nomDInstance = "HomePage"
+    const verbose = false
+
+    // Messages
+    const listeMessageEmis = ["liste_utilisateurs_requete"]
+    const listeMessageRecus = ["liste_utilisateurs_reponse"]
+
+    const [users, setUsers] = useState<User[]>([])
+    const [error, setError] = useState("")
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
+
+    const { current } = useRef({
+        nomDInstance,
+        traitementMessage: (msg: {
+            liste_utilisateurs_reponse?: {
+                etat: boolean
+                users?: User[]
+                error?: string
+            }
+        }) => {
+            if (verbose || controleur.verboseall)
+                console.log(
+                    `INFO: (${nomDInstance}) - traitementMessage - `,
+                    msg
+                )
+
+            if (msg.liste_utilisateurs_reponse) {
+                if (!msg.liste_utilisateurs_reponse.etat) {
+                    setError(
+                        `Fetching users failed: ${msg.liste_utilisateurs_reponse.error}`
+                    )
+                } else {
+                    setUsers(msg.liste_utilisateurs_reponse.users || [])
+                }
+            }
+        },
+    })
+
+    useEffect(() => {
+        const loggedIn = Cookies.get("loggedIn")
+        const userInfo = Cookies.get("userInfo")
+        if (!loggedIn) {
+            router.push("/login")
+        } else {
+            if (userInfo) {
+                setCurrentUser(JSON.parse(userInfo))
+            }
+            controleur.inscription(current, listeMessageEmis, listeMessageRecus)
+            fetchUsersList()
+        }
+
+        return () => {
+            controleur.desincription(
+                current,
+                listeMessageEmis,
+                listeMessageRecus
+            )
+        }
+    }, [router])
+
+    const fetchUsersList = () => {
+        try {
+            let T: {
+                liste_utilisateurs_requete: {}
+            } = {
+                liste_utilisateurs_requete: {},
+            }
+            controleur.envoie(canalSocketio, T)
+        } catch (err) {
+            setError("Failed to fetch users list. Please try again.")
+        }
+    }
+
+    const handleMessage = (user: User) => {
+        router.push(`/message/${user.email}`)
+    }
+
+    return (
+        <div className={styles.page}>
+            <main className={styles.main}>
+                <h1>Accueil - Visioconf</h1>
+                {error && <div className={styles.error}>{error}</div>}
+                <UsersList
+                    users={users}
+                    currentUserEmail={currentUser?.email || ""}
+                />
+            </main>
+            {currentUser && <CurrentUser user={currentUser} />}
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    )
 }

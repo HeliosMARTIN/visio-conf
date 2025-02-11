@@ -1,0 +1,48 @@
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  margin-bottom: 0.5rem;
+  color: #e0e0e0; /* Light text color */
+}
+
+.formGroup input {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #333; /* Dark input background */
+  color: #e0e0e0; /* Light text color */
+}
+
+.submitButton {
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #0070f3;
+  color: white;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  background-color: #555; /* Darker gray for better contrast */
+  cursor: not-allowed;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #005bb5; /* Darker hover color for better contrast */
+}
+
+.error {
+  color: #d32f2f; /* Darker red for better contrast */
+  margin-bottom: 1rem;
+}

@@ -1,3 +1,4 @@
+
 .page {
   --gray-rgb: 0, 0, 0;
   --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
@@ -128,23 +129,6 @@ a.secondary {
   flex-shrink: 0;
 }
 
-.currentUser {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  background: var(--gray-alpha-100);
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: right;
-}
-
-.usersList {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
@@ -202,4 +186,10 @@ a.secondary {
   .logo {
     filter: invert();
   }
+}
+
+.usersList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
