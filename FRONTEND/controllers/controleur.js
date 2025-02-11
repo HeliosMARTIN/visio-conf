@@ -1,4 +1,4 @@
-class Controleur {
+export class Controleur {
     listeEmission = new Object()
     listeAbonnement = new Object()
     verbose = false
@@ -196,5 +196,4 @@ class Controleur {
         }
     }
 }
-
-export default Controleur;
+export default Controleur;  // Change the export to default

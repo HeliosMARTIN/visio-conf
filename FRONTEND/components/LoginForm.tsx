@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import styles from "./LoginForm.module.css"
-import CanalSocketio from "../controllers/canalsocketio"
+import { CanalSocketio } from "../controllers/canalsocketio"
 import io from "socket.io-client"
 import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
@@ -10,7 +10,7 @@ import Controleur from "@/controllers/controleur"
 
 const controleur = new Controleur()
 const socket = io
-const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
+const canalSocketio = new CanalSocketio(controleur, "socketIO")
 
 export default function LoginForm() {
     // Messages
@@ -26,31 +26,25 @@ export default function LoginForm() {
         nomDInstance,
         traitementMessage: (msg: {
             login_response?: {
-                etat: string
+                etat: boolean
                 user?: { firstname: string; lastname: string; email: string }
             }
         }) => {
-            if (verbose || controleur.verboseall)
-                console.log(
-                    `INFO: (${nomDInstance}) - traitementMessage - `,
-                    msg
-                )
-
             if (msg.login_response) {
-                if (msg.login_response.etat === "false") {
-                    setError("Login failed. Please try again.")
-                } else {
-                    // Set cookies to stay logged in and store user info
-                    Cookies.set("loggedIn", "true", { expires: 7 })
-                    Cookies.set(
-                        "userInfo",
-                        JSON.stringify(msg.login_response.user),
-                        { expires: 7 }
-                    )
+                if (msg.login_response.etat === true && msg.login_response.user) {
+                    // Set cookies with user information
+                    Cookies.set("userInfo", JSON.stringify({
+                        email: msg.login_response.user.email,
+                        firstname: msg.login_response.user.firstname,
+                        lastname: msg.login_response.user.lastname
+                    }))
+                    Cookies.set("loggedIn", "true")
                     router.push("/")
+                } else {
+                    setError("Login failed. Please check your credentials.")
                 }
             }
-        },
+        }
     })
 
     useEffect(() => {

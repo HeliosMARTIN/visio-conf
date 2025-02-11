@@ -1,4 +1,4 @@
-const { ListeMessagesEmis, ListeMessagesRecus } = require("../ListeMessages")
+const { ListeMessagesEmis, ListeMessagesRecus } = require("./ListeMessages")
 
 class CanalSocketio {
     controleur

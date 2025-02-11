@@ -44,7 +44,7 @@ class GestionUtilisateur {
 
         if (mesg.login_request) {
             var u = await User.findOne(
-                { email: mesg.login_request.login },
+                { user_email: mesg.login_request.login },
                 "user_firstname user_lastname user_email user_picture user_password"
             )
             if (u != null) {
@@ -79,7 +79,7 @@ class GestionUtilisateur {
 
             try {
                 const {
-                    email,
+                    login,
                     mdp,
                     firstname,
                     lastname,
@@ -88,7 +88,7 @@ class GestionUtilisateur {
                     user_desc,
                 } = mesg.signup_request
 
-                const existingUser = await User.findOne({ email })
+                const existingUser = await User.findOne({ user_email:login })
                 console.log("existingUser", existingUser)
 
                 if (existingUser) {
@@ -98,8 +98,8 @@ class GestionUtilisateur {
                 const hashedPassword = await this.sha256(mdp)
                 const newUser = new User({
                     user_uuid: uuidv4(),
-                    email: login,
-                    password: hashedPassword,
+                    user_email: login,
+                    user_password: hashedPassword,
                     user_firstname: firstname,
                     user_lastname: lastname,
                     user_phone: user_phone,
@@ -112,7 +112,7 @@ class GestionUtilisateur {
                 const message = {
                     signup_response: {
                         etat: true,
-                        user: { firstname, lastname, email },
+                        user: { firstname, lastname, email:login },
                     },
                     id: [mesg.id],
                 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { SocketProvider } from "@/context/SocketProvider";
+import Menu from "@/components/Menu";
 
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({
         <html lang="fr">
             <body>
                 <SocketProvider>{children}</SocketProvider>
+                <Menu />
             </body>
         </html>
     );

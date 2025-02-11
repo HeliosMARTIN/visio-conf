@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import Controleur from "@/controllers/controleur";
-import CanalSocketio from "@/controllers/canalsocketio";
+import { CanalSocketio } from "@/controllers/canalsocketio";
 
 // ✅ Définition du type correct pour le contexte
 interface SocketContextType {
