@@ -42,4 +42,5 @@ class CanalSocketio{
 		
 	}
 }
+
 export default CanalSocketio;
