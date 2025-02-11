@@ -2,35 +2,36 @@
 
 # dependencies
 /node_modules
-/app-nextjs/node_modules
+/FRONTEND/app-nextjs/node_modules
+/FRONTEND/node_modules
 /.pnp
-/app-nextjs/.pnp
+/FRONTEND/app-nextjs/.pnp
 .pnp.*
-/app-nextjs.pnp.*
+/FRONTEND/app-nextjs.pnp.*
 .yarn/*
-/app-nextjs/.yarn/*
+/FRONTEND/app-nextjs/.yarn/*
 !.yarn/patches
-!/app-nextjs/.yarn/patches
+!/FRONTEND/app-nextjs/.yarn/patches
 !.yarn/plugins
-!/app-nextjs/.yarn/plugins
+!/FRONTEND/app-nextjs/.yarn/plugins
 !.yarn/releases
-!/app-nextjs/.yarn/releases
+!/FRONTEND/app-nextjs/.yarn/releases
 !.yarn/versions
-!/app-nextjs/.yarn/versions
+!/FRONTEND/app-nextjs/.yarn/versions
 
 # testing
 /coverage
-/app-nextjs/coverage
+/FRONTEND/app-nextjs/coverage
 
 # next.js
 /.next/
-/app-nextjs/.next/
+/FRONTEND/app-nextjs/.next/
 /out/
-/app-nextjs/out/
+/FRONTEND/app-nextjs/out/
 
 # production
 /build
-/app-nextjs/build
+FRONTEND//app-nextjs/build
 
 # misc
 .DS_Store
@@ -40,24 +41,24 @@
 
 # debug
 npm-debug.log*
-/app-nextjs/npm-debug.log*
+/FRONTEND/app-nextjs/npm-debug.log*
 yarn-debug.log*
-/app-nextjs/yarn-debug.log*
+/FRONTEND/app-nextjs/yarn-debug.log*
 yarn-error.log*
-/app-nextjs/yarn-error.log*
+/FRONTEND//app-nextjs/yarn-error.log*
 .pnpm-debug.log*
-/app-nextjs/.pnpm-debug.log*
+/FRONTEND/app-nextjs/.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-/app-nextjs/.env*
+/FRONTEND/app-nextjs/.env*
 
 # vercel
 .vercel
-/app-nextjs/.vercel
+/FRONTEND/app-nextjs/.vercel
 
 # typescript
 *.tsbuildinfo
-/app-nextjs/*.tsbuildinfo
+/FRONTEND/app-nextjs/*.tsbuildinfo
 next-env.d.ts
 /app-nextjs/next-env.d.ts
