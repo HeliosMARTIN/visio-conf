@@ -88,7 +88,7 @@ export default function MessagePage() {
                 listeMessageRecus
             )
         }
-    })
+    }, []) // Added empty dependency array to run only once
 
     const fetchMessages = () => {
         try {
