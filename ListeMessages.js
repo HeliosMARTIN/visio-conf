@@ -7,7 +7,7 @@ const ListeMessagesEmis = [
     "connexion_requete", // { login: string, mdp: string }
     "inscription_requete", // { login: string, mdp: string, firstname: string, lastname: string, user_phone: string, user_job: string, user_desc: string }
     "liste_utilisateurs_requete", // No data
-    "messages_requete", // No data
+    "messages_requete", // { userEmail: string | undefined, otherUserEmail: string }
 ]
 
 /**

@@ -92,10 +92,6 @@ export default function Home() {
         }
     }
 
-    const handleMessage = (user: User) => {
-        router.push(`/message/${user.email}`)
-    }
-
     return (
         <div className={styles.page}>
             <main className={styles.main}>

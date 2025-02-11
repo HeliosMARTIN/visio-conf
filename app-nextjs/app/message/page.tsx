@@ -7,6 +7,7 @@ import styles from "./MessagePage.module.css"
 import CanalSocketio from "../canalsocketio/canalsocketio"
 import { Message } from "../types/Message"
 import Controleur from "@/controleur"
+import { User } from "../types/User"
 
 const controleur = new Controleur()
 const socket = io
@@ -16,12 +17,12 @@ export default function MessagePage() {
     const searchParams = useSearchParams()
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
-    const [email, setEmail] = useState("")
+    const [otherUserEmail, setOtherUserEmail] = useState("")
 
     useEffect(() => {
         const firstName = searchParams.get("firstName")
         const lastName = searchParams.get("lastName")
-        const email = searchParams.get("email")
+        const otherUserEmail = searchParams.get("otherUserEmail")
 
         if (firstName) {
             setFirstName(firstName)
@@ -29,8 +30,8 @@ export default function MessagePage() {
         if (lastName) {
             setLastName(lastName)
         }
-        if (email) {
-            setEmail(email)
+        if (otherUserEmail) {
+            setOtherUserEmail(otherUserEmail)
         }
     }, [searchParams])
 
@@ -43,7 +44,7 @@ export default function MessagePage() {
 
     const [messages, setMessages] = useState<Message[]>([])
     const [error, setError] = useState("")
-    const [currentUser, setCurrentUser] = useState<Message | null>(null)
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
 
     const { current } = useRef({
         nomDInstance,
@@ -88,14 +89,20 @@ export default function MessagePage() {
                 listeMessageRecus
             )
         }
-    }, []) // Added empty dependency array to run only once
+    }, [otherUserEmail])
 
     const fetchMessages = () => {
         try {
             let T: {
-                liste_utilisateurs_requete: {}
+                messages_requete: {
+                    userEmail: string | undefined
+                    otherUserEmail: string
+                }
             } = {
-                liste_utilisateurs_requete: {},
+                messages_requete: {
+                    userEmail: currentUser?.email,
+                    otherUserEmail: otherUserEmail,
+                },
             }
             controleur.envoie(canalSocketio, T)
         } catch (err) {
@@ -108,7 +115,7 @@ export default function MessagePage() {
             <h1>
                 Conversation avec: {firstName} {lastName}
             </h1>
-            <p className={styles.email}>Email: {email}</p>
+            <p className={styles.email}>Email: {otherUserEmail}</p>
         </div>
     )
 }

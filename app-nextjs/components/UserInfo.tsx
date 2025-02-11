@@ -13,7 +13,7 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
 
     const handleMessage = () => {
         router.push(
-            `/message?firstName=${user.firstname}&lastName=${user.lastname}&email=${user.email}`
+            `/message?firstName=${user.firstname}&lastName=${user.lastname}&otherUserEmail=${user.email}`
         )
     }
 
