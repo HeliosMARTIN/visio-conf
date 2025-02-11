@@ -1,4 +1,4 @@
-const User = require("../modeles/user")
+const User = require("../models/user")
 const crypto = require("crypto")
 const { v4: uuidv4 } = require("uuid")
 class GestionUtilisateur {

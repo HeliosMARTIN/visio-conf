@@ -17,7 +17,7 @@ const UserSchema = new Schema({
     user_socket_id: { type: String, required: true, default: "none" },
     user_firstname: { type: String, required: true },
     user_lastname: { type: String, required: true },
-    email: { type: String, required: true },
+    user_email: { type: String, required: true },
     user_phone: { type: String, required: true },
     user_status: {
         type: String,
@@ -27,7 +27,7 @@ const UserSchema = new Schema({
         description:
             "Choose user status between : waiting, active, banned, deleted",
     },
-    password: { type: String, required: true, description: "SHA256" },
+    user_password: { type: String, required: true, description: "SHA256" },
     user_job: {
         type: String,
         required: true,
