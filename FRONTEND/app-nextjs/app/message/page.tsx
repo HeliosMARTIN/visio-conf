@@ -4,10 +4,10 @@ import io from "socket.io-client"
 import Cookies from "js-cookie"
 import { useEffect, useRef, useState } from "react"
 import styles from "./MessagePage.module.css"
-import CanalSocketio from "../canalsocketio/canalsocketio"
-import { Message } from "../types/Message"
-import Controleur from "@/controleur"
-import { User } from "../types/User"
+import CanalSocketio from "../../controllers/canalsocketio"
+import { Message } from "../../types/Message"
+import Controleur from "@/controllers/controleur"
+import { User } from "../../types/User"
 
 const controleur = new Controleur()
 const socket = io

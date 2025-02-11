@@ -1,5 +1,5 @@
 "use client"
-import { User } from "../app/types/User"
+import { User } from "../types/User"
 import styles from "./UserInfo.module.css"
 import { useRouter } from "next/navigation"
 

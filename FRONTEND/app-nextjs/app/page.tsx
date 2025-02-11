@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import styles from "./page.module.css"
-import CanalSocketio from "./canalsocketio/canalsocketio"
+import CanalSocketio from "../controllers/canalsocketio"
 import io from "socket.io-client"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
-import { User } from "./types/User"
-import Controleur from "@/controleur"
+import { User } from "../types/User"
+import Controleur from "@/controllers/controleur"
 
 const controleur = new Controleur()
 const socket = io

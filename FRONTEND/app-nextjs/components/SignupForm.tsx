@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react"
 import styles from "./SignupForm.module.css"
-import CanalSocketio from "../app/canalsocketio/canalsocketio"
+import CanalSocketio from "../controllers/canalsocketio"
 import io from "socket.io-client"
 import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controleur"
+import Controleur from "@/controllers/controleur"
 
 const controleur = new Controleur()
 const socket = io
