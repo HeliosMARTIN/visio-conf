@@ -3,17 +3,18 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import styles from "./page.module.css"
-import getControleurInstance from "../singletonControleur"
 import CanalSocketio from "./canalsocketio/canalsocketio"
 import io from "socket.io-client"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "./types/User"
+import Controleur from "@/controleur"
+
+const controleur = new Controleur()
+const socket = io
+const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
 
 export default function Home() {
-    const controleur = getControleurInstance()
-    const socket = io
-    const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
     const router = useRouter()
 
     const nomDInstance = "HomePage"
@@ -64,6 +65,8 @@ export default function Home() {
                 setCurrentUser(JSON.parse(userInfo))
             }
             controleur.inscription(current, listeMessageEmis, listeMessageRecus)
+            console.log("init page")
+
             fetchUsersList()
         }
 

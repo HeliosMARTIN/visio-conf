@@ -7,8 +7,6 @@ interface CurrentUserProps {
 }
 
 export default function CurrentUser({ user }: CurrentUserProps) {
-    console.log("user", user)
-
     return (
         <div className={styles.currentUser}>
             <p>
