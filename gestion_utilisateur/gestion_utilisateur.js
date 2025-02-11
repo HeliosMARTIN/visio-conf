@@ -45,25 +45,28 @@ class GestionUtilisateur {
         if (mesg.connexion_requete) {
             var u = await User.findOne(
                 { email: mesg.connexion_requete.login },
-                "user_firstname user_lastname email user_picture password"
+                "user_firstname user_lastname user_email user_picture user_password"
             )
             if (u != null) {
                 var mdp = await this.sha256(mesg.connexion_requete.mdp)
-                if (mdp == u.password) {
+                if (mdp == u.user_password) {
                     const message = new Object()
                     message.connexion_reponse = new Object()
                     message.connexion_reponse.etat = true
                     message.connexion_reponse.user = {
                         firstname: u.user_firstname,
                         lastname: u.user_lastname,
-                        email: u.email,
+                        email: u.user_email,
                     }
                     message.id = new Array()
                     message.id[0] = mesg.id
                     this.controleur.envoie(this, message)
                 } else {
                     console.log(
-                        "mauvais mdp, donné " + mdp + " ; en bdd " + u.password
+                        "mauvais mdp, donné " +
+                            mdp +
+                            " ; en bdd " +
+                            u.user_password
                     )
                 }
             } else {
