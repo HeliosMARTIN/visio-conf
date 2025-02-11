@@ -2,40 +2,62 @@
 
 # dependencies
 /node_modules
+/app-nextjs/node_modules
 /.pnp
+/app-nextjs/.pnp
 .pnp.*
+/app-nextjs.pnp.*
 .yarn/*
+/app-nextjs/.yarn/*
 !.yarn/patches
+!/app-nextjs/.yarn/patches
 !.yarn/plugins
+!/app-nextjs/.yarn/plugins
 !.yarn/releases
+!/app-nextjs/.yarn/releases
 !.yarn/versions
+!/app-nextjs/.yarn/versions
 
 # testing
 /coverage
+/app-nextjs/coverage
 
 # next.js
 /.next/
+/app-nextjs/.next/
 /out/
+/app-nextjs/out/
 
 # production
 /build
+/app-nextjs/build
 
 # misc
 .DS_Store
+/app-nextjs/.DS_Store
 *.pem
+/app-nextjs/*.pem
 
 # debug
 npm-debug.log*
+/app-nextjs/npm-debug.log*
 yarn-debug.log*
+/app-nextjs/yarn-debug.log*
 yarn-error.log*
+/app-nextjs/yarn-error.log*
 .pnpm-debug.log*
+/app-nextjs/.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+/app-nextjs/.env*
 
 # vercel
 .vercel
+/app-nextjs/.vercel
 
 # typescript
 *.tsbuildinfo
+/app-nextjs/*.tsbuildinfo
 next-env.d.ts
+/app-nextjs/next-env.d.ts
