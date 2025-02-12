@@ -41,7 +41,7 @@ export default function LoginForm() {
                     Cookies.set("loggedIn", "true")
                     router.push("/")
                 } else {
-                    setError("Login failed. Please check your credentials.")
+                    setError("La connexion a échoué. Veuillez vérifier vos informations d'identification.")
                 }
             }
         }
@@ -75,7 +75,7 @@ export default function LoginForm() {
             T.login_request = { login: email, mdp: password }
             controleur.envoie(canalSocketio, T)
         } catch (err) {
-            setError("Login failed. Please try again.")
+            setError("La connexion a échoué. Veuillez réessayer.")
         } finally {
             setLoading(false)
         }
@@ -95,7 +95,7 @@ export default function LoginForm() {
                 />
             </div>
             <div className={styles.formGroup}>
-                <label htmlFor="password">Password:</label>
+                <label htmlFor="password">Mot de passe:</label>
                 <input
                     type="password"
                     id="password"
@@ -109,7 +109,7 @@ export default function LoginForm() {
                 className={styles.submitButton}
                 disabled={loading}
             >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Connexion en cours..." : "Connexion"}
             </button>
         </form>
     )
