@@ -7,60 +7,62 @@ export default function Menu() {
 
     return (
         <section className={styles.section}>
-            <div>
+            <div className={styles.menu}>
                 <div>
-                    <LinkTo to="/">
+                    <LinkTo to="/" className={styles.logo}>
                         <Image
-                            className={styles.logo}
-                            src="/logo_iut.png"
+                            className={styles.logoImage}
+                            src="/logo_Univ.png"
                             alt="Logo"
-                            width={50}
-                            height={50}
+                            width={40}
+                            height={40}
                             priority
                         />
+                        <h2 className={styles.menuText}>Université de Toulon</h2>
                     </LinkTo>
                 </div>
                 <div>
                     <ul className={styles.allIcones}>
-                        <LinkTo to="/discussions">
+                        <LinkTo to="/discussions" className={styles.link}>
                             <Image
-                                className={styles.icones}
                                 src="/conversation.svg"
                                 alt="Icone Conversation"
-                                width={30}
-                                height={30}
+                                width={25}
+                                height={25}
                                 priority
                             />
+                            <h2 className={styles.menuText}>Conversations</h2>
                         </LinkTo>
-                        <LinkTo to="/utilisateurs">
+                        <LinkTo to="/utilisateurs" className={styles.link}>
                             <Image
-                                className={styles.icones}
                                 src="/users.svg"
                                 alt="Icone User"
-                                width={30}
-                                height={30}
+                                width={25}
+                                height={25}
                                 priority
                             />
+                            <h2 className={styles.menuText}>Utilisateurs</h2>
+
                         </LinkTo>
-                        <LinkTo to="/dossiers">
+                        <LinkTo to="/dossiers" className={styles.link}>
                             <Image
-                                className={styles.icones}
                                 src="/folder.svg"
                                 alt="Icone dossier"
-                                width={30}
-                                height={30}
+                                width={25}
+                                height={25}
                                 priority
                             />
+                            <h2 className={styles.menuText}>Dossiers</h2>
                         </LinkTo>
-                        <LinkTo to="/annuaire">
+                        <LinkTo to="/annuaire" className={styles.link}>
                             <Image
-                                className={styles.icones}
                                 src="/livre.svg"
                                 alt="Icone livre"
-                                width={30}
-                                height={30}
+                                width={25}
+                                height={25}
                                 priority
                             />
+                            <h2 className={styles.menuText}>Annuaire</h2>
                         </LinkTo>
                     </ul>
                 </div>
@@ -72,8 +74,8 @@ export default function Menu() {
                             className={styles.profil}
                             src="/profil.svg"
                             alt="profil"
-                            width={50}
-                            height={50}
+                            width={40}
+                            height={40}
                             priority
                         />
                     </LinkTo>
