@@ -2,7 +2,6 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
 import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
 import Link from "next/link"

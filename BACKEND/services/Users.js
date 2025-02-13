@@ -48,7 +48,7 @@ class UsersService {
 
         if (mesg.login_request) {
             const { login, mdp } = mesg.login_request
-            const user = await User.findOne({ email: login, password: mdp })
+            const user = await User.findOne({ email: login, password: sha256(mdp) })
             if (user) {
                 const token = jwt.sign(
                     {
@@ -81,7 +81,7 @@ class UsersService {
             const user = new User({
                 uuid: uuidv4(),
                 email: login,
-                password: mdp,
+                password: sha256(mdp),
                 firstname,
                 lastname,
                 phone: phone,
