@@ -9,14 +9,12 @@ class UsersService {
     listeDesMessagesEmis = new Array(
         "login_response",
         "signup_response",
-        "users_list_response",
-        "user_info_response"
+        "users_list_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
-        "users_list_request",
-        "user_info_request"
+        "users_list_request"
     )
     listeJoueurs = new Object()
 
@@ -47,14 +45,80 @@ class UsersService {
         }
 
         if (mesg.login_request) {
-            const { login, mdp } = mesg.login_request
-            const user = await User.findOne({ email: login, password: mdp })
-            if (user) {
+            try {
+                const { email, password } = mesg.login_request
+                console.log(email, password)
+
+                const hashedPassword = await this.sha256(password)
+                const user = await User.findOne({
+                    email,
+                    password: hashedPassword,
+                })
+                if (user) {
+                    const token = jwt.sign(
+                        {
+                            firstname: user.firstname,
+                            lastname: user.lastname,
+                            email,
+                            picture: user.picture,
+                            userId: user._id,
+                        },
+                        process.env.JWT_SECRET,
+                        { expiresIn: "1d" }
+                    )
+                    const message = {
+                        login_response: { etat: true, token },
+                        id: [mesg.id],
+                    }
+                    this.controleur.envoie(this, message)
+                } else {
+                    throw new Error("Invalid credentials")
+                }
+            } catch (error) {
+                const message = {
+                    login_response: { etat: false, error: error.message },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
+        if (mesg.signup_request) {
+            try {
+                const {
+                    email,
+                    password,
+                    firstname,
+                    lastname,
+                    phone,
+                    job,
+                    desc,
+                } = mesg.signup_request
+
+                const existingUser = await User.findOne({ email })
+                if (existingUser) {
+                    throw new Error("User already exists")
+                }
+
+                const hashedPassword = await this.sha256(password)
+
+                const user = new User({
+                    uuid: uuidv4(),
+                    email,
+                    password: hashedPassword,
+                    firstname,
+                    lastname,
+                    phone,
+                    job,
+                    desc,
+                    picture: "default_profile_picture.png",
+                })
+                await user.save()
                 const token = jwt.sign(
                     {
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email,
+                        firstname,
+                        lastname,
+                        email,
                         picture: user.picture,
                         userId: user._id,
                     },
@@ -62,84 +126,7 @@ class UsersService {
                     { expiresIn: "1d" }
                 )
                 const message = {
-                    login_response: { etat: true, token },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            } else {
-                const message = {
-                    login_response: { etat: false },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
-        }
-
-        if (mesg.signup_request) {
-            const { login, mdp, firstname, lastname, phone, job, desc } =
-                mesg.signup_request
-            const user = new User({
-                uuid: uuidv4(),
-                email: login,
-                password: mdp,
-                firstname,
-                lastname,
-                phone: phone,
-                job: job,
-                desc: desc,
-            })
-            await user.save()
-            const token = jwt.sign(
-                {
-                    uuid: user.uuid,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    email: user.email,
-                    picture: user.picture,
-                    userId: user._id,
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: "1d" }
-            )
-            const message = {
-                signup_response: { etat: true, token },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-
-        if (mesg.signup_request) {
-            try {
-                const { email, mdp, firstname, lastname, phone, job, desc } =
-                    mesg.signup_request
-
-                const existingUser = await User.findOne({ email })
-                console.log("existingUser", existingUser)
-
-                if (existingUser) {
-                    throw new Error("User already exists")
-                }
-
-                const hashedPassword = await this.sha256(mdp)
-                const newUser = new User({
-                    uuid: uuidv4(),
-                    email: email,
-                    password: hashedPassword,
-                    firstname: firstname,
-                    lastname: lastname,
-                    phone: phone,
-                    job: job,
-                    desc: desc,
-                })
-
-                await newUser.save()
-
-                const message = {
-                    signup_response: {
-                        etat: true,
-                        user: { firstname, lastname, email },
-                    },
-                    id: [mesg.id],
+                    signup_response: { etat: true, token },
                 }
                 this.controleur.envoie(this, message)
             } catch (error) {
@@ -148,74 +135,6 @@ class UsersService {
                         etat: false,
                         error: error.message,
                     },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
-        }
-
-        if (mesg.user_info_request) {
-            const token = mesg.user_info_request.token
-            if (token) {
-                jwt.verify(
-                    token,
-                    process.env.JWT_SECRET,
-                    async (err, decoded) => {
-                        if (err) {
-                            const message = {
-                                user_info_response: {
-                                    etat: false,
-                                    error: "Unauthorized",
-                                },
-                                id: [mesg.id],
-                            }
-                            this.controleur.envoie(this, message)
-                        } else {
-                            const user = await User.findById(
-                                decoded.userId,
-                                "firstname lastname email picture"
-                            )
-                            if (user) {
-                                const newToken = jwt.sign(
-                                    {
-                                        uuid: user.uuid,
-                                        firstname: user.firstname,
-                                        lastname: user.lastname,
-                                        email: user.email,
-                                        picture: user.picture,
-                                        userId: user._id,
-                                    },
-                                    process.env.JWT_SECRET,
-                                    { expiresIn: "1d" }
-                                )
-                                const message = {
-                                    user_info_response: {
-                                        etat: true,
-                                        token: newToken,
-                                    },
-                                    id: [mesg.id],
-                                }
-                                this.controleur.envoie(this, message)
-                            } else {
-                                const message = {
-                                    user_info_response: {
-                                        etat: false,
-                                        error: "User not found",
-                                    },
-                                    id: [mesg.id],
-                                }
-                                this.controleur.envoie(this, message)
-                            }
-                        }
-                    }
-                )
-            } else {
-                const message = {
-                    user_info_response: {
-                        etat: false,
-                        error: "No token provided",
-                    },
-                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             }

@@ -10,6 +10,7 @@ import React, {
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
 import { User } from "@/types/User"
+import { JwtPayload } from "jsonwebtoken"
 
 interface SocketContextType {
     controleur: Controleur

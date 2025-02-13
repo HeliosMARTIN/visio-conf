@@ -11,6 +11,17 @@ export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useSocket()
     const router = useRouter()
 
+    // New redirection effect if no token and currentUser is null
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        console.log("token", token)
+        console.log("currentUser", currentUser)
+
+        if (!token || !currentUser) {
+            router.push("/login")
+        }
+    }, [currentUser, router])
+
     const nomDInstance = "HomePage"
     const verbose = false
 
