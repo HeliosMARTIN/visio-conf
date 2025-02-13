@@ -1,19 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
-import CanalSocketio from "../controllers/canalsocketio"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
+import { useSocket } from "@/context/SocketProvider"
+import jwt from "jsonwebtoken"
 
 export default function LoginForm() {
-    // Messages
+    const { controleur, currentUser, setCurrentUser } = useSocket()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -22,48 +16,50 @@ export default function LoginForm() {
 
     const router = useRouter()
 
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             login_response?: {
-                etat: string
-                user?: { firstname: string; lastname: string; email: string }
+                etat: boolean
+                token?: string
             }
         }) => {
-            if (verbose || controleur.verboseall)
+            if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
                 )
 
             if (msg.login_response) {
-                if (msg.login_response.etat === "false") {
+                if (msg.login_response.etat === false) {
                     setError("Login failed. Please try again.")
                 } else {
-                    // Set cookies to stay logged in and store user info
-                    Cookies.set("loggedIn", "true", { expires: 7 })
-                    Cookies.set(
-                        "userInfo",
-                        JSON.stringify(msg.login_response.user),
-                        { expires: 7 }
-                    )
+                    const token = msg.login_response.token
+                    if (token) {
+                        const user = jwt.decode(token)
+                        setCurrentUser(user)
+                        localStorage.setItem("token", token)
+                    }
                     router.push("/")
                 }
             }
         },
-    })
+    }
 
     useEffect(() => {
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-
-        return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+        if (currentUser) {
+            router.push("/")
+        } else if (controleur) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            return () => {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [current])
+    }, [controleur, currentUser])
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -75,11 +71,10 @@ export default function LoginForm() {
         setLoading(true)
         setError("")
         try {
-            let T: { login_request: { login: string; mdp: string } } = {
-                login_request: { login: "", mdp: "" },
+            let T = {
+                login_request: { login: email, mdp: password },
             }
-            T.login_request = { login: email, mdp: password }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Login failed. Please try again.")
         } finally {

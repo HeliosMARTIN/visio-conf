@@ -1,51 +1,63 @@
-"use client";
+"use client"
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import Controleur from "@/controllers/controleur";
-import CanalSocketio from "@/controllers/canalsocketio";
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react"
+import Controleur from "@/controllers/controleur"
+import CanalSocketio from "@/controllers/canalsocketio"
 
-// ✅ Définition du type correct pour le contexte
 interface SocketContextType {
-    controleur: Controleur | null;
-    canal: CanalSocketio | null;
+    controleur: Controleur
+    canal: CanalSocketio
+    currentUser: any
+    setCurrentUser: React.Dispatch<React.SetStateAction<any>>
 }
 
-// ✅ Créer le contexte avec une valeur initiale `null`
-const SocketContext = createContext<SocketContextType | null>(null);
+const SocketContext = createContext<SocketContextType | null>(null)
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-    const [controleur, setControleur] = useState<Controleur | null>(null);
-    const [canal, setCanal] = useState<CanalSocketio | null>(null);
+    const controleurRef = useRef<Controleur>(null)
+    const canalRef = useRef<CanalSocketio>(null)
+
+    if (!controleurRef.current) {
+        controleurRef.current = new Controleur()
+    }
+    if (!canalRef.current) {
+        canalRef.current = new CanalSocketio(
+            controleurRef.current,
+            "CanalGlobal"
+        )
+    }
+
+    const [currentUser, setCurrentUser] = useState(null)
 
     useEffect(() => {
-        const newControleur = new Controleur();
-        const newCanal = new CanalSocketio(newControleur, "CanalGlobal");
-
-        setControleur(newControleur);
-        setCanal(newCanal);
-
         return () => {
-            newCanal.socket.disconnect(); // Déconnexion WebSocket lors du démontage
-        };
-    }, []);
+            canalRef.current?.socket.disconnect()
+        }
+    }, [])
 
     return (
-        <SocketContext.Provider value={{ controleur, canal }}>
+        <SocketContext.Provider
+            value={{
+                controleur: controleurRef.current,
+                canal: canalRef.current,
+                currentUser,
+                setCurrentUser,
+            }}
+        >
             {children}
         </SocketContext.Provider>
-    );
-};
+    )
+}
 
-// ✅ Hook pour accéder facilement au contexte
 export const useSocket = () => {
-    const context = useContext(SocketContext);
-    if (!context) {
-        throw new Error("useSocket must be used within a SocketProvider");
-    }
-    return context;
-};
-
-
-
-// Dans un composant, il suffit d’utiliser useSocket() pour récupérer les messages :
-// import { useSocket } from "@/context/SocketProvider";
+    const context = useContext(SocketContext)
+    if (!context)
+        throw new Error("useSocket must be used within a SocketProvider")
+    return context
+}

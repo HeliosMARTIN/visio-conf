@@ -1,4 +1,4 @@
-class Controleur {
+export default class Controleur {
     listeEmission = new Object()
     listeAbonnement = new Object()
     verbose = false
@@ -194,4 +194,3 @@ class Controleur {
         }
     }
 }
-module.exports = Controleur

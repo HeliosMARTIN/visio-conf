@@ -1,6 +1,6 @@
 const { ListeMessagesEmis, ListeMessagesRecus } = require("../ListeMessages")
 
-class CanalSocketio {
+export default class CanalSocketio {
     controleur
     nomDInstance
     socket
@@ -90,4 +90,3 @@ class CanalSocketio {
         }
     }
 }
-module.exports = CanalSocketio

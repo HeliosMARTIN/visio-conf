@@ -1,4 +1,4 @@
-const { ListeMessagesEmis, ListeMessagesRecus } = require("../ListeMessages")
+import { ListeMessagesEmis, ListeMessagesRecus } from "./ListeMessages.js"
 
 class CanalSocketio {
     controleur
@@ -90,4 +90,4 @@ class CanalSocketio {
         }
     }
 }
-module.exports = CanalSocketio
+export default CanalSocketio

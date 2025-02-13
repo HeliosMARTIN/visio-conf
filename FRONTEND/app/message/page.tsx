@@ -1,53 +1,36 @@
 "use client"
 import { useSearchParams } from "next/navigation"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import styles from "./MessagePage.module.css"
-import CanalSocketio from "../../controllers/canalsocketio"
+import { useSocket } from "@/context/SocketProvider"
 import { Message } from "../../types/Message"
-import Controleur from "@/controllers/controleur"
 import { User } from "../../types/User"
 
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
-
 export default function MessagePage() {
+    const { controleur, canal, currentUser } = useSocket()
     const searchParams = useSearchParams()
-    const [firstName, setFirstName] = useState("")
-    const [lastName, setLastName] = useState("")
-    const [otherUserEmail, setOtherUserEmail] = useState("")
+    const otherUserId = searchParams.get("id")
 
-    useEffect(() => {
-        const firstName = searchParams.get("firstName")
-        const lastName = searchParams.get("lastName")
-        const otherUserEmail = searchParams.get("otherUserEmail")
-
-        if (firstName) {
-            setFirstName(firstName)
-        }
-        if (lastName) {
-            setLastName(lastName)
-        }
-        if (otherUserEmail) {
-            setOtherUserEmail(otherUserEmail)
-        }
-    }, [searchParams])
+    const [otherUser, setOtherUser] = useState<User | null>(null)
+    const [messages, setMessages] = useState<Message[]>([])
+    const [error, setError] = useState("")
+    const [newMessage, setNewMessage] = useState("")
 
     const nomDInstance = "MessagePage"
     const verbose = false
 
-    // Messages
-    const listeMessageEmis = ["messages_get_request", "message_send_request"]
-    const listeMessageRecus = ["messages_get_response", "message_send_response"]
+    const listeMessageEmis = [
+        "messages_get_request",
+        "message_send_request",
+        "data_request",
+    ]
+    const listeMessageRecus = [
+        "messages_get_response",
+        "message_send_response",
+        "data_response",
+    ]
 
-    const [messages, setMessages] = useState<Message[]>([])
-    const [error, setError] = useState("")
-    const [currentUser, setCurrentUser] = useState<User>()
-    const [newMessage, setNewMessage] = useState("")
-
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             messages_get_response?: {
@@ -55,17 +38,23 @@ export default function MessagePage() {
                 messages?: Message[]
                 error?: string
             }
-            message_send_response?: {
-                etat: boolean
-                error?: string
-            }
+            message_send_response?: { etat: boolean; error?: string }
+            data_response?: { etat: boolean; user?: User; error?: string }
         }) => {
-            if (verbose || controleur.verboseall)
+            if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
                 )
-
+            if (msg.data_response) {
+                if (!msg.data_response.etat) {
+                    setError(
+                        `Fetching user info failed: ${msg.data_response.error}`
+                    )
+                } else {
+                    setOtherUser(msg.data_response.user || null)
+                }
+            }
             if (msg.messages_get_response) {
                 if (!msg.messages_get_response.etat) {
                     setError(
@@ -75,7 +64,6 @@ export default function MessagePage() {
                     setMessages(msg.messages_get_response.messages || [])
                 }
             }
-
             if (msg.message_send_response) {
                 if (!msg.message_send_response.etat) {
                     setError(
@@ -86,61 +74,53 @@ export default function MessagePage() {
                 }
             }
         },
-    })
+    }
 
     useEffect(() => {
-        const userInfo = Cookies.get("userInfo")
-
-        if (userInfo) {
-            setCurrentUser(JSON.parse(userInfo))
+        if (controleur && canal) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            if (otherUserId) {
+                const userDataMsg = { data_request: { id: otherUserId } }
+                controleur.envoie(handler, userDataMsg)
+            }
         }
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-        fetchMessages()
-
         return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+            if (controleur) {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [otherUserEmail])
+    }, [controleur, canal, otherUserId])
 
     const fetchMessages = () => {
+        if (!otherUser || !currentUser) return
         try {
-            let T: {
+            const T = {
                 messages_get_request: {
-                    userEmail: string | undefined
-                    otherUserEmail: string
-                }
-            } = {
-                messages_get_request: {
-                    userEmail: currentUser?.email || "",
-                    otherUserEmail: otherUserEmail,
+                    userEmail: currentUser.email,
+                    otherUserEmail: otherUser.email,
                 },
             }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Failed to fetch messages list. Please try again.")
         }
     }
 
     const sendMessage = () => {
+        if (!otherUser || !currentUser) return
         try {
-            let T: {
+            const T = {
                 message_send_request: {
-                    userEmail: string
-                    otherUserEmail: string
-                    text: string
-                }
-            } = {
-                message_send_request: {
-                    userEmail: currentUser?.email || "",
-                    otherUserEmail: otherUserEmail,
+                    userEmail: currentUser.email,
+                    otherUserEmail: otherUser.email,
                     text: newMessage,
                 },
             }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
             setNewMessage("")
         } catch (err) {
             setError("Failed to send message. Please try again.")
@@ -150,22 +130,25 @@ export default function MessagePage() {
     return (
         <div className={styles.messagePage}>
             <h1>
-                Conversation avec: {firstName} {lastName}
+                Conversation avec:{" "}
+                {otherUser
+                    ? `${otherUser.firstname} ${otherUser.lastname}`
+                    : "Loading..."}
             </h1>
-            <p className={styles.email}>Email: {otherUserEmail}</p>
+            <p className={styles.email}>Email: {otherUser?.email}</p>
             <div className={styles.messagesContainer}>
                 {messages.map((message) => (
                     <div key={message._id} className={styles.message}>
                         <img
-                            src={message.message_sender.user_picture}
+                            src={message.message_sender.picture}
                             alt="User"
                             className={styles.userPicture}
                         />
                         <div className={styles.messageContent}>
                             <div className={styles.messageHeader}>
                                 <span className={styles.userName}>
-                                    {message.message_sender.user_firstname}{" "}
-                                    {message.message_sender.user_lastname}
+                                    {message.message_sender.firstname}{" "}
+                                    {message.message_sender.lastname}
                                 </span>
                                 <span className={styles.timestamp}>
                                     {new Date(
