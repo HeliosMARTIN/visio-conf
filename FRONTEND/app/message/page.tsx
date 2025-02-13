@@ -1,7 +1,7 @@
 "use client"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import styles from "./MessagePage.module.css"
+import styles from "./messagePage.module.css"
 import { useSocket } from "@/context/SocketProvider"
 import { Message } from "../../types/Message"
 import { User } from "../../types/User"
@@ -29,6 +29,8 @@ export default function MessagePage() {
         "message_send_response",
         "data_response",
     ]
+    console.log(error);
+    
 
     const handler = {
         nomDInstance,
