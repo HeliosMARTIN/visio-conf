@@ -5,6 +5,9 @@ import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
 import { useSocket } from "@/context/SocketProvider"
 import jwt from "jsonwebtoken"
+import { Eye, EyeOff } from "lucide-react" // Import des icônes
+
+
 
 export default function LoginForm() {
     const { controleur, currentUser, setCurrentUser } = useSocket()
@@ -25,15 +28,15 @@ export default function LoginForm() {
             }
         }) => {
             if (verbose || controleur?.verboseall)
-                console.log(
-                    `INFO: (${nomDInstance}) - traitementMessage - `,
-                    msg
-                )
+                console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg)
 
             if (msg.login_response) {
                 if (msg.login_response.etat === false) {
-                    setError("Login failed. Please try again.")
+                    // Si la connexion échoue, nous ne savons pas exactement pourquoi
+                    // donc nous affichons un message d'erreur générique sur l'email
+                    setLoginError("Email ou mot de passe incorrect")
                 } else {
+                    setLoginError("")
                     const token = msg.login_response.token
                     if (token) {
                         const user = jwt.decode(token)
@@ -63,8 +66,10 @@ export default function LoginForm() {
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
+    const [loginError, setLoginError] = useState("")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -84,7 +89,6 @@ export default function LoginForm() {
 
     return (
         <form className={styles.loginForm} onSubmit={handleSubmit}>
-            {error && <div className={styles.error}>{error}</div>}
             <div className={styles.formGroup}>
                 <label htmlFor="email">Email:</label>
                 <input
@@ -92,18 +96,30 @@ export default function LoginForm() {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className={`${styles.input} ${loginError ? styles.error : ''}`}
                     required
                 />
             </div>
             <div className={styles.formGroup}>
                 <label htmlFor="password">Mot de passe:</label>
-                <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
+                <div className={styles.passwordContainer}>
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={`${styles.input} ${loginError ? styles.error : ''}`}
+                        required
+                    />
+                    <button
+                        type="button"
+                        className={styles.eyeButton}
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </div>
+                {loginError && <div className={styles.errorMessage}>{loginError}</div>}
             </div>
             <button
                 type="submit"

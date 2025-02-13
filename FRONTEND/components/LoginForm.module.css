@@ -24,6 +24,26 @@
   width: 25vw;
 }
 
+.passwordContainer{
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+
+.eyeButton{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #444;
+  right: 3%;
+}
+
 .submitButton {
   padding: 0.75rem;
   border: none;
@@ -34,15 +54,24 @@
 }
 
 .submitButton:disabled {
-  background-color: #555; /* Darker gray for better contrast */
+  background-color: #555; 
   cursor: not-allowed;
 }
 
 .submitButton:hover:not(:disabled) {
-  background-color: #005bb5; /* Darker hover color for better contrast */
+  background-color: #005bb5;
 }
 
 .error {
-  color: #d32f2f; /* Darker red for better contrast */
-  margin-bottom: 1rem;
+  color: #d32f2f; 
+}
+
+.input.error {
+  border: 2px solid #d32f2f !important;
+}
+
+.errorMessage {
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
