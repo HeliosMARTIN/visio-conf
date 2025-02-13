@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { SocketProvider } from "@/context/SocketProvider";
-import LayoutClient from "@/components/layoutClient"; // Import du composant client
+import type { Metadata } from "next"
+import "./globals.css"
+import { AppContextProvider } from "@/context/AppContext"
 
 export const metadata: Metadata = {
     title: "VisioConf",
@@ -16,11 +15,8 @@ export default function RootLayout({
     return (
         <html lang="fr">
             <body>
-                <SocketProvider>
-                    {children}
-                    <LayoutClient />
-                </SocketProvider>
+                <AppContextProvider>{children}</AppContextProvider>
             </body>
         </html>
-    );
+    )
 }

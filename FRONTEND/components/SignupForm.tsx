@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import styles from "./SignupForm.module.css"
-import { useSocket } from "@/context/SocketProvider"
+import { useAppContext } from "@/context/AppContext"
 import { useRouter } from "next/navigation"
 import jwt from "jsonwebtoken"
 import { User } from "@/types/User"
 
 export default function SignupForm() {
-    const { controleur, currentUser, setCurrentUser } = useSocket()
+    const { controleur, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
