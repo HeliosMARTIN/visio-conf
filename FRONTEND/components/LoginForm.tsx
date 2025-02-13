@@ -41,79 +41,77 @@ export default function LoginForm() {
                         localStorage.setItem("token", token)
                     }
                     router.push("/")
-                } else {
-                setError("Login failed. Please check your credentials.")
+                }
+            }
+        },
+    }
+
+    useEffect(() => {
+        if (currentUser) {
+            router.push("/")
+        } else if (controleur) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            return () => {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
             }
         }
-    },
-}
+    }, [controleur, currentUser])
 
-useEffect(() => {
-    if (currentUser) {
-        router.push("/")
-    } else if (controleur) {
-        controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
-        return () => {
-            controleur.desincription(
-                handler,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        setError("")
+        try {
+            let T = {
+                login_request: { login: email, mdp: password },
+            }
+            controleur?.envoie(handler, T)
+        } catch (err) {
+            setError("Login failed. Please try again.")
+        } finally {
+            setLoading(false)
         }
     }
-}, [controleur, currentUser])
 
-const [email, setEmail] = useState("")
-const [password, setPassword] = useState("")
-const [error, setError] = useState("")
-const [loading, setLoading] = useState(false)
-
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    try {
-        let T = {
-            login_request: { login: email, mdp: password },
-        }
-        controleur?.envoie(handler, T)
-    } catch (err) {
-        setError("Login failed. Please try again.")
-    } finally {
-        setLoading(false)
-    }
-}
-
-return (
-    <form className={styles.loginForm} onSubmit={handleSubmit}>
-        {error && <div className={styles.error}>{error}</div>}
-        <div className={styles.formGroup}>
-            <label htmlFor="email">Email:</label>
-            <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-            />
-        </div>
-        <div className={styles.formGroup}>
-            <label htmlFor="password">Password:</label>
-            <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-            />
-        </div>
-        <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={loading}
-        >
-            {loading ? "Logging in..." : "Login"}
-        </button>
-    </form>
-)
+    return (
+        <form className={styles.loginForm} onSubmit={handleSubmit}>
+            {error && <div className={styles.error}>{error}</div>}
+            <div className={styles.formGroup}>
+                <label htmlFor="email">Email:</label>
+                <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+            </div>
+            <div className={styles.formGroup}>
+                <label htmlFor="password">Password:</label>
+                <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+            </div>
+            <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={loading}
+            >
+                {loading ? "Logging in..." : "Login"}
+            </button>
+        </form>
+    )
 }
