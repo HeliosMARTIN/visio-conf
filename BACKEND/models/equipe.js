@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 const Schema = mongoose.Schema
 
 // Default values
-DEFAULT_EQUIPE_LOGO = "/others/default.png"
+DEFAULT_EQUIPE_LOGO = "default_profile_picture.png"
 DEFAULT_CHANNEL_TYPE = "public"
 
 const equipeSchema = new Schema({
