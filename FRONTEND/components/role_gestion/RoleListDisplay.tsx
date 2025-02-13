@@ -1,8 +1,9 @@
 /*Author : Matthieu BIVILLE*/
 
-import { useSocket } from "@/context/SocketProvider";
+import { useAppContext } from "@/context/AppContext";
 import { useEffect, useRef, useState } from "react";
 import styles from "./RoleDisplay.module.css"
+import router from "next/router";
 
 export default function RoleListDisplay () {
     const [regex, setRegex] = useState<string>("");
@@ -11,34 +12,43 @@ export default function RoleListDisplay () {
 
     const nomDInstance = "Home Role Gestion"
     const verbose = false
-    const { controleur, canal, currentUser, setCurrentUser } = useSocket()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = ["roles_list_request"]
     const listeMessageRecus = ["roles_list_response"]
 
-    const {current} = useRef({
-        nomDInstance,
-        traitementMessage: (msg : any) => {
-            if (verbose || controleur.verboseall) console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg);
-
-            if (typeof msg.roles_list_response !== "undefined") {
-                setRoleList(msg.roles_list_response);
-            }
+    const handler = {
+            nomDInstance,
+            traitementMessage: (msg: {
+                roles_list_response?: any
+            }) => {
+                if (verbose || controleur?.verboseall)
+                    console.log(
+                        `INFO: (${nomDInstance}) - traitementMessage - `,
+                        msg
+                    )
+                if (msg.roles_list_response) {
+                    setRoleList(msg.roles_list_response)
+                }
+            },
         }
-    });
 
     useEffect(() => {
-        if (controleur) {
-            controleur.inscription(current, listeMessageEmis, listeMessageRecus)
+        if (controleur && canal) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
         }
         return () => {
             if (controleur) {
-                controleur.desincription(current,listeMessageEmis,listeMessageRecus)
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
             }
         }
-    }, [current])
+    }, [router, controleur, canal])
 
     useEffect(() => {
-        controleur.envoie(current, {
+        controleur.envoie(handler, {
             "roles_list_request" : 1
         })
     }, [])

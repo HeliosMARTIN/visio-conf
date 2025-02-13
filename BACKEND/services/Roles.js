@@ -1,6 +1,6 @@
 /* Authors: Matthieu BIVILLE */
 
-const Role = require('../modeles/role');
+import Role from "../models/role.js"
 import { v4 as uuidv4 } from "uuid"
 
 class RolesService{

@@ -41,7 +41,7 @@ controleur.verboseall = verbose
 const usersService = new UsersService(controleur, "UsersService")
 const messagesService = new MessagesService(controleur, "MessagesService")
 const rolesService = new RolesService(controleur, "RolesService")
-const PermsService = new PermsService(controleur, "PermsService")
+const permsService = new PermsService(controleur, "PermsService")
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
 const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
 

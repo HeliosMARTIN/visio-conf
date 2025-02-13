@@ -1,6 +1,6 @@
 /* Authors: Matthieu BIVILLE */
 
-const Perm = require('../modeles/permission');
+import Perm from "../models/permission.js"
 import { v4 as uuidv4 } from "uuid"
 
 class PermsService{
