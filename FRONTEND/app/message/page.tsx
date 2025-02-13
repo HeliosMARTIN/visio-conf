@@ -29,6 +29,8 @@ export default function MessagePage() {
         "message_send_response",
         "data_response",
     ]
+    console.log(error);
+    
 
     const handler = {
         nomDInstance,
