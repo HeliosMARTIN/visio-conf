@@ -1,4 +1,5 @@
 import Discussion from "../models/discussion.js";
+import User from "../models/discussion.js";
 import { v4 as uuidv4 } from "uuid";
 
 class MessagesService {
@@ -8,11 +9,13 @@ class MessagesService {
     "messages_get_response",
     "message_send_response",
     "discuss_list_response",
+    "users_shearch_response",
   ];
   listeDesMessagesRecus = [
     "messages_get_request",
     "message_send_request",
     "discuss_list_request",
+    "users_shearch_request",
   ];
 
   constructor(c, nom) {
@@ -147,27 +150,77 @@ class MessagesService {
       }
     }
     if (mesg.discuss_list_request) {
-      const userId = mesg.discuss_list_request;
-      const discussions = await Discussion.find({
-        discussion_members: userId,
-      })
-        .select(
-          "discussion_uuid discussion_name discussion_description discussion_type discussion_date_create"
-        )
-        .populate({
-          path: "discussion_messages.message_sender",
-          select: "firstname lastname picture socket_id uuid",
-        });
+      try {
+        const userId = mesg.discuss_list_request;
+        const discussions = await Discussion.find({
+          discussion_members: userId,
+        })
+          .select(
+            "discussion_uuid discussion_name discussion_description discussion_type discussion_date_create"
+          )
+          .populate({
+            path: "discussion_messages.message_sender",
+            select: "firstname lastname picture socket_id uuid",
+          });
 
-      const message = {
-        discuss_list_response: {
-          etat: true,
-          messages: discussions,
-        },
-        id: [mesg.id],
-      };
+        const message = {
+          discuss_list_response: {
+            etat: true,
+            messages: discussions,
+          },
+          id: [mesg.id],
+        };
 
-      this.controleur.envoie(this, message);
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          discuss_list_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
+    }
+    if (mesg.users_shearch_request) {
+      try {
+        const args = users_shearch_request;
+        const query = {
+          $or: [
+            { firstname: new RegExp(args, "i") },
+            { lastname: new RegExp(args, "i") },
+            { email: new RegExp(args, "i") },
+          ],
+        };
+        const users = await User.find(query, "firstname lastname email");
+
+        const formattedUsers = users.map((user) => ({
+          id: user._id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          picture: user.picture,
+        }));
+        const message = {
+          users_shearch_response: {
+            etat: true,
+            users: formattedUsers,
+          },
+          id: [mesg.id],
+        };
+        console.log("on renvoie la response");
+
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          users_shearch_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
     }
   }
 }
