@@ -3,16 +3,16 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import styles from "./page.module.css"
-import CanalSocketio from "../controllers/canalsocketio"
+import {CanalSocketio} from "../controllers/canalsocketio"
 import io from "socket.io-client"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
-import Controleur from "@/controllers/controleur"
+import { Controleur } from "@/controllers/controleur"
 
 const controleur = new Controleur()
 const socket = io
-const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
+const canalSocketio = new CanalSocketio(controleur, "canalsocketio");
 
 export default function Home() {
     const router = useRouter()
@@ -62,7 +62,23 @@ export default function Home() {
             router.push("/login")
         } else {
             if (userInfo) {
-                setCurrentUser(JSON.parse(userInfo))
+                try {
+                    const parsedUserInfo = JSON.parse(userInfo)
+                    if (parsedUserInfo && typeof parsedUserInfo === 'object') {
+                        setCurrentUser(parsedUserInfo)
+                    } else {
+                        console.error("Invalid user info format")
+                        router.push("/login")
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Error parsing user info:", error)
+                    // Clear invalid cookies
+                    Cookies.remove("userInfo")
+                    Cookies.remove("loggedIn")
+                    router.push("/login")
+                    return;
+                }
             }
             controleur.inscription(current, listeMessageEmis, listeMessageRecus)
             console.log("init page")

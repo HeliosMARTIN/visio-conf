@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { SocketProvider } from "@/context/SocketProvider";
-
+import ProfilPopUp from "../components/ProfilPopUp"
 
 export const metadata: Metadata = {
     title: "VisioConf",
