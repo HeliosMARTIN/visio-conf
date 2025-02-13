@@ -4,8 +4,16 @@ import { v4 as uuidv4 } from "uuid";
 class MessagesService {
   controleur;
   verbose = false;
-  listeDesMessagesEmis = ["messages_get_response", "message_send_response"];
-  listeDesMessagesRecus = ["messages_get_request", "message_send_request"];
+  listeDesMessagesEmis = [
+    "messages_get_response",
+    "message_send_response",
+    "discuss_list_response",
+  ];
+  listeDesMessagesRecus = [
+    "messages_get_request",
+    "message_send_request",
+    "discuss_list_request",
+  ];
 
   constructor(c, nom) {
     this.controleur = c;
@@ -31,7 +39,7 @@ class MessagesService {
 
     if (mesg.messages_get_request) {
       try {
-        const { userEmail, convId } = mesg.messages_get_request;
+        const { convId } = mesg.messages_get_request;
         const discussions = await Discussion.find({
           discussion_uuid: convId,
         }).populate({
@@ -137,6 +145,29 @@ class MessagesService {
         };
         this.controleur.envoie(this, message);
       }
+    }
+    if (mesg.discuss_list_request) {
+      const userId = mesg.discuss_list_request;
+      const discussions = await Discussion.find({
+        discussion_members: userId,
+      })
+        .select(
+          "discussion_uuid discussion_name discussion_description discussion_type discussion_date_create"
+        )
+        .populate({
+          path: "discussion_messages.message_sender",
+          select: "firstname lastname picture socket_id uuid",
+        });
+
+      const message = {
+        discuss_list_response: {
+          etat: true,
+          messages: discussions,
+        },
+        id: [mesg.id],
+      };
+
+      this.controleur.envoie(this, message);
     }
   }
 }

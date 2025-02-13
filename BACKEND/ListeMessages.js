@@ -7,9 +7,10 @@ export const ListeMessagesEmis = [
   "login_request", // { login: string, mdp: string }
   "signup_request", // { login: string, mdp: string, firstname: string, lastname: string, phone: string, job: string, desc: string }
   "users_list_request", // No data
-  "messages_get_request", // { userEmail: string | undefined, convId: uuid }
+  "messages_get_request", // { convId: uuid }
   "message_send_request", // { userEmail: string, otherUserEmail?: string[], convId?:uuid , text: string }
   "user_info_request", // { token: string }
+  "discuss_list_request", // { userId : uuid }
 ];
 
 /**
@@ -24,4 +25,5 @@ export const ListeMessagesRecus = [
   "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
   "message_send_response", // { etat: boolean, error?: string }
   "user_info_response", // { etat: boolean, token?: string, error?: string }
+  "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
 ];
