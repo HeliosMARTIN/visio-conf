@@ -12,9 +12,7 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
     const router = useRouter()
 
     const handleMessage = () => {
-        router.push(
-            `/message?firstName=${user.firstname}&lastName=${user.lastname}&otherUserEmail=${user.email}`
-        )
+        router.push(`/message?id=${user.id}`)
     }
 
     if (user.email === currentUserEmail) return null

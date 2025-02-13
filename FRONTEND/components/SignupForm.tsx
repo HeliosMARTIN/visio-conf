@@ -1,63 +1,60 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import styles from "./SignupForm.module.css"
-import { CanalSocketio } from "../controllers/canalsocketio"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
+import { useSocket } from "@/context/SocketProvider"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(controleur, "socketIO")
+import jwt from "jsonwebtoken"
 
 export default function SignupForm() {
+    const { controleur, currentUser, setCurrentUser } = useSocket()
+    const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
     const listeMessageRecus = ["signup_response"]
 
     const nomDInstance = "SignupForm"
     const verbose = false
-
-    const router = useRouter()
-
-    const { current } = useRef({
+    // Define the common handler instead of using useRef
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             signup_response?: {
                 etat: boolean
-                user?: { firstname: string; lastname: string; email: string }
+                token?: string
             }
         }) => {
             if (msg.signup_response) {
-                if (msg.signup_response.etat === true && msg.signup_response.user) {
-                    // Set cookies with user information
-                    Cookies.set("userInfo", JSON.stringify({
-                        email: msg.signup_response.user.email,
-                        firstname: msg.signup_response.user.firstname,
-                        lastname: msg.signup_response.user.lastname
-                    }))
-                    Cookies.set("loggedIn", "true")
-                    router.push("/")
-                } else {
+                if (!msg.signup_response.etat) {
                     setError("Signup failed. Please try again.")
+                } else {
+                    const token = msg.signup_response.token
+                    if (token) {
+                        const user = jwt.decode(token)
+                        setCurrentUser(user)
+                        localStorage.setItem("token", token)
+                    }
+                    router.push("/")
                 }
             }
-        }
-    })
+        },
+    }
 
+    // Subscribe using the common controller instance
     useEffect(() => {
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-
-        return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+        if (currentUser) {
+            router.push("/")
+        } else if (controleur) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            return () => {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [current])
+    }, [controleur, currentUser])
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -74,37 +71,18 @@ export default function SignupForm() {
         setLoading(true)
         setError("")
         try {
-            let T: {
+            let T = {
                 signup_request: {
-                    login: string
-                    mdp: string
-                    firstname: string
-                    lastname: string
-                    user_phone: string
-                    user_job: string
-                    user_desc: string
-                }
-            } = {
-                signup_request: {
-                    login: "",
-                    mdp: "",
-                    firstname: "",
-                    lastname: "",
-                    user_phone: "",
-                    user_job: "",
-                    user_desc: "",
+                    login: email,
+                    mdp: password,
+                    firstname,
+                    lastname,
+                    phone: phone,
+                    job: job,
+                    desc: desc,
                 },
             }
-            T.signup_request = {
-                login: email,
-                mdp: password,
-                firstname,
-                lastname,
-                user_phone: phone,
-                user_job: job,
-                user_desc: desc,
-            }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Signup failed. Please try again.")
         } finally {
