@@ -76,6 +76,10 @@ export default function Home() {
         router.push("/login")
     }
 
+    const handleDiscussion = () => {
+        router.push("/discussion")
+    }
+
     return (
         <div className={styles.page}>
             <main className={styles.main}>
