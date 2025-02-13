@@ -19,7 +19,17 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
 
     return (
         <li className={styles.userInfo}>
-            {user.firstname} {user.lastname} ({user.email})
+            <img
+                src={user.picture || "/images/default_picture_profile.png"}
+                alt={`${user.firstname} profile picture`}
+                className={styles.userImage}
+            />
+            <div className={styles.userDetails}>
+                <span>
+                    {user.firstname} {user.lastname}
+                </span>
+                <span className={styles.userEmail}>({user.email})</span>
+            </div>
             <button className={styles.messageButton} onClick={handleMessage}>
                 Envoyer un message
             </button>

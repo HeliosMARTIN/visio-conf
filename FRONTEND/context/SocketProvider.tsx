@@ -9,12 +9,13 @@ import React, {
 } from "react"
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
+import { User } from "@/types/User"
 
 interface SocketContextType {
     controleur: Controleur
     canal: CanalSocketio
     currentUser: any
-    setCurrentUser: React.Dispatch<React.SetStateAction<any>>
+    setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>
 }
 
 const SocketContext = createContext<SocketContextType | null>(null)
@@ -33,7 +34,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         )
     }
 
-    const [currentUser, setCurrentUser] = useState(null)
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
 
     useEffect(() => {
         return () => {

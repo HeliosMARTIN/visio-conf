@@ -27,7 +27,7 @@ server.listen(port, () => {
     console.log(`Visioconf app listening on port ${port}`)
 })
 app.use(cors())
-app.use(express.static(path.join(__dirname, "public")))
+app.use(express.static(path.join(__dirname, "../FRONTEND/public")))
 app.use(express.json())
 
 var verbose = process.env.VERBOSE === "true"
