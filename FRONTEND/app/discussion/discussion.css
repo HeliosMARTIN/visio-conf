@@ -1,0 +1,22 @@
+body{
+    background-color: white;
+    color: black;
+}
+
+main{
+    display: flex;
+    flex-direction: row;
+}
+
+h1, p, h2{
+    color: black;
+}
+
+main div{
+    width: 50%;
+}
+
+#discussionMembers{
+    width: 100%;
+    border-right: 1px solid #e0e0e0;
+}
