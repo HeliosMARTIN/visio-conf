@@ -2,8 +2,12 @@
 import Image from "next/image";
 import styles from './Menu.module.css';
 import LinkTo from "@/components/LinkTo";
+import { useAppContext } from "@/context/AppContext"
+
 
 export default function Menu() {
+
+    const { currentUser } = useAppContext()
 
     return (
         <section className={styles.section}>
@@ -70,13 +74,15 @@ export default function Menu() {
             <div>
                 <div className={styles.profil}>
                     <LinkTo to="/">
+
                         <Image
                             className={styles.profil}
-                            src="/profil.svg"
+                            src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser?.picture}`}
                             alt="profil"
                             width={40}
                             height={40}
                             priority
+                            unoptimized
                         />
                     </LinkTo>
                 </div>

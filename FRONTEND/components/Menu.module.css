@@ -79,5 +79,6 @@ background: var(--Background, #F7FAFF);
 }
 
 .profil {
-    margin-top: auto; /* Place le profil en bas du menu */
+    margin-top: auto;
+    border-radius: 50%;
 }
