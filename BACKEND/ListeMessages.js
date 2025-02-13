@@ -10,6 +10,7 @@ export const ListeMessagesEmis = [
     "messages_get_request", // { userEmail: string | undefined, otherUserEmail: string }
     "message_send_request", // { userEmail: string, otherUserEmail: string, text: string }
     "user_info_request", // { token: string }
+    "upload_request", // { media: string }
 ]
 
 /**
@@ -24,4 +25,5 @@ export const ListeMessagesRecus = [
     "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
     "message_send_response", // { etat: boolean, error?: string }
     "user_info_response", // { etat: boolean, token?: string, error?: string }
+    "upload_response", // { etat: boolean, error?: string, url?: string }
 ]

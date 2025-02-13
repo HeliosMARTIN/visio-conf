@@ -2,6 +2,7 @@
 import { User } from "../types/User"
 import styles from "./UserInfo.module.css"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 interface UserInfoProps {
     user: User
@@ -19,9 +20,12 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
 
     return (
         <li className={styles.userInfo}>
-            <img
-                src={user.picture || "/images/default_picture_profile.png"}
+            <Image
+                src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
                 alt={`${user.firstname} profile picture`}
+                width={50}
+                height={50}
+                unoptimized
                 className={styles.userImage}
             />
             <div className={styles.userDetails}>

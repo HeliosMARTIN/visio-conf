@@ -223,12 +223,16 @@ class UsersService {
 
         if (mesg.users_list_request) {
             try {
-                const users = await User.find({}, "firstname lastname email")
+                const users = await User.find(
+                    {},
+                    "firstname lastname email picture"
+                )
                 const formattedUsers = users.map((user) => ({
                     id: user._id,
                     firstname: user.firstname,
                     lastname: user.lastname,
                     email: user.email,
+                    picture: user.picture,
                 }))
                 const message = {
                     users_list_response: {
