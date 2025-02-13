@@ -5,19 +5,15 @@ import styles from "./page.module.css"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
-import { useSocket } from "@/context/SocketProvider"
+import { useAppContext } from "@/context/AppContext"
 
 export default function Home() {
-    const { controleur, canal, currentUser, setCurrentUser } = useSocket()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
 
-    // New redirection effect if no token and currentUser is null
     useEffect(() => {
         const token = localStorage.getItem("token")
-        console.log("token", token)
-        console.log("currentUser", currentUser)
-
-        if (!token || !currentUser) {
+        if (!token) {
             router.push("/login")
         }
     }, [currentUser, router])
