@@ -7,18 +7,17 @@ import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
 import Link from "next/link"
 import jwt from "jsonwebtoken"
-import { useSocket } from "@/context/SocketProvider"
+import { useAppContext } from "@/context/AppContext"
 
 export default function LoginPage() {
     const router = useRouter()
 
-    const { currentUser } = useSocket()
+    const { currentUser } = useAppContext()
 
     useEffect(() => {
         const token = localStorage.getItem("token")
         if (token) {
-            const user = jwt.decode(token)
-            if (user && currentUser) {
+            if (currentUser) {
                 router.push("/")
             }
         }

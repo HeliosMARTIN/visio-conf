@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
-import { useSocket } from "@/context/SocketProvider"
+import { useAppContext } from "@/context/AppContext"
 import jwt from "jsonwebtoken"
 import { User } from "@/types/User"
 
 export default function LoginForm() {
-    const { controleur, currentUser, setCurrentUser } = useSocket()
+    const { controleur, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
