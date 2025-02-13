@@ -58,8 +58,8 @@ const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
 
     main().catch((err) => console.log(err))
 
-    async function main() {
-        await mongoose.connect(
-            "mongodb://visio-conf-user:visio-conf-password@127.0.0.1:27017/visio-conf?authSource=visio-conf"
-        )
-    }
+async function main() {
+    await mongoose.connect(
+        "mongodb://visio-conf-user:visio-conf-password@127.0.0.1:27017/visio-conf?authSource=admin"
+    )
+}
