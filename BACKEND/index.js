@@ -12,6 +12,8 @@ import Controleur from "./controleur.js"
 import UsersService from "./services/Users.js"
 import MessagesService from "./services/Messages.js"
 import AwsS3Service from "./services/AwsS3Service.js"
+import RolesService from "./services/Roles.js"
+import PermsService from "./services/Perms.js"
 
 dotenv.config()
 
@@ -38,6 +40,8 @@ controleur.verboseall = verbose
 // Instanciation des services pour les initialiser et déclencher leur enregistrement auprès du contrôleur
 const usersService = new UsersService(controleur, "UsersService")
 const messagesService = new MessagesService(controleur, "MessagesService")
+const rolesService = new RolesService(controleur, "RolesService")
+const PermsService = new PermsService(controleur, "PermsService")
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
 const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
 
