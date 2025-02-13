@@ -19,3 +19,7 @@ Ce projet est une application web de visioconférence développée dans le cadre
 ## MAQUETTE ANNEE DERNIERE 
 
 [Lien du figma](https://www.figma.com/design/7ThCs23ZaX0PXpY37B2qdf/VISIOCONF?node-id=0-1&t=TOgDrMpUMmIcWGKD-1)
+
+## NEW MAQUETTE
+
+[Lien du nouveau figma](https://www.figma.com/design/FhZD9N2AjSr0cu77KebYIc/Visio-conf?node-id=11-644&t=ObnywIOneUb5uQn1-0)

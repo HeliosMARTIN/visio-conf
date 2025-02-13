@@ -1,34 +1,26 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
 import styles from "./page.module.css"
-import { CanalSocketio } from "../controllers/canalsocketio"
-import io from "socket.io-client"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
-import { Controleur } from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(controleur, "canalsocketio");
+import { useSocket } from "@/context/SocketProvider"
 
 export default function Home() {
+    const { controleur, canal, currentUser, setCurrentUser } = useSocket()
     const router = useRouter()
 
     const nomDInstance = "HomePage"
     const verbose = false
 
-    // Messages
     const listeMessageEmis = ["users_list_request"]
     const listeMessageRecus = ["users_list_response"]
 
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
-    const [currentUser, setCurrentUser] = useState<User | null>(null)
 
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             users_list_response?: {
@@ -37,12 +29,11 @@ export default function Home() {
                 error?: string
             }
         }) => {
-            if (verbose || controleur.verboseall)
+            if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
                 )
-
             if (msg.users_list_response) {
                 if (!msg.users_list_response.etat) {
                     setError(
@@ -53,59 +44,36 @@ export default function Home() {
                 }
             }
         },
-    })
+    }
 
     useEffect(() => {
-        const loggedIn = Cookies.get("loggedIn")
-        const userInfo = Cookies.get("userInfo")
-        if (!loggedIn) {
-            router.push("/login")
-        } else {
-            if (userInfo) {
-                try {
-                    const parsedUserInfo = JSON.parse(userInfo)
-                    if (parsedUserInfo && typeof parsedUserInfo === 'object') {
-                        setCurrentUser(parsedUserInfo)
-                    } else {
-                        console.error("Invalid user info format")
-                        router.push("/login")
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error parsing user info:", error)
-                    // Clear invalid cookies
-                    Cookies.remove("userInfo")
-                    Cookies.remove("loggedIn")
-                    router.push("/login")
-                    return;
-                }
-            }
-            controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-            console.log("init page")
-
-            fetchUsersList()
+        if (controleur && canal) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
         }
-
         return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+            if (controleur) {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [router])
+    }, [router, controleur, canal])
 
     const fetchUsersList = () => {
         try {
-            let T: {
-                users_list_request: {}
-            } = {
-                users_list_request: {},
-            }
-            controleur.envoie(canalSocketio, T)
+            const T = { users_list_request: {} }
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Failed to fetch users list. Please try again.")
         }
+    }
+
+    const handleLogout = () => {
+        localStorage.removeItem("token")
+        setCurrentUser(null)
+        router.push("/login")
     }
 
     return (
@@ -113,10 +81,12 @@ export default function Home() {
             <main className={styles.main}>
                 <h1>Accueil - Visioconf</h1>
                 {error && <div className={styles.error}>{error}</div>}
+                <button onClick={fetchUsersList}>Fetch Users List</button>
                 <UsersList
                     users={users}
                     currentUserEmail={currentUser?.email || ""}
                 />
+                <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
         </div>

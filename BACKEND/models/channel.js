@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose"
+const Schema = mongoose.Schema
 
 let channelSchema = new Schema({
-    channel_uuid: {type: String, required: true},
-    channel_name: {type: String, required: true},
-    channel_icon: {type: String, required: true},
+    channel_uuid: { type: String, required: true },
+    channel_name: { type: String, required: true },
+    channel_icon: { type: String, required: true },
     channel_role: {
         role: {
             type: Schema.Types.ObjectId,
@@ -12,9 +12,9 @@ let channelSchema = new Schema({
             required: true,
         },
     },
-    channel_date_create: {type: Date, required: true, default: Date.now},
+    channel_date_create: { type: Date, required: true, default: Date.now },
     channel_type: {
-        type: Enumerator,
+        type: String, // changed from Enumerator to String
         required: true,
         default: "public",
         enum: ["public", "private"],
@@ -23,8 +23,8 @@ let channelSchema = new Schema({
     // if channel type is set to private, we need to check if the user is able to see the channel in the channel members list
     channel_messages: [
         {
-            message_uuid: {type: String, required: true},
-            message_content: {type: String, required: true},
+            message_uuid: { type: String, required: true },
+            message_content: { type: String, required: true },
             message_sender: {
                 type: Schema.Types.ObjectId,
                 ref: "User",
@@ -69,6 +69,6 @@ let channelSchema = new Schema({
             },
         },
     ],
-});
+})
 
-module.exports = mongoose.model("Channel", channelSchema);
+export default mongoose.model("Channel", channelSchema)

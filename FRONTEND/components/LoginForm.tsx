@@ -1,19 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
-import { CanalSocketio } from "../controllers/canalsocketio"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(controleur, "socketIO")
+import { useSocket } from "@/context/SocketProvider"
+import jwt from "jsonwebtoken"
 
 export default function LoginForm() {
-    // Messages
+    const { controleur, currentUser, setCurrentUser } = useSocket()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -22,95 +16,104 @@ export default function LoginForm() {
 
     const router = useRouter()
 
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             login_response?: {
                 etat: boolean
-                user?: { firstname: string; lastname: string; email: string }
+                token?: string
             }
         }) => {
+            if (verbose || controleur?.verboseall)
+                console.log(
+                    `INFO: (${nomDInstance}) - traitementMessage - `,
+                    msg
+                )
+
             if (msg.login_response) {
-                if (msg.login_response.etat === true && msg.login_response.user) {
-                    // Set cookies with user information
-                    Cookies.set("userInfo", JSON.stringify({
-                        email: msg.login_response.user.email,
-                        firstname: msg.login_response.user.firstname,
-                        lastname: msg.login_response.user.lastname
-                    }))
-                    Cookies.set("loggedIn", "true")
+                if (msg.login_response.etat === false) {
+                    setError("Login failed. Please try again.")
+                } else {
+                    const token = msg.login_response.token
+                    if (token) {
+                        const user = jwt.decode(token)
+                        setCurrentUser(user)
+                        localStorage.setItem("token", token)
+                    }
                     router.push("/")
                 } else {
-                    setError("Login failed. Please check your credentials.")
-                }
+                setError("Login failed. Please check your credentials.")
             }
         }
-    })
+    },
+}
 
-    useEffect(() => {
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-
+useEffect(() => {
+    if (currentUser) {
+        router.push("/")
+    } else if (controleur) {
+        controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
         return () => {
             controleur.desincription(
-                current,
+                handler,
                 listeMessageEmis,
                 listeMessageRecus
             )
         }
-    }, [current])
-
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [error, setError] = useState("")
-    const [loading, setLoading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        setError("")
-        try {
-            let T: { login_request: { login: string; mdp: string } } = {
-                login_request: { login: "", mdp: "" },
-            }
-            T.login_request = { login: email, mdp: password }
-            controleur.envoie(canalSocketio, T)
-        } catch (err) {
-            setError("Login failed. Please try again.")
-        } finally {
-            setLoading(false)
-        }
     }
+}, [controleur, currentUser])
 
-    return (
-        <form className={styles.loginForm} onSubmit={handleSubmit}>
-            {error && <div className={styles.error}>{error}</div>}
-            <div className={styles.formGroup}>
-                <label htmlFor="email">Email:</label>
-                <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="password">Password:</label>
-                <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-            </div>
-            <button
-                type="submit"
-                className={styles.submitButton}
-                disabled={loading}
-            >
-                {loading ? "Logging in..." : "Login"}
-            </button>
-        </form>
-    )
+const [email, setEmail] = useState("")
+const [password, setPassword] = useState("")
+const [error, setError] = useState("")
+const [loading, setLoading] = useState(false)
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    try {
+        let T = {
+            login_request: { login: email, mdp: password },
+        }
+        controleur?.envoie(handler, T)
+    } catch (err) {
+        setError("Login failed. Please try again.")
+    } finally {
+        setLoading(false)
+    }
+}
+
+return (
+    <form className={styles.loginForm} onSubmit={handleSubmit}>
+        {error && <div className={styles.error}>{error}</div>}
+        <div className={styles.formGroup}>
+            <label htmlFor="email">Email:</label>
+            <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+            />
+        </div>
+        <div className={styles.formGroup}>
+            <label htmlFor="password">Password:</label>
+            <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+            />
+        </div>
+        <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={loading}
+        >
+            {loading ? "Logging in..." : "Login"}
+        </button>
+    </form>
+)
 }

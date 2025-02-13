@@ -1,7 +1,7 @@
-const Discussion = require("../models/discussion")
-const { v4: uuidv4 } = require("uuid")
+import Discussion from "../models/discussion.js"
+import { v4 as uuidv4 } from "uuid"
 
-class HandleMessages {
+class MessagesService {
     controleur
     verbose = false
     listeDesMessagesEmis = ["messages_get_response", "message_send_response"]
@@ -41,7 +41,7 @@ class HandleMessages {
                 }).populate({
                     path: "discussion_messages.message_sender",
                     model: "User",
-                    select: "user_firstname user_lastname user_picture user_socket_id user_uuid",
+                    select: "firstname lastname picture socket_id uuid",
                 })
 
                 const messages = discussions.flatMap(
@@ -112,4 +112,4 @@ class HandleMessages {
     }
 }
 
-module.exports = HandleMessages
+export default MessagesService
