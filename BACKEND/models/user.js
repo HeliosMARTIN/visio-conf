@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 const ObjectId = Schema.Types.ObjectId
 
 // Default values
-const DEFAULT_USER_PICTURE = "/others/default.png"
+const DEFAULT_USER_PICTURE = "default_profile_picture.png"
 const DEFAULT_ROLE = ["user"]
 const DEFAULT_STATUS = "waiting"
 const DEFAULT_DISTURB_STATUS = "available"

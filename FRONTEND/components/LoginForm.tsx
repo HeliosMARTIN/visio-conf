@@ -5,6 +5,7 @@ import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
 import { useSocket } from "@/context/SocketProvider"
 import jwt from "jsonwebtoken"
+import { User } from "@/types/User"
 
 export default function LoginForm() {
     const { controleur, currentUser, setCurrentUser } = useSocket()
@@ -36,7 +37,7 @@ export default function LoginForm() {
                 } else {
                     const token = msg.login_response.token
                     if (token) {
-                        const user = jwt.decode(token)
+                        const user = jwt.decode(token) as User
                         setCurrentUser(user)
                         localStorage.setItem("token", token)
                     }
@@ -72,7 +73,7 @@ export default function LoginForm() {
         setError("")
         try {
             let T = {
-                login_request: { login: email, mdp: password },
+                login_request: { email, password },
             }
             controleur?.envoie(handler, T)
         } catch (err) {

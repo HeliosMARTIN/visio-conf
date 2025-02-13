@@ -3,7 +3,7 @@
   --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
   --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
 
-  --button-primary-hover: #383838;
+  --button-primary-hover: #d0d0d0;
   --button-secondary-hover: #f2f2f2;
 
   display: grid;
@@ -16,16 +16,6 @@
   font-family: var(--font-geist-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-  }
-}
 
 .main {
   display: flex;
@@ -67,7 +57,7 @@
   color: var(--background);
   border: none;
   border-radius: 8px;
-  padding: 4px 8px;
+  padding: 8px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }

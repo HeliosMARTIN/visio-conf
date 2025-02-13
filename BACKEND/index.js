@@ -11,6 +11,7 @@ import CanalSocketio from "./canalsocketio.js"
 import Controleur from "./controleur.js"
 import UsersService from "./services/Users.js"
 import MessagesService from "./services/Messages.js"
+import AwsS3Service from "./services/AwsS3Service.js"
 
 dotenv.config()
 
@@ -27,7 +28,7 @@ server.listen(port, () => {
     console.log(`Visioconf app listening on port ${port}`)
 })
 app.use(cors())
-app.use(express.static(path.join(__dirname, "public")))
+app.use(express.static(path.join(__dirname, "../FRONTEND/public")))
 app.use(express.json())
 
 var verbose = process.env.VERBOSE === "true"
@@ -38,8 +39,9 @@ controleur.verboseall = verbose
 const usersService = new UsersService(controleur, "UsersService")
 const messagesService = new MessagesService(controleur, "MessagesService")
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
+const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
 
-    main().catch((err) => console.log(err))
+main().catch((err) => console.error("Error during startup:", err))
 
 async function main() {
     await mongoose.connect(process.env.MONGO_URI, {

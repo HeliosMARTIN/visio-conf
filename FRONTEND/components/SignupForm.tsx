@@ -5,6 +5,7 @@ import styles from "./SignupForm.module.css"
 import { useSocket } from "@/context/SocketProvider"
 import { useRouter } from "next/navigation"
 import jwt from "jsonwebtoken"
+import { User } from "@/types/User"
 
 export default function SignupForm() {
     const { controleur, currentUser, setCurrentUser } = useSocket()
@@ -30,7 +31,7 @@ export default function SignupForm() {
                 } else {
                     const token = msg.signup_response.token
                     if (token) {
-                        const user = jwt.decode(token)
+                        const user = jwt.decode(token) as User
                         setCurrentUser(user)
                         localStorage.setItem("token", token)
                     }
@@ -73,8 +74,8 @@ export default function SignupForm() {
         try {
             let T = {
                 signup_request: {
-                    login: email,
-                    mdp: password,
+                    email,
+                    password,
                     firstname,
                     lastname,
                     phone: phone,

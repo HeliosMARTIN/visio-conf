@@ -1,12 +1,22 @@
 "use client"
+
+import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import styles from "./MessagePage.module.css"
+import styles from "./messagePage.module.css"
 import { useSocket } from "@/context/SocketProvider"
 import { Message } from "../../types/Message"
 import { User } from "../../types/User"
 
 export default function MessagePage() {
+    return (
+        <Suspense fallback={<div>Loading messages...</div>}>
+            <MessagePageContent />
+        </Suspense>
+    )
+}
+
+function MessagePageContent() {
     const { controleur, canal, currentUser } = useSocket()
     const searchParams = useSearchParams()
     const otherUserId = searchParams.get("id")

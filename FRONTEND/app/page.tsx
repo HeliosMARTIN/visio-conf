@@ -11,14 +11,27 @@ export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useSocket()
     const router = useRouter()
 
+    // New redirection effect if no token and currentUser is null
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        console.log("token", token)
+        console.log("currentUser", currentUser)
+
+        if (!token || !currentUser) {
+            router.push("/login")
+        }
+    }, [currentUser, router])
+
     const nomDInstance = "HomePage"
     const verbose = false
 
-    const listeMessageEmis = ["users_list_request"]
-    const listeMessageRecus = ["users_list_response"]
+    const listeMessageEmis = ["users_list_request", "upload_request"]
+    const listeMessageRecus = ["users_list_response", "upload_response"]
 
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [uploadMessage, setUploadMessage] = useState("")
 
     const handler = {
         nomDInstance,
@@ -28,6 +41,7 @@ export default function Home() {
                 users?: User[]
                 error?: string
             }
+            upload_response?: { etat: boolean; error?: string; url?: string }
         }) => {
             if (verbose || controleur?.verboseall)
                 console.log(
@@ -41,6 +55,17 @@ export default function Home() {
                     )
                 } else {
                     setUsers(msg.users_list_response.users || [])
+                }
+            }
+            if (msg.upload_response) {
+                if (msg.upload_response.etat) {
+                    setUploadMessage(
+                        "Upload successful: " + msg.upload_response.url
+                    )
+                } else {
+                    setUploadMessage(
+                        "Upload failed: " + msg.upload_response.error
+                    )
                 }
             }
         },
@@ -76,16 +101,59 @@ export default function Home() {
         router.push("/login")
     }
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0])
+        }
+    }
+
+    const handleUpload = () => {
+        if (selectedFile && controleur) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                let base64data = event.target?.result
+                if (typeof base64data === "string") {
+                    // Remove data URL prefix if present
+                    const commaIndex = base64data.indexOf(",")
+                    base64data =
+                        commaIndex !== -1
+                            ? base64data.substring(commaIndex + 1)
+                            : base64data
+                }
+                const message = {
+                    upload_request: {
+                        media: {
+                            name: selectedFile.name,
+                            fileType: selectedFile.type,
+                            data: base64data,
+                        },
+                    },
+                }
+                controleur.envoie(handler, message)
+            }
+            reader.readAsDataURL(selectedFile)
+        } else {
+            alert("Please select a file first")
+        }
+    }
+
     return (
         <div className={styles.page}>
             <main className={styles.main}>
                 <h1>Accueil - Visioconf</h1>
                 {error && <div className={styles.error}>{error}</div>}
+                {uploadMessage && (
+                    <div className={styles.info}>{uploadMessage}</div>
+                )}
                 <button onClick={fetchUsersList}>Fetch Users List</button>
                 <UsersList
                     users={users}
                     currentUserEmail={currentUser?.email || ""}
                 />
+                <div style={{ marginTop: "1rem" }}>
+                    <input type="file" onChange={handleFileChange} />
+                    <button onClick={handleUpload}>Upload File</button>
+                </div>
                 <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
