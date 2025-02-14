@@ -24,6 +24,6 @@ export const ListeMessagesRecus = [
     "users_list_response", // { etat: boolean, users?: User[], error?: string }
     "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
     "message_send_response", // { etat: boolean, error?: string }
-    "upload_response", // { etat: boolean, error?: string, url?: string }
+    "upload_response", // { etat: boolean, error?: string, fileName?: string }
     "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
 ]

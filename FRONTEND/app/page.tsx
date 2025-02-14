@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import styles from "./page.module.css"
 import UsersList from "../components/UsersList"
@@ -35,6 +35,8 @@ export default function Home() {
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const pendingFileRef = useRef<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
     const [uploadMessage, setUploadMessage] = useState("")
 
     const handler = {
@@ -45,7 +47,12 @@ export default function Home() {
                 users?: User[]
                 error?: string
             }
-            upload_response?: { etat: boolean; error?: string; url?: string }
+            upload_response?: {
+                etat: boolean
+                error?: string
+                fileName?: string
+                signedUrl?: string
+            }
             update_user_response?: {
                 etat: boolean
                 newUserInfo: User | null
@@ -67,10 +74,43 @@ export default function Home() {
                 }
             }
             if (msg.upload_response) {
-                if (msg.upload_response.etat) {
-                    setUploadMessage(
-                        "Upload successful: " + msg.upload_response.url
-                    )
+                if (
+                    msg.upload_response.etat &&
+                    pendingFileRef.current &&
+                    msg.upload_response.signedUrl
+                ) {
+                    // Set mode to "cors" explicitly.
+                    fetch(msg.upload_response.signedUrl, {
+                        method: "PUT",
+                        mode: "cors",
+                        body: pendingFileRef.current,
+                        headers: {
+                            "Content-Type": pendingFileRef.current.type,
+                        },
+                    })
+                        .then((response) => {
+                            if (response.ok) {
+                                const updateProfilePictureMessage = {
+                                    update_user_request: {
+                                        picture: msg.upload_response?.fileName,
+                                    },
+                                }
+                                controleur.envoie(
+                                    handler,
+                                    updateProfilePictureMessage
+                                )
+                                pendingFileRef.current = null
+                            } else {
+                                setUploadMessage(
+                                    "S3 upload failed: " + response.statusText
+                                )
+                            }
+                        })
+                        .catch((error) => {
+                            setUploadMessage(
+                                "S3 upload error: " + error.message
+                            )
+                        })
                 } else {
                     setUploadMessage(
                         "Upload failed: " + msg.upload_response.error
@@ -126,37 +166,33 @@ export default function Home() {
         }
     }
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB threshold
+
     const handleUpload = () => {
         if (selectedFile && controleur) {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                let base64data = event.target?.result
-                if (typeof base64data === "string") {
-                    // Remove data URL prefix if present
-                    const commaIndex = base64data.indexOf(",")
-                    base64data =
-                        commaIndex !== -1
-                            ? base64data.substring(commaIndex + 1)
-                            : base64data
-                }
-                const uploadMessage = {
-                    upload_request: {
-                        media: {
-                            name: selectedFile.name,
-                            fileType: selectedFile.type,
-                            data: base64data,
-                        },
-                    },
-                }
-                const updateProfilePictureMessage = {
-                    update_user_request: {
-                        picture: selectedFile.name,
-                    },
-                }
-                controleur.envoie(handler, uploadMessage)
-                controleur.envoie(handler, updateProfilePictureMessage)
+            if (selectedFile.size > MAX_FILE_SIZE) {
+                alert(
+                    "File is too large to upload over WebSocket. Please select a smaller file."
+                )
+                return
             }
-            reader.readAsDataURL(selectedFile)
+            // Save file to ref so it remains available in the handler
+            pendingFileRef.current = selectedFile
+            // Clear selectedFile in state and reset the file input display
+            setSelectedFile(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
+            // Send only file name and type; backend (AwsS3Service) generates a signed URL.
+            const uploadMessage = {
+                upload_request: {
+                    media: {
+                        name: selectedFile.name,
+                        fileType: selectedFile.type,
+                    },
+                },
+            }
+            controleur.envoie(handler, uploadMessage)
         } else {
             alert("Please select a file first")
         }
@@ -176,7 +212,11 @@ export default function Home() {
                     currentUserEmail={currentUser?.email || ""}
                 />
                 <div style={{ marginTop: "1rem" }}>
-                    <input type="file" onChange={handleFileChange} />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileChange}
+                    />
                     <button onClick={handleUpload}>Upload File</button>
                 </div>
                 <button onClick={handleLogout}>Logout</button>
