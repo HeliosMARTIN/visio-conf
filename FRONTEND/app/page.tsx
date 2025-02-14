@@ -21,8 +21,16 @@ export default function Home() {
     const nomDInstance = "HomePage"
     const verbose = false
 
-    const listeMessageEmis = ["users_list_request", "upload_request"]
-    const listeMessageRecus = ["users_list_response", "upload_response"]
+    const listeMessageEmis = [
+        "users_list_request",
+        "upload_request",
+        "update_user_request",
+    ]
+    const listeMessageRecus = [
+        "users_list_response",
+        "upload_response",
+        "update_user_response",
+    ]
 
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
@@ -38,6 +46,11 @@ export default function Home() {
                 error?: string
             }
             upload_response?: { etat: boolean; error?: string; url?: string }
+            update_user_response?: {
+                etat: boolean
+                newUserInfo: User | null
+                error?: string
+            }
         }) => {
             if (verbose || controleur?.verboseall)
                 console.log(
@@ -61,6 +74,16 @@ export default function Home() {
                 } else {
                     setUploadMessage(
                         "Upload failed: " + msg.upload_response.error
+                    )
+                }
+            }
+            if (msg.update_user_response) {
+                if (msg.update_user_response.etat) {
+                    setCurrentUser(msg.update_user_response.newUserInfo)
+                } else {
+                    console.log(
+                        "Failed to update user info: ",
+                        msg.update_user_response.error
                     )
                 }
             }
@@ -116,7 +139,7 @@ export default function Home() {
                             ? base64data.substring(commaIndex + 1)
                             : base64data
                 }
-                const message = {
+                const uploadMessage = {
                     upload_request: {
                         media: {
                             name: selectedFile.name,
@@ -125,7 +148,13 @@ export default function Home() {
                         },
                     },
                 }
-                controleur.envoie(handler, message)
+                const updateProfilePictureMessage = {
+                    update_user_request: {
+                        picture: selectedFile.name,
+                    },
+                }
+                controleur.envoie(handler, uploadMessage)
+                controleur.envoie(handler, updateProfilePictureMessage)
             }
             reader.readAsDataURL(selectedFile)
         } else {

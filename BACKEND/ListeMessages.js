@@ -10,6 +10,7 @@ export const ListeMessagesEmis = [
     "messages_get_request", // { userEmail: string | undefined, otherUserEmail: string }
     "message_send_request", // { userEmail: string, otherUserEmail: string, text: string }
     "upload_request", // { media: string }
+    "update_user_request", // { any field of User }
     //---- ROLES ----
     "roles_list_request", // No data
     "one_role_request", // { role_id : ObjectId}
@@ -32,6 +33,7 @@ export const ListeMessagesRecus = [
     "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
     "message_send_response", // { etat: boolean, error?: string }
     "upload_response", // { etat: boolean, error?: string, url?: string }
+    "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
     //---- ROLES ----
     "roles_list_response", // {role_list : Role[]}
     "one_role_response", // {role : Role}
@@ -40,5 +42,5 @@ export const ListeMessagesRecus = [
     "updated_role", //{ state : boolean}
     "deleted_role", // {state : boolean}
     //---- PERMISSIONS ----
-    "perms_list_response", // { perms?: Permission[]}
+    "perms_list_response", // { perms?: Permission[]} 
 ]
