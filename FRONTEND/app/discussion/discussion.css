@@ -3,20 +3,28 @@ body{
     color: black;
 }
 
-main{
+.discussionContainer{
     display: flex;
     flex-direction: row;
 }
 
-h1, p, h2{
-    color: black;
+.listMessages{
+    width: 25%;
 }
 
-main div{
-    width: 50%;
+.chat{
+    width: 75%;
 }
 
 #discussionMembers{
     width: 100%;
-    border-right: 1px solid #e0e0e0;
+    padding: 8px;
+    border-radius: 10px;
+    border: 2px solid #BDBDBD;
+    background-color: white;
+    color: black;
+}
+
+#resultList{
+
 }

@@ -86,6 +86,7 @@ export default function Home() {
                 <h1>Accueil - Visioconf</h1>
                 {error && <div className={styles.error}>{error}</div>}
                 <button onClick={fetchUsersList}>Fetch Users List</button>
+                <button onClick={handleDiscussion}>Discussions</button>
                 <UsersList
                     users={users}
                     currentUserEmail={currentUser?.email || ""}

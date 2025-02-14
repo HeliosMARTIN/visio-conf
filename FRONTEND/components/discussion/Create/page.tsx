@@ -107,17 +107,22 @@ export function CreateDiscussion() {
             </div>
 
             {showList && filteredUsers.length > 0 && (
-                <ul className="absolute w-full mt-1 border rounded bg-white shadow-lg z-10">
-                    {filteredUsers.map((user) => (
-                        <li 
-                            key={user.email}
-                            onClick={() => handleUserSelect(user)}
-                            className="p-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                            {user.firstname} {user.lastname}
-                        </li>
-                    ))}
-                </ul>
+                <>
+                    <div className="resultList">
+                        <p>Résultats pertinents :</p>
+                        <ul>
+                            {filteredUsers.map((user) => (
+                                <li 
+                                    key={user.email}
+                                    onClick={() => handleUserSelect(user)}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                                >
+                                    {user.firstname} {user.lastname}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </>
             )}
             <textarea name="message" id="message"></textarea>
             <button>Envoyer</button>
