@@ -11,7 +11,8 @@ export const ListeMessagesEmis = [
   "message_send_request", // { userEmail: string, otherUserEmail?: string[], convId?:uuid , text: string }
   "user_info_request", // { token: string }
   "discuss_list_request", // { userId : uuid }
-  "users_shearch_request", // { equestArgs : string }
+  "users_shearch_request", // { requestArgs : string }
+  "discuss_remove_member_request", // { UserId : uuid, convId : uuid }
 ];
 
 /**
@@ -28,4 +29,5 @@ export const ListeMessagesRecus = [
   "user_info_response", // { etat: boolean, token?: string, error?: string }
   "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
   "users_shearch_response", // {  etat: boolean, users?: User[], error?: string }
+  "discuss_remove_member_response", // { etat: boolean, error?: string }
 ];

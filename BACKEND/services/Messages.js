@@ -10,12 +10,14 @@ class MessagesService {
     "message_send_response",
     "discuss_list_response",
     "users_shearch_response",
+    "discuss_remove_member_response",
   ];
   listeDesMessagesRecus = [
     "messages_get_request",
     "message_send_request",
     "discuss_list_request",
     "users_shearch_request",
+    "discuss_remove_member_request",
   ];
 
   constructor(c, nom) {
@@ -210,6 +212,32 @@ class MessagesService {
         };
         console.log("on renvoie la response");
 
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          users_shearch_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
+    }
+    if (mesg.discuss_remove_member_request) {
+      try {
+        const [userId, discussId] = mesg.discuss_remove_member_request;
+        const discussion = await Discussion.findOneAndUpdate(
+          { discussion_uuid: discussId },
+          { $pull: { discussion_members: userId } },
+          { new: true }
+        );
+        const message = {
+          discuss_remove_member_response: {
+            etat: true,
+          },
+          id: [mesg.id],
+        };
         this.controleur.envoie(this, message);
       } catch (error) {
         const message = {
