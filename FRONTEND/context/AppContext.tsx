@@ -50,11 +50,14 @@ export const AppContextProvider = ({
                 const user = jwt.decode(token) as User
                 setCurrentUser(user)
             }
+            if (canalRef.current?.socket) {
+                canalRef.current.socket.emit("authenticate", token)
+            }
         } else {
             setCurrentUser(null)
             router.push("/login")
         }
-    }, [currentUser, router])
+    }, [])
 
     useEffect(() => {
         return () => {

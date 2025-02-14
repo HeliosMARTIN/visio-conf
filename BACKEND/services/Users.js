@@ -127,6 +127,7 @@ class UsersService {
                 )
                 const message = {
                     signup_response: { etat: true, token },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             } catch (error) {
@@ -135,6 +136,7 @@ class UsersService {
                         etat: false,
                         error: error.message,
                     },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             }
