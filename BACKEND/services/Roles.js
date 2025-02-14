@@ -9,7 +9,7 @@ class RolesService{
     listeDesMessagesEmis=[
         "roles_list_response",
         "created_role", 
-        "role_already_exist",
+        "role_already_exists",
         "updated_role",
         "deleted_role"
     ];
@@ -34,11 +34,12 @@ class RolesService{
          }
         
         if(typeof mesg.create_role_request != "undefined"){
-            var role = await Role.findOne({ label: mesg.create_role_request.name });
+            var role = await Role.findOne({ role_label: mesg.create_role_request.name });
             if(role == null) {
                 var newRole = new Role({
-                    label: mesg.create_role_request.name,
-                    perms: []
+                    role_uuid: mesg.create_role_request.name.toLowerCase().replace(" ", "_"),
+                    role_label: mesg.create_role_request.name,
+                    role_permissions: mesg.create_role_request.perms
                 })
                 var r = await newRole.save();
                 if(r != null){
@@ -46,7 +47,7 @@ class RolesService{
                 }			 
             }
             else{
-                this.controleur.envoie(this, {"role_already_exist" : {"role_id" : role._id, "socket_id" : mesg.id}});
+                this.controleur.envoie(this, {"role_already_exists" : {"role_id" : role._id, "socket_id" : mesg.id}});
             }
         }
         if(typeof mesg.roles_list_request != "undefined"){

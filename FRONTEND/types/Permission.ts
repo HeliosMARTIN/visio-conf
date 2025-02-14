@@ -1,5 +1,5 @@
 export interface Permission {
-    id: string
-    uuid: string
-    label: string
+    _id: string
+    permission_uuid: string
+    permission_label: string
 }

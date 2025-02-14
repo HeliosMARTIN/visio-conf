@@ -2,7 +2,6 @@
 
 .container {
   width: 80%;
-  border: black solid;
   height: 100vh;
   padding-inline: 25px;
   padding-top: 52px;
@@ -38,6 +37,10 @@
   line-height: normal;
 }
 
+.addButton:hover{
+  cursor: pointer;
+}
+
 .search{
   margin-top: 93px;
 }
@@ -56,6 +59,10 @@
   align-items: center;
 }
 
+.iconContainer:hover{
+  cursor: pointer;
+}
+
 .rowIcons{
   display: flex;
   column-gap: 25px;
@@ -71,10 +78,3 @@
   font-weight: 400;
 }
 
-.even-row {
-  background-color: #EAEAEA; /* Gris clair pour les lignes paires */
-}
-
-.odd-row {
-  background-color: white; /* Fond blanc pour les lignes impaires */
-}

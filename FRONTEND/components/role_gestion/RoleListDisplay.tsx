@@ -9,6 +9,7 @@ import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Role } from "@/types/Role";
 import DeleteRole from "../modals/DeleteRole";
+import CustomSnackBar from "../SnackBar";
 
 export default function RoleListDisplay () {
     const [regex, setRegex] = useState<string>("");
@@ -17,6 +18,7 @@ export default function RoleListDisplay () {
     const [rows, setRows] = useState<any>();
 
     const [openDelete, setOpenDelete] = useState<boolean>(false);
+    const [openAlert, setOpenAlert] = useState<boolean>(false);
 
     const nomDInstance = "Home Role Gestion"
     const verbose = false
@@ -37,6 +39,7 @@ export default function RoleListDisplay () {
                 }
                 if (msg.deleted_role) {
                     setOpenDelete(false);
+                    setOpenAlert(true);
                 }
             },
         }
@@ -47,11 +50,7 @@ export default function RoleListDisplay () {
         }
         return () => {
             if (controleur) {
-                controleur.desincription(
-                    handler,
-                    listeMessageEmis,
-                    listeMessageRecus
-                )
+                controleur.desincription(handler,listeMessageEmis,listeMessageRecus)
             }
         }
     }, [router, controleur, canal])
@@ -126,7 +125,10 @@ export default function RoleListDisplay () {
                     <img src="./icons/User_Friend.svg" alt="" className={styles.icon}/>
                     <Typography variant="subtitle1" className={styles.title}>Liste des rôles</Typography>
                 </div>
-                <button className={styles.addButton}>+ Ajouter</button>
+                <button 
+                    onClick={() => window.location.href = "/add_role"}
+                    className={styles.addButton}
+                >+ Ajouter</button>
             </div>
             <TextField 
                 id="regex"
@@ -173,6 +175,12 @@ export default function RoleListDisplay () {
                 setOpenDeleteRole={setOpenDelete}
                 roleName={selectedRole?.name}
                 handleDeleteRole={handleDeleteRole}
+            />
+            <CustomSnackBar
+                open={openAlert}
+                setOpen={setOpenAlert}
+                msg="Rôle supprimé avec succès !"
+                severity="success"
             />
         </div>
     )

@@ -12,11 +12,11 @@ export const ListeMessagesEmis = [
     "upload_request", // { media: string }
     //---- ROLES ----
     "roles_list_request", // No data
-    "create_role_request", // { name : string}
+    "create_role_request", // { name : string, perms : Permission._id[]}
     "update_role_request", // { role_id : ObjectId, perms : Permission._id[]}
     "delete_role_request", // {role_id : ObjectId}
     //---- PERMISSIONS ----
-    "perms_list_request", // {state : boolean}
+    "perms_list_request", // No data
 ]
 
 /**
