@@ -8,6 +8,7 @@ class RolesService{
     verbose=false;
     listeDesMessagesEmis=[
         "roles_list_response",
+        "one_role_response",
         "created_role", 
         "role_already_exists",
         "updated_role",
@@ -15,6 +16,7 @@ class RolesService{
     ];
     listeDesMessagesRecus=[
         "roles_list_request",
+        "one_role_request",
         "create_role_request",
         "update_role_request",
         "delete_role_request"
@@ -53,6 +55,10 @@ class RolesService{
         if(typeof mesg.roles_list_request != "undefined"){
             var roles = await Role.find();
             this.controleur.envoie(this, {"roles_list_response" : roles});
+        }
+        if(typeof mesg.one_role_request != "undefined"){
+            var role = await Role.findOne({_id : mesg.one_role_request.role_id});
+            this.controleur.envoie(this, {"one_role_response" : {role : role}});
         }
         if(typeof mesg.update_role_request != "undefined"){
             await Role.updateOne(

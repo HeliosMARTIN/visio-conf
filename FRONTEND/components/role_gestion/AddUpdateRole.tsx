@@ -8,23 +8,37 @@ import { TextField, Typography } from "@mui/material";
 import CustomSnackBar from "../SnackBar";
 import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Permission } from "@/types/Permission";
+import { Role } from "@/types/Role";
+import { useParams } from "next/navigation";
 
-export default function AddRole () {
-    const [roleName, setRoleName] = useState<string>("");
+export default function AddUpdateRole ({roleId} : {roleId? : string | string[] | undefined}) {
+    const [roleName, setRoleName] = useState<string | undefined>("");
     const [permList, setPermList] = useState<Permission[]>([]);
     const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
+    const [role, setRole] = useState<Role>();
 
-    const [openDropDown, setOpenDropDown] = useState<boolean>(false);
+    const [openDropDown, setOpenDropDown] = useState<boolean>(roleId ? true : false);
 
     const [openAlert, setOpenAlert] = useState<boolean>(false);
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "warning" | "info">("success");
     const [alertMessage, setAlertMessage] = useState<string>("");
 
-    const nomDInstance = "Home Role Gestion"
+    const nomDInstance = "Add Update Role"
     const verbose = false
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
-    const listeMessageEmis = ["perms_list_request", "create_role_request"]
-    const listeMessageRecus = ["perms_list_response", "created_role", "role_already_exists"]
+    const listeMessageEmis = [
+        "perms_list_request", 
+        "create_role_request", 
+        "one_role_request",
+        "update_role_request"
+    ]
+    const listeMessageRecus = [
+        "perms_list_response", 
+        "created_role", 
+        "role_already_exists", 
+        "one_role_response",
+        "updated_role"
+    ]
 
     const handler = {
             nomDInstance,
@@ -32,6 +46,8 @@ export default function AddRole () {
                 perms_list_response?: any,
                 role_already_exists? : any,
                 created_role? : any,
+                updated_role? : any,
+                one_role_response? : any
             }) => {
                 if (verbose || controleur?.verboseall)
                     console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
@@ -49,6 +65,14 @@ export default function AddRole () {
                     setAlertMessage("Le rôle a été créé avec succès !");
                     setAlertSeverity("success");
                     setOpenAlert(true);
+                }
+                if (msg.updated_role) {
+                    setAlertMessage("Le rôle a été mis à jour avec succès !");
+                    setAlertSeverity("success");
+                    setOpenAlert(true);
+                }
+                if (msg.one_role_response){
+                    setRole(msg.one_role_response.role);
                 }
             },
         }
@@ -68,19 +92,44 @@ export default function AddRole () {
         controleur.envoie(handler, {
             "perms_list_request" : 1
         })
-    }, [])
-
-    const handleAddRole = () => {
-        if(roleName){
+        if(roleId){
             controleur.envoie(handler, {
-                "create_role_request" : {
-                    name : roleName,
-                    perms: selectedPerms
+                "one_role_request" : {
+                    role_id : roleId
                 }
             })
         }
+    }, [])
+
+    useEffect(() => {
+        if(role){
+            setRoleName(role.role_label);
+            setSelectedPerms(role.role_permissions);
+        }
+    }, [role])
+
+    const handleAddUpdateRole = () => {
+        if(roleName){
+            if(!role){
+                controleur.envoie(handler, {
+                    "create_role_request" : {
+                        name : roleName,
+                        perms: selectedPerms
+                    }
+                })
+            }
+            else{
+                controleur.envoie(handler, {
+                    "update_role_request" : {
+                        role_id : roleId,
+                        name : roleName,
+                        perms: selectedPerms
+                    }
+                })
+            }
+        }
         else{
-            setAlertMessage("Vous ne pouvez créer un rôle sans nom !");
+            setAlertMessage("Vous ne pouvez créer ou modifier un rôle sans mettre un nom !");
             setAlertSeverity("error");
             setOpenAlert(true);
         }
@@ -103,8 +152,10 @@ export default function AddRole () {
         <div className={styles.container}>
             <div style={{display: "flex", justifyContent: "left"}}>
                 <div style={{display : "flex", alignItems : "center", columnGap: "20px"}}>
-                    <img src="./icons/User_Friend.svg" alt="" className={styles.icon}/>
-                    <Typography variant="subtitle1" className={styles.title}>Créer un rôle</Typography>
+                    <img src="/icons/User_Friend.svg" alt="" className={styles.icon}/>
+                    <Typography variant="subtitle1" className={styles.title}>
+                        {roleId ? "Modifer" : "Créer"} un rôle
+                    </Typography>
                 </div>
             </div>
             <div style={{display: "flex", justifyContent: "center"}}>
@@ -135,6 +186,7 @@ export default function AddRole () {
                                     <p 
                                         style={{backgroundColor: index%2 ? "#EAEAEA" : "white"}}
                                         className={styles.option}
+                                        key={perm._id}
                                     >
                                         {perm.permission_label}
                                         <input 
@@ -143,6 +195,7 @@ export default function AddRole () {
                                             id="" 
                                             style={{width: "25px", height:"25px"}}
                                             onChange={() => handleCheckboxChange(perm)}
+                                            checked={selectedPerms.includes(perm._id)}
                                         />
                                     </p>
                                 )
@@ -175,7 +228,7 @@ export default function AddRole () {
             </div>
             <div style={{display: "flex", justifyContent: "right"}}>
                 <button 
-                    onClick={handleAddRole}
+                    onClick={handleAddUpdateRole}
                     className={styles.addButton}
                 ><Check size={26} color="white"/> Valider</button>
             </div>

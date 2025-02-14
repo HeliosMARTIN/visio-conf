@@ -12,6 +12,7 @@ export const ListeMessagesEmis = [
     "upload_request", // { media: string }
     //---- ROLES ----
     "roles_list_request", // No data
+    "one_role_request", // { role_id : ObjectId}
     "create_role_request", // { name : string, perms : Permission._id[]}
     "update_role_request", // { role_id : ObjectId, perms : Permission._id[]}
     "delete_role_request", // {role_id : ObjectId}
@@ -33,6 +34,7 @@ export const ListeMessagesRecus = [
     "upload_response", // { etat: boolean, error?: string, url?: string }
     //---- ROLES ----
     "roles_list_response", // {role_list : Role[]}
+    "one_role_response", // {role : Role}
     "created_role", // { role_id : ObjectId }
     "role_already_exists", // { state : boolean }
     "updated_role", //{ state : boolean}

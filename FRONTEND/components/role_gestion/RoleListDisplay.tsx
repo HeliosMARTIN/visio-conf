@@ -94,7 +94,11 @@ export default function RoleListDisplay () {
             flex: 1,
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
-                    <div style={{backgroundColor: "#223A6A"}} className={styles.iconContainer}>
+                    <div 
+                        style={{backgroundColor: "#223A6A"}} 
+                        className={styles.iconContainer}
+                        onClick={() => {window.location.href = `/add_role/${params.row.id}`}}
+                    >
                         <Pencil size={22} color="white" />
                     </div>
                     <div 
