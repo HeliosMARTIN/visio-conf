@@ -11,6 +11,7 @@ class MessagesService {
     "discuss_list_response",
     "users_shearch_response",
     "discuss_remove_member_response",
+    "discuss_remove_message_response",
   ];
   listeDesMessagesRecus = [
     "messages_get_request",
@@ -18,6 +19,7 @@ class MessagesService {
     "discuss_list_request",
     "users_shearch_request",
     "discuss_remove_member_request",
+    "discuss_remove_message_request",
   ];
 
   constructor(c, nom) {
@@ -41,7 +43,7 @@ class MessagesService {
       );
       console.log(mesg);
     }
-
+    // CAS : DEMANDE DE LA LISTE DES MESSAGES D'UNE DISCUSSION
     if (mesg.messages_get_request) {
       try {
         const { convId } = mesg.messages_get_request;
@@ -76,7 +78,7 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
-
+    // CAS : DEMANDE D'ENVOI DE MESSAGE & CREATION DE DISCUSSION
     if (mesg.message_send_request) {
       try {
         if (mesg.message_send_request.otherUserEmail != "undefined") {
@@ -151,6 +153,7 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
+    // CAS : DEMANDE DE LA LISTE DES DISCUSSION DE L'UTILISATEUR
     if (mesg.discuss_list_request) {
       try {
         const userId = mesg.discuss_list_request;
@@ -185,6 +188,7 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
+    // CAS : RECHERCHE DE CONTACT
     if (mesg.users_shearch_request) {
       try {
         const args = users_shearch_request;
@@ -224,6 +228,7 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
+    // CAS : DEMANDE DE SUPPRESSION MEMBRE D'UNE DISCUSSION
     if (mesg.discuss_remove_member_request) {
       try {
         const [userId, discussId] = mesg.discuss_remove_member_request;
@@ -232,12 +237,45 @@ class MessagesService {
           { $pull: { discussion_members: userId } },
           { new: true }
         );
+        if (discussion.discussion_members.length === 0) {
+          await Discussion.deleteOne({ discussion_uuid: discussId });
+        }
         const message = {
           discuss_remove_member_response: {
             etat: true,
           },
           id: [mesg.id],
         };
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          users_shearch_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
+    }
+    // CAS : DEMANDE DE SUPPRESSION DE MESSAGE
+    if (mesg.discuss_remove_message_request) {
+      try {
+        const [messageId, convId] = mesg.discuss_remove_message_request;
+
+        const discussion = await Discussion.findOneAndUpdate(
+          { discussion_uuid: convId },
+          { $pull: { discussion_messages: { message_uuid: messageId } } },
+          { new: true }
+        );
+
+        const message = {
+          discuss_remove_message_response: {
+            etat: true,
+          },
+          id: [mesg.id],
+        };
+
         this.controleur.envoie(this, message);
       } catch (error) {
         const message = {
