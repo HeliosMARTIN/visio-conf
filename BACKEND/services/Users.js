@@ -2,6 +2,7 @@ import User from "../models/user.js"
 import crypto from "crypto"
 import { v4 as uuidv4 } from "uuid"
 import jwt from "jsonwebtoken"
+import SocketIdentificationService from "./SocketIdentification.js"
 
 class UsersService {
     controleur
@@ -9,12 +10,14 @@ class UsersService {
     listeDesMessagesEmis = new Array(
         "login_response",
         "signup_response",
-        "users_list_response"
+        "users_list_response",
+        "update_user_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
-        "users_list_request"
+        "users_list_request",
+        "update_user_request"
     )
     listeJoueurs = new Object()
 
@@ -27,6 +30,7 @@ class UsersService {
                     this.nomDInstance +
                     "):  s'enregistre aupres du controleur"
             )
+
         this.controleur.inscription(
             this,
             this.listeDesMessagesEmis,
@@ -122,6 +126,7 @@ class UsersService {
                 const token = this.createToken(user);
                 const message = {
                     signup_response: { etat: true, token },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             } catch (error) {
@@ -130,6 +135,7 @@ class UsersService {
                         etat: false,
                         error: error.message,
                     },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             }
@@ -164,6 +170,55 @@ class UsersService {
                     users_list_response: {
                         etat: false,
                         error: error.message,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
+        if (mesg.update_user_request) {
+            try {
+                const socketId = mesg.id
+                if (!socketId)
+                    throw new Error("Sender socket id not available for update")
+                // Use all received fields as update (partial update)
+                const fieldsToUpdate = mesg.update_user_request
+                // Retrieve user info based on socket id
+                const userInfo =
+                    await SocketIdentificationService.getUserInfoBySocketId(
+                        socketId
+                    )
+                if (!userInfo)
+                    throw new Error("User not found based on socket id")
+                // Update only the received fields
+                const user = await User.findOneAndUpdate(
+                    { _id: userInfo._id },
+                    fieldsToUpdate,
+                    { new: true }
+                )
+                if (!user) throw new Error("User not found")
+                const newUserInfo = {
+                    id: user._id,
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    email: user.email,
+                    picture: user.picture,
+                }
+                const message = {
+                    update_user_response: {
+                        etat: true,
+                        newUserInfo,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } catch (error) {
+                const message = {
+                    update_user_response: {
+                        etat: false,
+                        error: error.message,
+                        newUserInfo: null,
                     },
                     id: [mesg.id],
                 }
