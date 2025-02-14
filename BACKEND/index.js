@@ -1,41 +1,70 @@
-const express = require("express")
-    const app = express()
-    var cors = require("cors")
-    const path = require("path")
-    const port = 3220
-    const server = require("http").createServer(app)
-    const io = require("socket.io")(server, { cors: { origin: "*" } })
-    const mongoose = require("mongoose")
+import express from "express"
+import cors from "cors"
+import path from "path"
+import { createServer } from "http"
+import { Server } from "socket.io"
+import mongoose from "mongoose"
+import dotenv from "dotenv"
+import { fileURLToPath } from "url"
+import jwt from "jsonwebtoken"
+import CanalSocketio from "./canalsocketio.js"
+import Controleur from "./controleur.js"
+import UsersService from "./services/Users.js"
+import MessagesService from "./services/Messages.js"
+import AwsS3Service from "./services/AwsS3Service.js"
+import SocketIdentificationService from "./services/SocketIdentification.js"
 
-    const Controleur = require("./controleur.js")
-    const CanalSocketio = require("./canalsocketio.js")
-    const GestionUtilisateur = require("./gestion_utilisateur/gestion_utilisateur.js")
-    /*
-    const Login=require('./login/login.js');
-    const Moteur=require('./moteur/moteur.js');
-    const Chat=require('./chat/chat.js');
-    */
+dotenv.config()
 
-    server.listen(port, () => {
-        console.log(`Visioconf app listening on port ${port}`)
+// Pour __dirname en ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const app = express()
+const port = process.env.PORT || 3220
+const server = createServer(app)
+const io = new Server(server, { cors: { origin: "*" } })
+
+io.on("connection", (socket) => {
+    socket.on("authenticate", async (token) => {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET)
+            const userId = decoded.userId
+            await SocketIdentificationService.updateUserSocket(
+                userId,
+                socket.id
+            )
+            console.log(
+                `Socket updated for user ${userId} with socket id ${socket.id}`
+            )
+        } catch (err) {
+            console.error("Authentication failed:", err.message)
+        }
     })
-    app.use(cors())
-    app.use(express.static(path.join(__dirname, "public")))
+})
 
-    var verbose = true
-    var controleur = new Controleur()
-    controleur.verboseall = true
+server.listen(port, () => {
+    console.log(`Visioconf app listening on port ${port}`)
+})
+app.use(cors())
+app.use(express.static(path.join(__dirname, "../FRONTEND/public")))
+app.use(express.json())
 
-    var canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
-    var gestionUtilisateur = new GestionUtilisateur(
-        controleur,
-        "gestion_utilisateur"
-    )
+var verbose = process.env.VERBOSE === "true"
+var controleur = new Controleur()
+controleur.verboseall = verbose
 
-    main().catch((err) => console.log(err))
-    
-    async function main() {
-        await mongoose.connect(
-            "mongodb://visio-conf-user:visio-conf-password@127.0.0.1:27017/visio-conf?authSource=visio-conf"
-        )
-    }
+// Instanciation des services pour les initialiser et déclencher leur enregistrement auprès du contrôleur
+const usersService = new UsersService(controleur, "UsersService")
+const messagesService = new MessagesService(controleur, "MessagesService")
+const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
+const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
+
+main().catch((err) => console.error("Error during startup:", err))
+
+async function main() {
+    await mongoose.connect(process.env.MONGO_URI, {
+        user: process.env.MONGO_USER,
+        pass: process.env.MONGO_PASSWORD,
+    })
+}

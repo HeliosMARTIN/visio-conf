@@ -1,33 +1,28 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import styles from "./SignupForm.module.css"
-import CanalSocketio from "../controllers/canalsocketio"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
+import { useAppContext } from "@/context/AppContext"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(socket, controleur, "socketIO")
+import jwt from "jsonwebtoken"
+import { User } from "@/types/User"
 
 export default function SignupForm() {
+    const { controleur, currentUser, setCurrentUser } = useAppContext()
+    const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
     const listeMessageRecus = ["signup_response"]
 
     const nomDInstance = "SignupForm"
     const verbose = false
-
-    const router = useRouter()
-
-    const { current } = useRef({
+    // Define the common handler instead of using useRef
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             signup_response?: {
-                etat: string
-                user?: { firstname: string; lastname: string; email: string }
+                etat: boolean
+                token?: string
             }
         }) => {
             if (verbose || controleur.verboseall)
@@ -37,34 +32,36 @@ export default function SignupForm() {
                 )
 
             if (msg.signup_response) {
-                if (msg.signup_response.etat === "false") {
+                if (!msg.signup_response.etat) {
                     setError("Signup failed. Please try again.")
                 } else {
-                    // Set cookies to stay logged in and store user info
-                    Cookies.set("loggedIn", "true", { expires: 7 })
-
-                    Cookies.set(
-                        "userInfo",
-                        JSON.stringify(msg.signup_response.user),
-                        { expires: 7 }
-                    )
+                    const token = msg.signup_response.token
+                    if (token) {
+                        const user = jwt.decode(token) as User
+                        setCurrentUser(user)
+                        localStorage.setItem("token", token)
+                    }
                     router.push("/")
                 }
             }
         },
-    })
+    }
 
+    // Subscribe using the common controller instance
     useEffect(() => {
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-
-        return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+        if (currentUser) {
+            router.push("/")
+        } else if (controleur) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            return () => {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [current])
+    }, [controleur, currentUser])
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -81,37 +78,18 @@ export default function SignupForm() {
         setLoading(true)
         setError("")
         try {
-            let T: {
+            let T = {
                 signup_request: {
-                    login: string
-                    mdp: string
-                    firstname: string
-                    lastname: string
-                    user_phone: string
-                    user_job: string
-                    user_desc: string
-                }
-            } = {
-                signup_request: {
-                    login: "",
-                    mdp: "",
-                    firstname: "",
-                    lastname: "",
-                    user_phone: "",
-                    user_job: "",
-                    user_desc: "",
+                    email,
+                    password,
+                    firstname,
+                    lastname,
+                    phone: phone,
+                    job: job,
+                    desc: desc,
                 },
             }
-            T.signup_request = {
-                login: email,
-                mdp: password,
-                firstname,
-                lastname,
-                user_phone: phone,
-                user_job: job,
-                user_desc: desc,
-            }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Signup failed. Please try again.")
         } finally {

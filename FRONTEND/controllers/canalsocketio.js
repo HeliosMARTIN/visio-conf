@@ -1,42 +1,56 @@
-import { io } from "socket.io-client";
+import io from "socket.io-client"
+import Controleur from "@/controllers/controleur"
 
-export class CanalSocketio {
-	controleur;
-	nomDInstance;
-	socket;
-	listeDesMessagesEmis;
-	listeDesMessagesRecus;
-	verbose = false;
+class CanalSocketio {
+    controleur
+    nomDInstance
+    socket
 
-	constructor(c, nom) {
+    listeDesMessagesEmis
+    listeDesMessagesRecus
+    verbose = false
 
-		this.controleur = c;
-		this.nomDInstance = nom;
-		
-        this.socket = io('http://localhost:3220', { autoConnect: true, reconnection: true });
+    constructor(c, nom) {
+        this.controleur = c
 
-		this.socket.on("message", (msg) => {
-			if (this.controleur.verboseall || this.verbose) 
-				console.log("INFO (" + this.nomDInstance + "): reçoit ce message: " + msg);
-			
-			this.controleur.envoie(this, JSON.parse(msg));
-		});
+        this.nomDInstance = nom
 
-		this.socket.on("donne_liste", (msg) => {
-			const listes = JSON.parse(msg);
-			this.listeDesMessagesEmis = listes.emission;
-			this.listeDesMessagesRecus = listes.abonnement;
-			
-			if (this.controleur.verboseall || this.verbose) 
-				console.log("INFO (" + this.nomDInstance + "): inscription des messages de CanalSocketio");
+        this.socket = io("http://localhost:3220", {
+            autoConnect: true,
+            reconnection: true,
+        })
 
-			this.controleur.inscription(this, listes.emission, listes.abonnement);
-		});
+        this.socket.on("message", (msg) => {
+            if (this.controleur.verboseall || this.verbose)
+                console.log(
+                    "INFO (" + this.nomDInstance + "): reçoit ce message:" + msg
+                )
+            this.controleur.envoie(this, JSON.parse(msg))
+        })
+        this.socket.on("donne_liste", (msg) => {
+            var listes = JSON.parse(msg)
+            this.listeDesMessagesEmis = listes.emission
+            this.listeDesMessagesRecus = listes.abonnement
+            if (this.controleur.verboseall || this.verbose)
+                console.log(
+                    "INFO (" +
+                        this.nomDInstance +
+                        "): inscription des messages de CanalSocketio"
+                )
 
-		this.socket.emit("demande_liste", {});
-	}
+            this.controleur.inscription(
+                this,
+                listes.emission,
+                listes.abonnement
+            )
+        })
 
-	traitementMessage(mesg) {
-		this.socket.emit("message", JSON.stringify(mesg));
-	}
+        this.socket.emit("demande_liste", {})
+    }
+
+    traitementMessage(mesg) {
+        this.socket.emit("message", JSON.stringify(mesg))
+    }
 }
+
+export default CanalSocketio

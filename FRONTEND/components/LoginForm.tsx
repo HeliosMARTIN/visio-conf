@@ -1,19 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
-import { CanalSocketio } from "../controllers/canalsocketio"
-import io from "socket.io-client"
-import Cookies from "js-cookie"
 import { useRouter } from "next/navigation"
-import Controleur from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(controleur, "socketIO")
+import { useAppContext } from "@/context/AppContext"
+import jwt from "jsonwebtoken"
+import { User } from "@/types/User"
 
 export default function LoginForm() {
-    // Messages
+    const { controleur, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -22,42 +17,52 @@ export default function LoginForm() {
 
     const router = useRouter()
 
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             login_response?: {
                 etat: boolean
-                user?: { firstname: string; lastname: string; email: string }
+                token?: string
             }
         }) => {
+            if (verbose || controleur?.verboseall)
+                console.log(
+                    `INFO: (${nomDInstance}) - traitementMessage - `,
+                    msg
+                )
+
             if (msg.login_response) {
-                if (msg.login_response.etat === true && msg.login_response.user) {
-                    // Set cookies with user information
-                    Cookies.set("userInfo", JSON.stringify({
-                        email: msg.login_response.user.email,
-                        firstname: msg.login_response.user.firstname,
-                        lastname: msg.login_response.user.lastname
-                    }))
-                    Cookies.set("loggedIn", "true")
+                if (msg.login_response.etat === false) {
+                    setError("Login failed. Please try again.")
+                } else {
+                    const token = msg.login_response.token
+                    if (token) {
+                        const user = jwt.decode(token) as User
+                        setCurrentUser(user)
+                        localStorage.setItem("token", token)
+                    }
                     router.push("/")
                 } else {
                     setError("Login failed. Please check your credentials.")
                 }
             }
-        }
-    })
+        },
+    }
 
     useEffect(() => {
-        controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-
-        return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+        if (currentUser) {
+            router.push("/")
+        } else if (controleur) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            return () => {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [current])
+    }, [controleur, currentUser])
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -69,11 +74,10 @@ export default function LoginForm() {
         setLoading(true)
         setError("")
         try {
-            let T: { login_request: { login: string; mdp: string } } = {
-                login_request: { login: "", mdp: "" },
+            let T = {
+                login_request: { email, password },
             }
-            T.login_request = { login: email, mdp: password }
-            controleur.envoie(canalSocketio, T)
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Login failed. Please try again.")
         } finally {

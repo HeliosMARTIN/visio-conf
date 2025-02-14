@@ -150,7 +150,6 @@ class Controleur {
             )
             console.log(t)
         }
-
         for (var item in t) {
             if (item != "id") {
                 if (typeof this.listeEmission[item] == "undefined") {
@@ -164,7 +163,7 @@ class Controleur {
                     return
                 }
                 if (
-                    this.listeEmission[item][emetteur.nomDInstance] ==
+                    typeof this.listeEmission[item][emetteur.nomDInstance] ==
                     "undefined"
                 ) {
                     console.log(
@@ -197,4 +196,4 @@ class Controleur {
     }
 }
 
-export default Controleur;
+export default Controleur

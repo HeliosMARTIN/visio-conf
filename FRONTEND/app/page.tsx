@@ -1,34 +1,43 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
 import styles from "./page.module.css"
-import {CanalSocketio} from "../controllers/canalsocketio"
-import io from "socket.io-client"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
-import { Controleur } from "@/controllers/controleur"
-
-const controleur = new Controleur()
-const socket = io
-const canalSocketio = new CanalSocketio(controleur, "canalsocketio");
+import { useAppContext } from "@/context/AppContext"
 
 export default function Home() {
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
+
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        if (!token) {
+            router.push("/login")
+        }
+    }, [currentUser, router])
 
     const nomDInstance = "HomePage"
     const verbose = false
 
-    // Messages
-    const listeMessageEmis = ["users_list_request"]
-    const listeMessageRecus = ["users_list_response"]
+    const listeMessageEmis = [
+        "users_list_request",
+        "upload_request",
+        "update_user_request",
+    ]
+    const listeMessageRecus = [
+        "users_list_response",
+        "upload_response",
+        "update_user_response",
+    ]
 
     const [users, setUsers] = useState<User[]>([])
     const [error, setError] = useState("")
-    const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [uploadMessage, setUploadMessage] = useState("")
 
-    const { current } = useRef({
+    const handler = {
         nomDInstance,
         traitementMessage: (msg: {
             users_list_response?: {
@@ -36,13 +45,18 @@ export default function Home() {
                 users?: User[]
                 error?: string
             }
+            upload_response?: { etat: boolean; error?: string; url?: string }
+            update_user_response?: {
+                etat: boolean
+                newUserInfo: User | null
+                error?: string
+            }
         }) => {
-            if (verbose || controleur.verboseall)
+            if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
                 )
-
             if (msg.users_list_response) {
                 if (!msg.users_list_response.etat) {
                     setError(
@@ -52,59 +66,99 @@ export default function Home() {
                     setUsers(msg.users_list_response.users || [])
                 }
             }
-        },
-    })
-
-    useEffect(() => {
-        const loggedIn = Cookies.get("loggedIn")
-        const userInfo = Cookies.get("userInfo")
-        if (!loggedIn) {
-            router.push("/login")
-        } else {
-            if (userInfo) {
-                try {
-                    const parsedUserInfo = JSON.parse(userInfo)
-                    if (parsedUserInfo && typeof parsedUserInfo === 'object') {
-                        setCurrentUser(parsedUserInfo)
-                    } else {
-                        console.error("Invalid user info format")
-                        router.push("/login")
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error parsing user info:", error)
-                    // Clear invalid cookies
-                    Cookies.remove("userInfo")
-                    Cookies.remove("loggedIn")
-                    router.push("/login")
-                    return;
+            if (msg.upload_response) {
+                if (msg.upload_response.etat) {
+                    setUploadMessage(
+                        "Upload successful: " + msg.upload_response.url
+                    )
+                } else {
+                    setUploadMessage(
+                        "Upload failed: " + msg.upload_response.error
+                    )
                 }
             }
-            controleur.inscription(current, listeMessageEmis, listeMessageRecus)
-            console.log("init page")
+            if (msg.update_user_response) {
+                if (msg.update_user_response.etat) {
+                    setCurrentUser(msg.update_user_response.newUserInfo)
+                } else {
+                    console.log(
+                        "Failed to update user info: ",
+                        msg.update_user_response.error
+                    )
+                }
+            }
+        },
+    }
 
-            fetchUsersList()
+    useEffect(() => {
+        if (controleur && canal) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
         }
-
         return () => {
-            controleur.desincription(
-                current,
-                listeMessageEmis,
-                listeMessageRecus
-            )
+            if (controleur) {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
         }
-    }, [router])
+    }, [router, controleur, canal])
 
     const fetchUsersList = () => {
         try {
-            let T: {
-                users_list_request: {}
-            } = {
-                users_list_request: {},
-            }
-            controleur.envoie(canalSocketio, T)
+            const T = { users_list_request: {} }
+            controleur?.envoie(handler, T)
         } catch (err) {
             setError("Failed to fetch users list. Please try again.")
+        }
+    }
+
+    const handleLogout = () => {
+        localStorage.removeItem("token")
+        setCurrentUser(null)
+        router.push("/login")
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0])
+        }
+    }
+
+    const handleUpload = () => {
+        if (selectedFile && controleur) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                let base64data = event.target?.result
+                if (typeof base64data === "string") {
+                    // Remove data URL prefix if present
+                    const commaIndex = base64data.indexOf(",")
+                    base64data =
+                        commaIndex !== -1
+                            ? base64data.substring(commaIndex + 1)
+                            : base64data
+                }
+                const uploadMessage = {
+                    upload_request: {
+                        media: {
+                            name: selectedFile.name,
+                            fileType: selectedFile.type,
+                            data: base64data,
+                        },
+                    },
+                }
+                const updateProfilePictureMessage = {
+                    update_user_request: {
+                        picture: selectedFile.name,
+                    },
+                }
+                controleur.envoie(handler, uploadMessage)
+                controleur.envoie(handler, updateProfilePictureMessage)
+            }
+            reader.readAsDataURL(selectedFile)
+        } else {
+            alert("Please select a file first")
         }
     }
 
@@ -113,10 +167,19 @@ export default function Home() {
             <main className={styles.main}>
                 <h1>Accueil - Visioconf</h1>
                 {error && <div className={styles.error}>{error}</div>}
+                {uploadMessage && (
+                    <div className={styles.info}>{uploadMessage}</div>
+                )}
+                <button onClick={fetchUsersList}>Fetch Users List</button>
                 <UsersList
                     users={users}
                     currentUserEmail={currentUser?.email || ""}
                 />
+                <div style={{ marginTop: "1rem" }}>
+                    <input type="file" onChange={handleFileChange} />
+                    <button onClick={handleUpload}>Upload File</button>
+                </div>
+                <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
         </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { SocketProvider } from "@/context/SocketProvider";
-import ProfilPopUp from "../components/ProfilPopUp"
+import { AppContextProvider } from "@/context/AppContext"
 
 export const metadata: Metadata = {
     title: "VisioConf",
@@ -16,8 +15,8 @@ export default function RootLayout({
     return (
         <html lang="fr">
             <body>
-                <SocketProvider>{children}</SocketProvider>
+                <AppContextProvider>{children}</AppContextProvider>
             </body>
         </html>
-    );
+    )
 }

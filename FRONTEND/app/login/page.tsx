@@ -6,14 +6,20 @@ import Cookies from "js-cookie"
 import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
 import Link from "next/link"
+import jwt from "jsonwebtoken"
+import { useAppContext } from "@/context/AppContext"
 
 export default function LoginPage() {
     const router = useRouter()
 
+    const { currentUser } = useAppContext()
+
     useEffect(() => {
-        const loggedIn = Cookies.get("loggedIn")
-        if (loggedIn) {
-            router.push("/")
+        const token = localStorage.getItem("token")
+        if (token) {
+            if (currentUser) {
+                router.push("/")
+            }
         }
     }, [router])
 
