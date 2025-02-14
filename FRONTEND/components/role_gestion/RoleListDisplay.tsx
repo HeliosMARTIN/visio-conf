@@ -8,31 +8,35 @@ import { InputAdornment, TextField, Typography } from "@mui/material";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Role } from "@/types/Role";
+import DeleteRole from "../modals/DeleteRole";
 
 export default function RoleListDisplay () {
     const [regex, setRegex] = useState<string>("");
     const [roleList, setRoleList] = useState<Role[]>();
-    const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+    const [selectedRole, setSelectedRole] = useState<any>();
     const [rows, setRows] = useState<any>();
+
+    const [openDelete, setOpenDelete] = useState<boolean>(false);
 
     const nomDInstance = "Home Role Gestion"
     const verbose = false
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
-    const listeMessageEmis = ["roles_list_request"]
-    const listeMessageRecus = ["roles_list_response"]
+    const listeMessageEmis = ["roles_list_request", "delete_role_request"]
+    const listeMessageRecus = ["roles_list_response", "deleted_role"]
 
     const handler = {
             nomDInstance,
             traitementMessage: (msg: {
-                roles_list_response?: any
+                roles_list_response?: any,
+                deleted_role? : any
             }) => {
                 if (verbose || controleur?.verboseall)
-                    console.log(
-                        `INFO: (${nomDInstance}) - traitementMessage - `,
-                        msg
-                    )
+                    console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
                 if (msg.roles_list_response) {
                     setRoleList(msg.roles_list_response)
+                }
+                if (msg.deleted_role) {
+                    setOpenDelete(false);
                 }
             },
         }
@@ -56,7 +60,7 @@ export default function RoleListDisplay () {
         controleur.envoie(handler, {
             "roles_list_request" : 1
         })
-    }, [])
+    }, [openDelete])
 
     useEffect(() => {
         setRows([]);
@@ -94,13 +98,25 @@ export default function RoleListDisplay () {
                     <div style={{backgroundColor: "#223A6A"}} className={styles.iconContainer}>
                         <Pencil size={22} color="white" />
                     </div>
-                    <div style={{backgroundColor: "#CB0000"}} className={styles.iconContainer}>
+                    <div 
+                        style={{backgroundColor: "#CB0000"}} 
+                        className={styles.iconContainer}
+                        onClick={() => {setSelectedRole(params.row); setOpenDelete(true)}}
+                    >
                         <Trash2 size={22} color="white" />
                     </div>
                 </div>
             )
         },
     ];
+
+    const handleDeleteRole = () => {
+        controleur.envoie(handler, {
+            "delete_role_request" : {
+                role_id : selectedRole.id
+            }
+        })
+    }
       
 
     return (
@@ -136,6 +152,7 @@ export default function RoleListDisplay () {
                 columnHeaderHeight={69}
                 className={styles.table}
                 autoPageSize
+                disableRowSelectionOnClick
                 sx={{  
                     '.MuiDataGrid-columnHeaderTitle': {
                         paddingInline: '38px',
@@ -150,6 +167,12 @@ export default function RoleListDisplay () {
                         paddingInline: '38px',
                     },
                 }}
+            />
+            <DeleteRole
+                openDeleteRole={openDelete}
+                setOpenDeleteRole={setOpenDelete}
+                roleName={selectedRole?.name}
+                handleDeleteRole={handleDeleteRole}
             />
         </div>
     )
