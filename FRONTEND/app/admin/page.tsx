@@ -7,9 +7,9 @@ import styles from "./HomeAdmin.module.css"
 import { Drama, ListChecks, MessagesSquare, PhoneCall, UserRound, UsersRound } from "lucide-react"
 import { useState } from "react"
 import AdminMenu from "@/components/admin/AdminMenu";
-import AddUpdateRole from "@/components/role_gestion/AddUpdateRole"
-import HomeRoleGestion from "@/components/role_gestion/HomeRoleGestion"
-import HomeUserGestion from "@/components/user_gestion/HomeUserGestion"
+import AddUpdateRole from "@/components/admin/role_gestion/AddUpdateRole"
+import HomeRoleGestion from "@/components/admin/role_gestion/HomeRoleGestion"
+import HomeUserGestion from "@/components/admin/user_gestion/HomeUserGestion"
 
 export default function HomeAdmin() {
     const [selectedTab, setSelectedTab] = useState<string>("");

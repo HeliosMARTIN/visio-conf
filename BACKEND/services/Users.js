@@ -12,14 +12,16 @@ class UsersService {
         "signup_response",
         "users_list_response",
         "update_user_response",
-        "update_user_status_response"
+        "update_user_status_response",
+        "deleted_role"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
         "users_list_request",
         "update_user_request",
-        "update_user_status_request"
+        "update_user_status_request",
+        "delete_role_request"
     )
     listeJoueurs = new Object()
 
@@ -231,6 +233,12 @@ class UsersService {
                 }
                 this.controleur.envoie(this, message)
             }
+        }
+        if(typeof mesg.delete_role_request != "undefined"){
+            await User.updateMany(
+                {}, 
+                { $pull: { roles: mesg.delete_role_request.role_id } }
+            );              
         }
         if (mesg.update_user_status_request){
             const socketId = mesg.id

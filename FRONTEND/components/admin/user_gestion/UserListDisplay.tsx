@@ -4,8 +4,8 @@ import styles from "./UserDisplay.module.css"
 import { InputAdornment, TextField, Typography } from "@mui/material";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
-import CustomSnackBar from "../SnackBar";
-import ChangeUserStatus from "../modals/ChangeUserStatus";
+import CustomSnackBar from "../../SnackBar";
+import ChangeUserStatus from "../../modals/ChangeUserStatus";
 
 export default function UserListDisplay ({
     regex,

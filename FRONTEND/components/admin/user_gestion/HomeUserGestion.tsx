@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import styles from "./UserDisplay.module.css"
 import router from "next/router";
 import { Pencil, Trash2, Power } from "lucide-react";
-import CustomSnackBar from "../SnackBar";
+import CustomSnackBar from "../../SnackBar";
 import UserListDisplay from "./UserListDisplay";
 import { User } from "@/types/User";
 
@@ -17,7 +17,7 @@ export default function HomeUserGestion () {
 
     const [openChangeStatus, setOpenChangeStatus] = useState<boolean>(false);
     const [openAlert, setOpenAlert] = useState<boolean>(false);
-    const [addUpdateRole, setAddUpdateRole] = useState<boolean>(false);
+    const [updateUser, setUpdateUser] = useState<boolean>(false);
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "warning" | "info">("success");
     const [alertMessage, setAlertMessage] = useState<string>("");
     const [action, setAction] = useState<string>("");
@@ -76,7 +76,7 @@ export default function HomeUserGestion () {
         controleur.envoie(handler, {
             "users_list_request" : 1
         })
-    }, [openChangeStatus, addUpdateRole])
+    }, [openChangeStatus, updateUser])
 
     useEffect(() => {
         setRows([]);
@@ -149,7 +149,10 @@ export default function HomeUserGestion () {
                     <div 
                         style={{backgroundColor: "#223A6A"}} 
                         className={styles.iconContainer}
-                        onClick={() => {setSelectedUser(params.row); setAddUpdateRole(true);}}
+                        onClick={() => {
+                            setSelectedUser(params.row); 
+                            setUpdateUser(true);
+                        }}
                     >
                         <Pencil size={22} color="white" />
                     </div>
@@ -189,7 +192,7 @@ export default function HomeUserGestion () {
         })
     }
       
-    if(!addUpdateRole){
+    if(!updateUser){
         return (
             <>
                 <UserListDisplay 

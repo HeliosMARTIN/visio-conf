@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import styles from "./AddRole.module.css"
 import router from "next/router";
 import { TextField, Typography } from "@mui/material";
-import CustomSnackBar from "../SnackBar";
+import CustomSnackBar from "../../SnackBar";
 import { Check, ChevronDown, ChevronUp, X} from "lucide-react";
 import { Permission } from "@/types/Permission";
 import { Role } from "@/types/Role";

@@ -4,8 +4,8 @@ import styles from "./RoleDisplay.module.css"
 import { InputAdornment, TextField, Typography } from "@mui/material";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
-import DeleteRole from "../modals/DeleteRole";
-import CustomSnackBar from "../SnackBar";
+import DeleteRole from "../../modals/DeleteRole";
+import CustomSnackBar from "../../SnackBar";
 
 export default function RoleListDisplay ({
     setAddUpdateRole,

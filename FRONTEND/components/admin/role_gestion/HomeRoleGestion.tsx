@@ -8,7 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Role } from "@/types/Role";
 import RoleListDisplay from "./RoleListDisplay";
 import AddUpdateRole from "./AddUpdateRole";
-import CustomSnackBar from "../SnackBar";
+import CustomSnackBar from "../../SnackBar";
 
 export default function HomeRoleGestion () {
     const [regex, setRegex] = useState<string>("");
