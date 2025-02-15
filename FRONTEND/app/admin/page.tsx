@@ -65,7 +65,6 @@ export default function HomeAdmin() {
             <div style={{display: "flex"}}>
                 <AdminMenu selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
                 {selectedTab === "Rôles" && <HomeRoleGestion />}
-                {selectedTab === "Add Role" && <AddUpdateRole roleId={""} />}
             </div>
         )
     }

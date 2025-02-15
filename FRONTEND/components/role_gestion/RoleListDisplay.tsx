@@ -70,18 +70,27 @@ export default function RoleListDisplay ({
                 autoPageSize
                 disableRowSelectionOnClick
                 sx={{  
-                    '.MuiDataGrid-columnHeaderTitle': {
-                        paddingInline: '38px',
-                        color:"#223A6A",
-                        fontFamily: "Arial",
-                        fontSize: "20px",
-                        fontStyle: "normal",
-                        fontWeight: 700,
-                        lineHeight: "normal"
+                    '& .MuiDataGrid-columnHeader': {
+                        backgroundColor: '#EAEAEA',
+                        color: '#223A6A',
+                        fontWeight: 'bold',
+                        fontSize: '20px',
+                        paddingInline: "30px"
+                    },
+                    '& .MuiDataGrid-columnHeaderTitle': {
+                        fontWeight: 'bold',
                     },
                     '& .MuiDataGrid-cell': {
-                        paddingInline: '38px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingInline: "30px"
                     },
+                    '& .MuiDataGrid-row:nth-of-type(even)': {
+                        backgroundColor: '#EAEAEA',
+                    },
+                    '& .MuiDataGrid-footerContainer': {
+                        backgroundColor: '#EAEAEA',
+                    }
                 }}
             />
             <DeleteRole

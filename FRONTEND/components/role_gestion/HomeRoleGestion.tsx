@@ -4,7 +4,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useEffect, useState } from "react";
 import styles from "./RoleDisplay.module.css"
 import router from "next/router";
-import { Pencil, Search, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Role } from "@/types/Role";
 import RoleListDisplay from "./RoleListDisplay";
 import AddUpdateRole from "./AddUpdateRole";
@@ -84,10 +84,11 @@ export default function HomeRoleGestion () {
         setRows([]);
         const newRows : any = [];
         roleList?.map((role, index) => {
-            if(role.role_label.includes(regex)){
+            if((role.role_label.toLowerCase()).includes(regex)){
                 newRows.push({
                     id : role._id,
                     name : role.role_label,
+                    nbPerm : role.role_permissions.length,
                     action : "",
                     isEven: index%2 == 0
                 })
@@ -99,8 +100,18 @@ export default function HomeRoleGestion () {
     const columns = [
         { 
             field: 'name', 
-            headerName: 'Name', 
-            flex: 4,
+            headerName: 'Nom', 
+            flex: 2,
+            renderCell: (params : any) => (
+                <div className={styles.rowLabel}>
+                    {params.value}
+                </div>
+            )
+        },
+        { 
+            field: 'nbPerm', 
+            headerName: "Nombre de permissions", 
+            flex: 2,
             renderCell: (params : any) => (
                 <div className={styles.rowLabel}>
                     {params.value}
@@ -109,7 +120,7 @@ export default function HomeRoleGestion () {
         },
         { 
             field: 'action', 
-            headerName: 'Action', 
+            headerName: 'Actions', 
             flex: 1,
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
