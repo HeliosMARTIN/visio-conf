@@ -1,127 +1,37 @@
 /*Author : Matthieu BIVILLE*/
 
-import { useAppContext } from "@/context/AppContext";
-import { useEffect, useState } from "react";
 import styles from "./RoleDisplay.module.css"
-import router from "next/router";
 import { InputAdornment, TextField, Typography } from "@mui/material";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Role } from "@/types/Role";
 import DeleteRole from "../modals/DeleteRole";
 import CustomSnackBar from "../SnackBar";
 
-export default function RoleListDisplay () {
-    const [regex, setRegex] = useState<string>("");
-    const [roleList, setRoleList] = useState<Role[]>();
-    const [selectedRole, setSelectedRole] = useState<any>();
-    const [rows, setRows] = useState<any>();
-
-    const [openDelete, setOpenDelete] = useState<boolean>(false);
-    const [openAlert, setOpenAlert] = useState<boolean>(false);
-
-    const nomDInstance = "Home Role Gestion"
-    const verbose = false
-    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
-    const listeMessageEmis = ["roles_list_request", "delete_role_request"]
-    const listeMessageRecus = ["roles_list_response", "deleted_role"]
-
-    const handler = {
-            nomDInstance,
-            traitementMessage: (msg: {
-                roles_list_response?: any,
-                deleted_role? : any
-            }) => {
-                if (verbose || controleur?.verboseall)
-                    console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
-                if (msg.roles_list_response) {
-                    setRoleList(msg.roles_list_response)
-                }
-                if (msg.deleted_role) {
-                    setOpenDelete(false);
-                    setOpenAlert(true);
-                }
-            },
-        }
-
-    useEffect(() => {
-        if (controleur && canal) {
-            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
-        }
-        return () => {
-            if (controleur) {
-                controleur.desincription(handler,listeMessageEmis,listeMessageRecus)
-            }
-        }
-    }, [router, controleur, canal])
-
-    useEffect(() => {
-        controleur.envoie(handler, {
-            "roles_list_request" : 1
-        })
-    }, [openDelete])
-
-    useEffect(() => {
-        setRows([]);
-        const newRows : any = [];
-        roleList?.map((role, index) => {
-            if(role.role_label.includes(regex)){
-                newRows.push({
-                    id : role._id,
-                    name : role.role_label,
-                    action : "",
-                    isEven: index%2 == 0
-                })
-            }
-        })
-        setRows(newRows);
-    }, [roleList, regex])
-
-    const columns = [
-        { 
-            field: 'name', 
-            headerName: 'Name', 
-            flex: 4,
-            renderCell: (params : any) => (
-                <div className={styles.rowLabel}>
-                    {params.value}
-                </div>
-            )
-        },
-        { 
-            field: 'action', 
-            headerName: 'Action', 
-            flex: 1,
-            renderCell: (params : any) => (
-                <div className={styles.rowIcons}>
-                    <div 
-                        style={{backgroundColor: "#223A6A"}} 
-                        className={styles.iconContainer}
-                        onClick={() => {window.location.href = `/add_role/${params.row.id}`}}
-                    >
-                        <Pencil size={22} color="white" />
-                    </div>
-                    <div 
-                        style={{backgroundColor: "#CB0000"}} 
-                        className={styles.iconContainer}
-                        onClick={() => {setSelectedRole(params.row); setOpenDelete(true)}}
-                    >
-                        <Trash2 size={22} color="white" />
-                    </div>
-                </div>
-            )
-        },
-    ];
-
-    const handleDeleteRole = () => {
-        controleur.envoie(handler, {
-            "delete_role_request" : {
-                role_id : selectedRole.id
-            }
-        })
-    }
-      
-
+export default function RoleListDisplay ({
+    setAddUpdateRole,
+    regex,
+    setRegex,
+    rows, 
+    columns,
+    openDelete,
+    setOpenDelete,
+    selectedRole,
+    handleDeleteRole,
+    openAlert,
+    setOpenAlert
+} : {
+    setAddUpdateRole : Function,
+    regex : string,
+    setRegex : Function,
+    rows : any, 
+    columns : any,
+    openDelete : boolean,
+    setOpenDelete : Function,
+    selectedRole : any,
+    handleDeleteRole : any,
+    openAlert : boolean,
+    setOpenAlert : any
+}) {
     return (
         <div className={styles.container}>
             <div style={{display: "flex", justifyContent: "space-between"}}>
@@ -130,7 +40,7 @@ export default function RoleListDisplay () {
                     <Typography variant="subtitle1" className={styles.title}>Liste des rôles</Typography>
                 </div>
                 <button 
-                    onClick={() => window.location.href = "/add_role"}
+                    onClick={() => setAddUpdateRole(true)}
                     className={styles.addButton}
                 >+ Ajouter</button>
             </div>
