@@ -11,13 +11,15 @@ class UsersService {
         "login_response",
         "signup_response",
         "users_list_response",
-        "update_user_response"
+        "update_user_response",
+        "update_user_status_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
         "users_list_request",
-        "update_user_request"
+        "update_user_request",
+        "update_user_status_request"
     )
     listeJoueurs = new Object()
 
@@ -150,7 +152,7 @@ class UsersService {
             try {
                 const users = await User.find(
                     {},
-                    "firstname lastname email picture"
+                    "firstname lastname email picture status"
                 )
                 const formattedUsers = users.map((user) => ({
                     id: user._id,
@@ -158,6 +160,7 @@ class UsersService {
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
+                    status : user.status
                 }))
                 const message = {
                     users_list_response: {
@@ -228,6 +231,31 @@ class UsersService {
                 }
                 this.controleur.envoie(this, message)
             }
+        }
+        if (mesg.update_user_status_request){
+            const socketId = mesg.id
+            if (!socketId) throw new Error("Sender socket id not available for update") 
+            
+            const userInfo = await SocketIdentificationService.getUserInfoBySocketId(socketId)
+            if (!userInfo) throw new Error("User not found based on socket id")
+            
+            const action = mesg.update_user_status_request.action;
+            const newStatus = action === "activate" ? "active" : (action === "deactivate" ? "deleted" : "banned");
+            const user = await User.findOneAndUpdate(
+                { _id: mesg.update_user_status_request.user_id },
+                { status : newStatus},
+                { new: true }
+            )
+            if (!user) throw new Error("User not found")
+
+            const message = {
+                update_user_status_response: {
+                    etat: true,
+                    action : action
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
         }
     }
 

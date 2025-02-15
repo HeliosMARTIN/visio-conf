@@ -89,8 +89,7 @@ export default function HomeRoleGestion () {
                     id : role._id,
                     name : role.role_label,
                     nbPerm : role.role_permissions.length,
-                    action : "",
-                    isEven: index%2 == 0
+                    action : ""
                 })
             }
         })

@@ -9,6 +9,7 @@ import { useState } from "react"
 import AdminMenu from "@/components/admin/AdminMenu";
 import AddUpdateRole from "@/components/role_gestion/AddUpdateRole"
 import HomeRoleGestion from "@/components/role_gestion/HomeRoleGestion"
+import HomeUserGestion from "@/components/user_gestion/HomeUserGestion"
 
 export default function HomeAdmin() {
     const [selectedTab, setSelectedTab] = useState<string>("");
@@ -64,6 +65,7 @@ export default function HomeAdmin() {
         return(
             <div style={{display: "flex"}}>
                 <AdminMenu selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+                {selectedTab === "Utilisateurs" && <HomeUserGestion />}
                 {selectedTab === "Rôles" && <HomeRoleGestion />}
             </div>
         )
