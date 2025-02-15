@@ -15,13 +15,13 @@ export default function AdminMenu({
         {
             name : "Utilisateurs", 
             icon : <UsersRound size={40} />, 
-            subOption : ["Lister", "Valider", "Modifier", "Désactiver", "Bannir"], 
+            subOption : ["Lister", "Modifier", "Valider", "Désactiver", "Bannir"], 
             click : () => setSelectedTab("Utilisateurs")
         },
         {
             name : "Rôles", 
             icon : <Drama size={40} />, 
-            subOption : ["Lister", "Créer", "Modifier", "Supprimer"],
+            subOption : ["Lister", "Créer", "Dupliquer", "Modifier", "Supprimer"],
             click : () => setSelectedTab("Rôles")
         },
         {

@@ -8,6 +8,7 @@ import { Pencil, Trash2, Power } from "lucide-react";
 import CustomSnackBar from "../../SnackBar";
 import UserListDisplay from "./UserListDisplay";
 import { User } from "@/types/User";
+import UpdateUserRole from "./UpdateUserRole";
 
 export default function HomeUserGestion () {
     const [regex, setRegex] = useState<string>("");
@@ -27,13 +28,13 @@ export default function HomeUserGestion () {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = [
         "users_list_request", 
-        "update_user_status_request"
+        "update_user_status_request",
+        "update_user_roles_request"
     ]
     const listeMessageRecus = [
         "users_list_response", 
         "update_user_status_response",
-        "created_role",
-        "updated_role"
+        "update_user_roles_response"
     ]
 
     const handler = {
@@ -41,8 +42,7 @@ export default function HomeUserGestion () {
             traitementMessage: (msg: {
                 users_list_response?: any,
                 update_user_status_response? : any,
-                created_role? : any,
-                updated_role? : any,
+                update_user_roles_response? : any
             }) => {
                 if (verbose || controleur?.verboseall)
                     console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
@@ -55,6 +55,11 @@ export default function HomeUserGestion () {
                     setAlertMessage(`Utilisateur 
                         ${usedAction === "activate" ? " activé " : (usedAction === "deactivate" ? " désactivé " : " banni ")} 
                     avec succès !`);
+                    setAlertSeverity("success");
+                    setOpenAlert(true);
+                }
+                if (msg.update_user_roles_response) {
+                    setAlertMessage(`Rôle de l'utilisateur mis à jour avec succès !`);
                     setAlertSeverity("success");
                     setOpenAlert(true);
                 }
@@ -92,7 +97,8 @@ export default function HomeUserGestion () {
                     lastname : user.lastname,
                     email: user.email,
                     status: user.status === "active" ? "Actif" :
-                    (user.status === "waiting" ? "En attente" : "Désactivé")
+                    (user.status === "waiting" ? "En attente" : "Désactivé"),
+                    roles : user.roles
                 })
             }
         })
@@ -219,7 +225,10 @@ export default function HomeUserGestion () {
     }
     else{
         return (
-            <></>
+            <UpdateUserRole
+                user={selectedUser}
+                setUpdateUser={setUpdateUser}
+            />
         )
     }
 }
