@@ -115,7 +115,8 @@ export default function AddUpdateRole ({
                 controleur.envoie(handler, {
                     "create_role_request" : {
                         name : roleName,
-                        perms: selectedPerms
+                        perms: selectedPerms,
+                        action : "create"
                     }
                 })
             }

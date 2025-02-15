@@ -16,7 +16,7 @@ export const ListeMessagesEmis = [
     //---- ROLES ----
     "roles_list_request", // No data
     "one_role_request", // { role_id : ObjectId}
-    "create_role_request", // { name : string, perms : Permission._id[]}
+    "create_role_request", // { name : string, perms : Permission._id[], action : string}
     "update_role_request", // { role_id : ObjectId, perms : Permission._id[]}
     "delete_role_request", // {role_id : ObjectId}
     //---- PERMISSIONS ----

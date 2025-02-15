@@ -6,6 +6,7 @@ import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteRole from "../../modals/DeleteRole";
 import CustomSnackBar from "../../SnackBar";
+import DuplicateRole from "@/components/modals/DuplicateRole";
 
 export default function RoleListDisplay ({
     setAddUpdateRole,
@@ -17,6 +18,9 @@ export default function RoleListDisplay ({
     setOpenDelete,
     selectedRole,
     handleDeleteRole,
+    openDuplicate,
+    setOpenDuplicate,
+    handleDuplicateRole,
     openAlert,
     setOpenAlert
 } : {
@@ -29,6 +33,9 @@ export default function RoleListDisplay ({
     setOpenDelete : Function,
     selectedRole : any,
     handleDeleteRole : any,
+    openDuplicate : boolean,
+    setOpenDuplicate : Function,
+    handleDuplicateRole : any,
     openAlert : boolean,
     setOpenAlert : any
 }) {
@@ -92,6 +99,12 @@ export default function RoleListDisplay ({
                         backgroundColor: '#EAEAEA',
                     }
                 }}
+            />
+            <DuplicateRole
+                openDuplicateRole={openDuplicate}
+                setOpenDuplicateRole={setOpenDuplicate}
+                roleName={selectedRole?.name}
+                handleDuplicateRole={handleDuplicateRole}
             />
             <DeleteRole
                 openDeleteRole={openDelete}

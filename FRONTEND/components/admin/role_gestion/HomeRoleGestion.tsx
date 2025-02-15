@@ -4,7 +4,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useEffect, useState } from "react";
 import styles from "./RoleDisplay.module.css"
 import router from "next/router";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Copy } from "lucide-react";
 import { Role } from "@/types/Role";
 import RoleListDisplay from "./RoleListDisplay";
 import AddUpdateRole from "./AddUpdateRole";
@@ -17,6 +17,7 @@ export default function HomeRoleGestion () {
     const [rows, setRows] = useState<any>();
 
     const [openDelete, setOpenDelete] = useState<boolean>(false);
+    const [openDuplicate, setOpenDuplicate] = useState<boolean>(false);
     const [openAlert, setOpenAlert] = useState<boolean>(false);
     const [addUpdateRole, setAddUpdateRole] = useState<boolean>(false);
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "warning" | "info">("success");
@@ -25,7 +26,11 @@ export default function HomeRoleGestion () {
     const nomDInstance = "Home Role Gestion"
     const verbose = false
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
-    const listeMessageEmis = ["roles_list_request", "delete_role_request"]
+    const listeMessageEmis = [
+        "roles_list_request", 
+        "delete_role_request",
+        "create_role_request", 
+    ]
     const listeMessageRecus = [
         "roles_list_response", 
         "deleted_role",
@@ -48,10 +53,16 @@ export default function HomeRoleGestion () {
                 }
                 if (msg.deleted_role) {
                     setOpenDelete(false);
+                    setAlertMessage("Rôle supprimé avec succès !");
+                    setAlertSeverity("success");
                     setOpenAlert(true);
                 }
                 if (msg.created_role) {
-                    setAlertMessage("Nouveau rôle créé avec succès !");
+                    setOpenDuplicate(false);
+                    setAlertMessage(`
+                        ${msg.created_role.action === "create" ? "Nouveau r" : "R"}ôle 
+                        ${msg.created_role.action === "create" ? " créé " : " dupliqué "} avec succès !`
+                    );
                     setAlertSeverity("success");
                     setOpenAlert(true);
                 }
@@ -78,7 +89,7 @@ export default function HomeRoleGestion () {
         controleur.envoie(handler, {
             "roles_list_request" : 1
         })
-    }, [openDelete, addUpdateRole])
+    }, [openDelete, openDuplicate, addUpdateRole])
 
     useEffect(() => {
         setRows([]);
@@ -88,6 +99,7 @@ export default function HomeRoleGestion () {
                 newRows.push({
                     id : role._id,
                     name : role.role_label,
+                    perm : role.role_permissions,
                     nbPerm : role.role_permissions.length,
                     action : ""
                 })
@@ -126,6 +138,13 @@ export default function HomeRoleGestion () {
                     <div 
                         style={{backgroundColor: "#223A6A"}} 
                         className={styles.iconContainer}
+                        onClick={() => {setSelectedRole(params.row); setOpenDuplicate(true)}}
+                    >
+                        <Copy size={22} color="white" />
+                    </div>
+                    <div 
+                        style={{backgroundColor: "#223A6A"}} 
+                        className={styles.iconContainer}
                         onClick={() => {setSelectedRole(params.row); setAddUpdateRole(true);}}
                     >
                         <Pencil size={22} color="white" />
@@ -149,6 +168,20 @@ export default function HomeRoleGestion () {
             }
         })
     }
+
+    const handleDuplicateRole = () => {
+        var i = 2;
+        while(roleList?.find(role => role.role_label === selectedRole.name + ` (${i})`)){
+            i++;
+        }
+        controleur.envoie(handler, {
+            "create_role_request" : {
+                name : selectedRole.name + ` (${i})`,
+                perms: selectedRole.perm,
+                action : "duplicate"
+            }
+        })
+    }
       
     if(!addUpdateRole){
         return (
@@ -165,6 +198,9 @@ export default function HomeRoleGestion () {
                     handleDeleteRole={handleDeleteRole}
                     openAlert={openAlert}
                     setOpenAlert={setOpenAlert}
+                    openDuplicate={openDuplicate}
+                    setOpenDuplicate={setOpenDuplicate}
+                    handleDuplicateRole={handleDuplicateRole}
                 />
                 <CustomSnackBar
                     open={openAlert}

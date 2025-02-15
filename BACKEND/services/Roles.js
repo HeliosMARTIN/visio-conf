@@ -45,7 +45,7 @@ class RolesService{
                 })
                 var r = await newRole.save();
                 if(r != null){
-                    this.controleur.envoie(this, {"created_role" : {"role_id" : r._id, "socket_id" : mesg.id}});	
+                    this.controleur.envoie(this, {"created_role" : {"role_id" : r._id, action : mesg.create_role_request.action, "socket_id" : mesg.id}});	
                 }			 
             }
             else{
