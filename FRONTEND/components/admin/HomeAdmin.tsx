@@ -31,19 +31,28 @@ export default function HomeAdmin({user} : {user : any}) {
         "user_perms_request"
     ]
     const listeMessageRecus = [
-        "user_perms_response"
+        "user_perms_response",
+        "update_user_roles_response",
+        "updated_role"
     ]
 
     const handler = {
             nomDInstance,
             traitementMessage: (msg: {
                 user_perms_response?: any,
+                update_user_roles_response? : any,
+                updated_role? : any
             }) => {
                 if (verbose || controleur?.verboseall)
                     console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
                 if (msg.user_perms_response) {
                     const perms = msg.user_perms_response.perms;
                     setUserPerms(perms);
+                }
+                if (msg.update_user_roles_response || msg.updated_role) {
+                    controleur.envoie(handler, {
+                        "user_perms_request" : {userId : user?.userId}
+                    })
                 }
             },
         }
@@ -66,7 +75,6 @@ export default function HomeAdmin({user} : {user : any}) {
     }, [user])
 
     useEffect(() => {
-        console.log("Permissions mises à jour :", userPerms);
         setIsAdmin(userPerms.some((perm: string) => perm.includes("admin")));
     }, [userPerms]);
 

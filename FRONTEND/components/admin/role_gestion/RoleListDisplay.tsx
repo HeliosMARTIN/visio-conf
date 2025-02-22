@@ -44,7 +44,7 @@ export default function RoleListDisplay ({
             <div style={{display: "flex", justifyContent: "space-between"}}>
                 <div style={{display : "flex", alignItems : "center", columnGap: "20px"}}>
                     <img src="./icons/User_Friend.svg" alt="" className={styles.icon}/>
-                    <Typography variant="subtitle1" className={styles.title}>Liste des rôles</Typography>
+                    <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>Liste des rôles</Typography>
                 </div>
                 <button 
                     onClick={() => setAddUpdateRole(true)}

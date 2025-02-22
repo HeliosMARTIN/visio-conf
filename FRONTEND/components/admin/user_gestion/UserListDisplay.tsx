@@ -37,7 +37,7 @@ export default function UserListDisplay ({
             <div style={{display: "flex", justifyContent: "left"}}>
                 <div style={{display : "flex", alignItems : "center", columnGap: "20px"}}>
                     <img src="./icons/User_Friend.svg" alt="" className={styles.icon}/>
-                    <Typography variant="subtitle1" className={styles.title}>Liste des utilisateurs</Typography>
+                    <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>Liste des utilisateurs</Typography>
                 </div>
             </div>
             <TextField 

@@ -285,9 +285,9 @@ class UsersService {
 
             const message = {
                 update_user_roles_response: {
-                    etat: true,
+                    userId : mesg.update_user_roles_request.user_id,
                 },
-                id: [mesg.id],
+                id: [mesg.id, user.socket_id],
             }
             this.controleur.envoie(this, message)
         }

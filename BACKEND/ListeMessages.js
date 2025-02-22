@@ -38,7 +38,7 @@ export const ListeMessagesRecus = [
     "upload_response", // { etat: boolean, error?: string, url?: string }
     "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
     "update_user_status_response", // {etat: boolean, action : string}
-    "update_user_roles_response", // {etat: boolean}
+    "update_user_roles_response", // {userId : ObjectId}
     //---- ROLES ----
     "roles_list_response", // {role_list : Role[]}
     "one_role_response", // {role : Role}
