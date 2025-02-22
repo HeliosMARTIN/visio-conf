@@ -21,6 +21,7 @@ export const ListeMessagesEmis = [
     "delete_role_request", // {role_id : ObjectId}
     //---- PERMISSIONS ----
     "perms_list_request", // No data
+    "user_perms_request", //{ userId : ObjectId}
 ]
 
 /**
@@ -47,4 +48,5 @@ export const ListeMessagesRecus = [
     "deleted_role", // {state : boolean}
     //---- PERMISSIONS ----
     "perms_list_response", // { perms?: Permission[]} 
+    "user_perms_response", // { perms : Permission[]}
 ]

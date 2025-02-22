@@ -48,6 +48,7 @@ export default function UserListDisplay ({
                 value={regex}
                 onChange={(e) => setRegex(e.target.value)}
                 className={styles.search}
+                sx={{marginTop: "40px"}}
                 InputProps={{
                     startAdornment: (
                     <InputAdornment position="start">

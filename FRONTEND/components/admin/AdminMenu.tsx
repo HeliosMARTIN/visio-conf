@@ -2,45 +2,66 @@
 
 import { selectClasses, Typography } from "@mui/material"
 import styles from "./AdminMenu.module.css"
-import { Drama, ListChecks, MessagesSquare, PhoneCall, UserRound, UsersRound } from "lucide-react"
+import { Drama, ListChecks, MessagesSquare, X, UsersRound } from "lucide-react"
 
 export default function AdminMenu({
     selectedTab,
-    setSelectedTab
+    setSelectedTab,
+    userPerms
 } : {
     selectedTab: string,
-    setSelectedTab : Function
+    setSelectedTab : Function,
+    userPerms : string[]
 }) {
     const tabs = [
         {
             name : "Utilisateurs", 
             icon : <UsersRound size={40} />, 
-            subOption : ["Lister", "Modifier", "Valider", "Désactiver", "Bannir"], 
+            subOption : [
+                { label: "Lister", condition: userPerms.includes("admin_demande_liste_utilisateurs")},
+                { label: "Modifier", condition: userPerms.includes("admin_modifier_utilisateur")},
+                { label: "Valider", condition: userPerms.includes("")},
+                { label: "Désactiver", condition: userPerms.includes("")},
+                { label: "Bannir", condition: userPerms.includes("")},
+            ], 
             click : () => setSelectedTab("Utilisateurs")
         },
         {
             name : "Rôles", 
             icon : <Drama size={40} />, 
-            subOption : ["Lister", "Créer", "Dupliquer", "Modifier", "Supprimer"],
+            subOption :[
+                { label: "Lister", condition: userPerms.includes("admin_demande_liste_roles")},
+                { label: "Créer", condition: userPerms.includes("admin_ajouter_role")},
+                { label: "Modifier", condition: userPerms.includes("admin_modifier_role")},
+                { label: "Supprimer", condition: userPerms.includes("admin_supprimer_role")},
+            ],
             click : () => setSelectedTab("Rôles")
         },
         {
             name : "Permissions", 
             icon : <ListChecks size={40} />, 
-            subOption : ["Lister"],
+            subOption : [
+                { label: "Lister", condition: userPerms.includes("admin_demande_liste_permissions") },
+                { label: "Créer", condition: userPerms.includes("") }
+            ],
             click : () => setSelectedTab("Permissions")
         },
         {
             name : "Groupes", 
             icon : <MessagesSquare size={40} />, 
-            subOption : ["Lister", "Créer", "Modifier", "Supprimer"],
+            subOption : [
+                { label: "Lister", condition: userPerms.includes("") },
+                { label: "Créer", condition: userPerms.includes("") },
+                { label: "Modifier", condition: userPerms.includes("") },
+                { label: "Supprimer", condition: userPerms.includes("") },
+            ],
             click : () => setSelectedTab("Groupes")
         },
     ]
 
     return(
         <div className={styles.container}>
-            <Typography className={styles.title}>Administration</Typography>
+            <Typography className={styles.menuTitle} style={{fontSize: "40px", fontWeight: 800}}>Administration</Typography>
             {
                 tabs.map((tab, index) => {
                     return(
@@ -53,12 +74,20 @@ export default function AdminMenu({
                             }}
                             onClick={tab.click}
                         >
-                            <div className={styles.tabText}>
+                            <div key={index} className={styles.tabText}>
                                 <p style={{fontSize: "24px", fontWeight: 700, marginBottom: "15px"}}>{tab.name}</p>
                                 <div className={styles.tabOption}>
                                     {tab.subOption.map((option, index) => {
                                         return (
-                                            <p key={index} className={styles.option}>{option}</p>
+                                            <div style={{position: "relative", width: "30%"}}>
+                                                <p key={index} className={styles.option}>{option.label}</p>
+                                                {!option.condition && <X size={48} style={{
+                                                    position : "absolute",
+                                                    top: "50%",
+                                                    left: "50%",
+                                                    transform: "translate(-50%, -50%)"
+                                                }}/>}
+                                            </div>
                                         )
                                     })}
                                 </div>

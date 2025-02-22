@@ -13,7 +13,8 @@ class UsersService {
         "users_list_response",
         "update_user_response",
         "update_user_status_response",
-        "update_user_roles_response"
+        "update_user_roles_response",
+        "user_perms_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
@@ -22,7 +23,8 @@ class UsersService {
         "update_user_request",
         "update_user_status_request",
         "update_user_roles_request",
-        "delete_role_request"        
+        "delete_role_request",
+        "user_perms_request"      
     )
     listeJoueurs = new Object()
 
@@ -284,6 +286,31 @@ class UsersService {
             const message = {
                 update_user_roles_response: {
                     etat: true,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+        if (mesg.user_perms_request){
+            const user = await User.findOne({ _id: mesg.user_perms_request.userId })
+            .populate({
+                path: "roles",
+                populate: { path: "role_permissions" }
+            });
+
+            let perms = [];
+
+            user.roles.map((role) => {
+                role.role_permissions.map((perm) => {
+                    if(!perms.includes(perm.permission_uuid)){
+                        perms.push(perm.permission_uuid);
+                    }
+                })
+            })
+            
+            const message = {
+                user_perms_response: {
+                    perms: perms,
                 },
                 id: [mesg.id],
             }
