@@ -10,7 +10,7 @@ import RoleListDisplay from "./RoleListDisplay";
 import AddUpdateRole from "./AddUpdateRole";
 import CustomSnackBar from "../../SnackBar";
 
-export default function HomeRoleGestion () {
+export default function HomeRoleGestion ({userPerms} : {userPerms : string[]}) {
     const [regex, setRegex] = useState<string>("");
     const [roleList, setRoleList] = useState<Role[]>();
     const [selectedRole, setSelectedRole] = useState<any>();
@@ -136,23 +136,38 @@ export default function HomeRoleGestion () {
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
                     <div 
-                        style={{backgroundColor: "#223A6A"}} 
+                        style={{backgroundColor: userPerms.includes("") ? "#223A6A" : "gray"}} 
                         className={styles.iconContainer}
-                        onClick={() => {setSelectedRole(params.row); setOpenDuplicate(true)}}
+                        onClick={() => {
+                            if(userPerms.includes("")){
+                                setSelectedRole(params.row); 
+                                setOpenDuplicate(true);
+                            }
+                        }}
                     >
                         <Copy size={22} color="white" />
                     </div>
                     <div 
-                        style={{backgroundColor: "#223A6A"}} 
+                        style={{backgroundColor: userPerms.includes("admin_modifier_role") ? "#223A6A" : "gray"}} 
                         className={styles.iconContainer}
-                        onClick={() => {setSelectedRole(params.row); setAddUpdateRole(true);}}
+                        onClick={() => {
+                            if(userPerms.includes("admin_modifier_role")){
+                                setSelectedRole(params.row); 
+                                setAddUpdateRole(true);
+                            }
+                        }}
                     >
                         <Pencil size={22} color="white" />
                     </div>
                     <div 
-                        style={{backgroundColor: "#CB0000"}} 
+                        style={{backgroundColor: userPerms.includes("admin_supprimer_role") ? "#CB0000" : "gray"}} 
                         className={styles.iconContainer}
-                        onClick={() => {setSelectedRole(params.row); setOpenDelete(true)}}
+                        onClick={() => {
+                            if(userPerms.includes("admin_supprimer_role")){
+                                setSelectedRole(params.row); 
+                                setOpenDelete(true);
+                            }
+                        }}
                     >
                         <Trash2 size={22} color="white" />
                     </div>
@@ -186,22 +201,28 @@ export default function HomeRoleGestion () {
     if(!addUpdateRole){
         return (
             <>
-                <RoleListDisplay 
-                    setAddUpdateRole={setAddUpdateRole}
-                    regex={regex}
-                    setRegex={setRegex}
-                    rows={rows}
-                    columns={columns}
-                    openDelete={openDelete}
-                    setOpenDelete={setOpenDelete}
-                    selectedRole={selectedRole}
-                    handleDeleteRole={handleDeleteRole}
-                    openAlert={openAlert}
-                    setOpenAlert={setOpenAlert}
-                    openDuplicate={openDuplicate}
-                    setOpenDuplicate={setOpenDuplicate}
-                    handleDuplicateRole={handleDuplicateRole}
-                />
+            {userPerms.includes("admin_demande_liste_roles") ? (
+                    <RoleListDisplay 
+                        setAddUpdateRole={setAddUpdateRole}
+                        regex={regex}
+                        setRegex={setRegex}
+                        rows={rows}
+                        columns={columns}
+                        openDelete={openDelete}
+                        setOpenDelete={setOpenDelete}
+                        selectedRole={selectedRole}
+                        handleDeleteRole={handleDeleteRole}
+                        openAlert={openAlert}
+                        setOpenAlert={setOpenAlert}
+                        openDuplicate={openDuplicate}
+                        setOpenDuplicate={setOpenDuplicate}
+                        handleDuplicateRole={handleDuplicateRole}
+                        userPerms={userPerms}
+                    />
+                ) : (
+                    <></>
+            )
+            }
                 <CustomSnackBar
                     open={openAlert}
                     setOpen={setOpenAlert}

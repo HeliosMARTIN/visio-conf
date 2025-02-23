@@ -22,7 +22,8 @@ export default function RoleListDisplay ({
     setOpenDuplicate,
     handleDuplicateRole,
     openAlert,
-    setOpenAlert
+    setOpenAlert,
+    userPerms
 } : {
     setAddUpdateRole : Function,
     regex : string,
@@ -37,7 +38,8 @@ export default function RoleListDisplay ({
     setOpenDuplicate : Function,
     handleDuplicateRole : any,
     openAlert : boolean,
-    setOpenAlert : any
+    setOpenAlert : any,
+    userPerms : string[]
 }) {
     return (
         <div className={styles.container}>
@@ -47,7 +49,10 @@ export default function RoleListDisplay ({
                     <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>Liste des rôles</Typography>
                 </div>
                 <button 
-                    onClick={() => setAddUpdateRole(true)}
+                    onClick={() => {
+                        if(userPerms.includes("admin_ajouter_role")) setAddUpdateRole(true);
+                    }}
+                    style={{backgroundColor: userPerms.includes("admin_ajouter_role") ? "#223A6A" : "gray"}}
                     className={styles.addButton}
                 >+ Ajouter</button>
             </div>

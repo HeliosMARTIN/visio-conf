@@ -81,6 +81,15 @@
   row-gap: 100px;
 }
 
+.forbiddenAccess{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 50px;
+  height: 100vh;
+}
+
 
 
 

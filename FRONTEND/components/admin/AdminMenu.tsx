@@ -20,9 +20,9 @@ export default function AdminMenu({
             subOption : [
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_utilisateurs")},
                 { label: "Modifier", condition: userPerms.includes("admin_modifier_utilisateur")},
-                { label: "Valider", condition: userPerms.includes("")},
+                { label: "Valider", condition: userPerms.includes("admin_ajouter_utilisateur")},
                 { label: "Désactiver", condition: userPerms.includes("")},
-                { label: "Bannir", condition: userPerms.includes("")},
+                { label: "Bannir", condition: userPerms.includes("admin_supprimer_utilisateur")},
             ], 
             click : () => setSelectedTab("Utilisateurs")
         },
@@ -32,6 +32,7 @@ export default function AdminMenu({
             subOption :[
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_roles")},
                 { label: "Créer", condition: userPerms.includes("admin_ajouter_role")},
+                { label: "Dupliquer", condition: userPerms.includes("")},
                 { label: "Modifier", condition: userPerms.includes("admin_modifier_role")},
                 { label: "Supprimer", condition: userPerms.includes("admin_supprimer_role")},
             ],

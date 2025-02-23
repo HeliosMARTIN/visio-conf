@@ -10,7 +10,7 @@ import UserListDisplay from "./UserListDisplay";
 import { User } from "@/types/User";
 import UpdateUserRole from "./UpdateUserRole";
 
-export default function HomeUserGestion () {
+export default function HomeUserGestion ({userPerms} : {userPerms : string[]}) {
     const [regex, setRegex] = useState<string>("");
     const [userList, setUserList] = useState<User[]>();
     const [selectedUser, setSelectedUser] = useState<any>();
@@ -153,11 +153,13 @@ export default function HomeUserGestion () {
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
                     <div 
-                        style={{backgroundColor: "#223A6A"}} 
+                        style={{backgroundColor: userPerms.includes("admin_modifier_utilisateur") ? "#223A6A" : "gray"}} 
                         className={styles.iconContainer}
                         onClick={() => {
-                            setSelectedUser(params.row); 
-                            setUpdateUser(true);
+                            if(userPerms.includes("admin_modifier_utilisateur")){
+                                setSelectedUser(params.row); 
+                                setUpdateUser(true);
+                            }
                         }}
                     >
                         <Pencil size={22} color="white" />
@@ -174,12 +176,14 @@ export default function HomeUserGestion () {
                         <Power size={22} color="white" />
                     </div>
                     <div 
-                        style={{backgroundColor: "#CB0000"}} 
+                        style={{backgroundColor: userPerms.includes("admin_supprimer_utilisateur") ? "#CB0000" : "gray"}} 
                         className={styles.iconContainer}
                         onClick={() => {
-                            setAction("ban");
-                            setSelectedUser(params.row); 
-                            setOpenChangeStatus(true)
+                            if(userPerms.includes("admin_supprimer_utilisateur")){
+                                setAction("ban");
+                                setSelectedUser(params.row); 
+                                setOpenChangeStatus(true)
+                            }
                         }}
                     >
                         <Trash2 size={22} color="white" />
@@ -201,19 +205,24 @@ export default function HomeUserGestion () {
     if(!updateUser){
         return (
             <>
-                <UserListDisplay 
-                    regex={regex}
-                    setRegex={setRegex}
-                    rows={rows}
-                    columns={columns}
-                    openChangeStatus={openChangeStatus}
-                    setOpenChangeStatus={setOpenChangeStatus}
-                    selectedUser={selectedUser}
-                    handleChangeStatus={handleChangeStatus}
-                    openAlert={openAlert}
-                    setOpenAlert={setOpenAlert}
-                    action={action}
-                />
+            {userPerms.includes("admin_demande_liste_utilisateurs") ? (
+                    <UserListDisplay 
+                        regex={regex}
+                        setRegex={setRegex}
+                        rows={rows}
+                        columns={columns}
+                        openChangeStatus={openChangeStatus}
+                        setOpenChangeStatus={setOpenChangeStatus}
+                        selectedUser={selectedUser}
+                        handleChangeStatus={handleChangeStatus}
+                        openAlert={openAlert}
+                        setOpenAlert={setOpenAlert}
+                        action={action}
+                    />
+                ) : (
+                    <></> //FAIRE CE QU'ON AFFICHE SI PAS LE DROIT 
+                )
+            }
                 <CustomSnackBar
                     open={openAlert}
                     setOpen={setOpenAlert}

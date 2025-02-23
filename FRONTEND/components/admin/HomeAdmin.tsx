@@ -4,7 +4,7 @@
 
 import { Typography } from "@mui/material"
 import styles from "./HomeAdmin.module.css"
-import { Drama, ListChecks, MessagesSquare, PhoneCall, UserRound, UsersRound } from "lucide-react"
+import { Drama, ListChecks, MessagesSquare, PhoneCall, UserRound, UsersRound, OctagonX } from "lucide-react"
 import { useEffect, useState } from "react"
 import AdminMenu from "@/components/admin/AdminMenu";
 import HomeRoleGestion from "@/components/admin/role_gestion/HomeRoleGestion"
@@ -120,13 +120,15 @@ export default function HomeAdmin({user} : {user : any}) {
             ) : (
                 <div style={{display: "flex"}}>
                     <AdminMenu selectedTab={selectedTab} setSelectedTab={setSelectedTab} userPerms={userPerms}/>
-                    {selectedTab === "Utilisateurs" && <HomeUserGestion />}
-                    {selectedTab === "Rôles" && <HomeRoleGestion />}
+                    {selectedTab === "Utilisateurs" && <HomeUserGestion userPerms={userPerms}/>}
+                    {selectedTab === "Rôles" && <HomeRoleGestion  userPerms={userPerms}/>}
                 </div>
             )
         ) : (
-            <div>
-                Vous n'êtes pas un administrateur. Vous ne pouvez pas accéder à cette page !
+            <div className={styles.forbiddenAccess}>
+                <OctagonX size={100} color="#ff0000" />
+                <Typography style={{fontSize: "40px", fontWeight: 800, color: "#ff0000"}}>Vous n'êtes pas autorisé à accéder à cette page !</Typography>
+                <p style={{fontSize: "20px", fontWeight: 500, color: "#223A6A"}}>S'il s'agit d'une erreur, veuillez contacter un administrateur de l'application.</p>
             </div>
         )
     )

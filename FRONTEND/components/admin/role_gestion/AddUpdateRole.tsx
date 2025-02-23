@@ -190,7 +190,7 @@ export default function AddUpdateRole ({
                                         className={styles.option}
                                         key={perm._id}
                                     >
-                                        {perm.permission_label}
+                                        {(perm.permission_uuid.includes("admin") ? "(Admin) " : "") + perm.permission_label}
                                         <input 
                                             type="checkbox" 
                                             name="" 
@@ -220,7 +220,7 @@ export default function AddUpdateRole ({
                                             style={{backgroundColor: index%2 ? "#EAEAEA" : "white"}}
                                             className={styles.option}
                                         >
-                                            {perm.permission_label}
+                                            {(perm.permission_uuid.includes("admin") ? "(Admin) " : "") + perm.permission_label}
                                         </p>
                                     )
                                 }

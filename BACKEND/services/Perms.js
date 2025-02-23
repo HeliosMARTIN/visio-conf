@@ -27,7 +27,7 @@ class PermsService{
         }
     
         if(typeof mesg.perms_list_request != "undefined"){
-            var perms = await Perm.find().sort();
+            var perms = await Perm.find().sort({permission_uuid : 1});
             this.controleur.envoie(this, {
                 "perms_list_response" : perms,
                 id : [mesg.id]
