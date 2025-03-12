@@ -157,7 +157,7 @@ class UsersService {
             try {
                 const users = await User.find(
                     {},
-                    "firstname lastname email picture status roles"
+                    "firstname lastname email picture status roles is_online"
                 )
                 const formattedUsers = users.map((user) => ({
                     id: user._id,
@@ -166,7 +166,8 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     status : user.status,
-                    roles : user.roles
+                    roles : user.roles,
+                    online : user.is_online
                 }))
                 const message = {
                     users_list_response: {

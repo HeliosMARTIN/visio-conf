@@ -49,7 +49,7 @@ export default function AdminMenu({
             click : () => setSelectedTab("Permissions")
         },
         {
-            name : "Groupes", 
+            name : "Equipes", 
             icon : <MessagesSquare size={40} />, 
             subOption : [
                 { label: "Lister", condition: userPerms.includes("") },

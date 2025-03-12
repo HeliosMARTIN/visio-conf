@@ -16,22 +16,25 @@ import HomePermGestion from "./perm_gestion/HomePermGestion"
 export default function HomeAdmin({user} : {user : any}) {
     const [selectedTab, setSelectedTab] = useState<string>("");
     const [userPerms, setUserPerms] = useState<string[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<number>(0);
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
     
     const tabs = [
         {name : "Utilisateurs", icon : <UsersRound size={60} color="#0272DA"/>, color : "#0272DA", click : () => setSelectedTab("Utilisateurs")},
         {name : "Rôles", icon : <Drama size={60} color="#63B367"/>, color : "#63B367", click : () => setSelectedTab("Rôles")},
         {name : "Permissions", icon : <ListChecks size={60} color="#DA1F63"/>, color : "#DA1F63", click : () => setSelectedTab("Permissions")},
-        {name : "Groupes", icon : <MessagesSquare size={60} color="#444447"/>, color : "#444447", click : () => setSelectedTab("Groupes")},
+        {name : "Equipes", icon : <MessagesSquare size={60} color="#444447"/>, color : "#444447", click : () => setSelectedTab("Groupes")},
     ]
 
     const nomDInstance = "Home Admin"
     const verbose = false
     const { controleur, canal } = useAppContext()
     const listeMessageEmis = [
+        "users_list_request", 
         "user_perms_request"
     ]
     const listeMessageRecus = [
+        "users_list_response",
         "user_perms_response",
         "update_user_roles_response",
         "updated_role"
@@ -42,7 +45,8 @@ export default function HomeAdmin({user} : {user : any}) {
             traitementMessage: (msg: {
                 user_perms_response?: any,
                 update_user_roles_response? : any,
-                updated_role? : any
+                updated_role? : any,
+                users_list_response? : any
             }) => {
                 if (verbose || controleur?.verboseall)
                     console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
@@ -54,6 +58,12 @@ export default function HomeAdmin({user} : {user : any}) {
                     controleur.envoie(handler, {
                         "user_perms_request" : {userId : user?.userId}
                     })
+                }
+                if(msg.users_list_response){
+                    const nbOnlineUsers = msg.users_list_response.users.reduce((acc : number, user : any) => {
+                        return acc + (user.online ? 1 : 0);
+                    }, 0);
+                    setOnlineUsers(nbOnlineUsers);
                 }
             },
         }
@@ -79,6 +89,12 @@ export default function HomeAdmin({user} : {user : any}) {
         setIsAdmin(userPerms.some((perm: string) => perm.includes("admin")));
     }, [userPerms]);
 
+    useEffect(() => {
+        controleur.envoie(handler, {
+            "users_list_request" : 1
+        })
+    }, [])
+
     return (
         isAdmin  ? (
             !selectedTab ? (
@@ -89,15 +105,15 @@ export default function HomeAdmin({user} : {user : any}) {
                             <div style={{backgroundColor: "#47DA60"}} className={styles.icons}>
                                 <UserRound size={30} color="white" />
                             </div>
-                            <p className={styles.emphasis}>147</p>
-                            <p>utilisateurs connectés</p>
+                            <p className={styles.emphasis}>{onlineUsers}</p>
+                            <p>utilisateur(s) connecté(s)</p>
                         </div>
                         <div style={{backgroundColor: "#F4E8FF", borderColor: "#BF82FE"}} className={styles.infos}>
                             <div style={{backgroundColor: "#BF82FE"}} className={styles.icons}>
                                 <PhoneCall size={30} color="white" />
                             </div>
                             <p className={styles.emphasis}>6</p>
-                            <p>appels en cours</p>
+                            <p>appel(s) en cours</p>
                         </div>
                     </div>
                     <div className={styles.tabsContainer}>
