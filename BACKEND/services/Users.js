@@ -21,7 +21,6 @@ class UsersService {
         "update_user_request",
         "user_info_request"
     )
-    listeJoueurs = new Object()
 
     constructor(c, nom) {
         this.controleur = c
