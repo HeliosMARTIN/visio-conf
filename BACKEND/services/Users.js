@@ -2,6 +2,7 @@ import User from "../models/user.js"
 import crypto from "crypto"
 import { v4 as uuidv4 } from "uuid"
 import jwt from "jsonwebtoken"
+import SocketIdentificationService from "./SocketIdentification.js"
 
 class UsersService {
     controleur
@@ -9,14 +10,17 @@ class UsersService {
     listeDesMessagesEmis = new Array(
         "login_response",
         "signup_response",
-        "users_list_response"
+        "users_list_response",
+        "update_user_response",
+        "user_info_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
-        "users_list_request"
+        "users_list_request",
+        "update_user_request",
+        "user_info_request"
     )
-    listeJoueurs = new Object()
 
     constructor(c, nom) {
         this.controleur = c
@@ -27,6 +31,7 @@ class UsersService {
                     this.nomDInstance +
                     "):  s'enregistre aupres du controleur"
             )
+
         this.controleur.inscription(
             this,
             this.listeDesMessagesEmis,
@@ -56,13 +61,7 @@ class UsersService {
                 })
                 if (user) {
                     const token = jwt.sign(
-                        {
-                            firstname: user.firstname,
-                            lastname: user.lastname,
-                            email,
-                            picture: user.picture,
-                            userId: user._id,
-                        },
+                        { userId: user._id },
                         process.env.JWT_SECRET,
                         { expiresIn: "1d" }
                     )
@@ -115,18 +114,13 @@ class UsersService {
                 })
                 await user.save()
                 const token = jwt.sign(
-                    {
-                        firstname,
-                        lastname,
-                        email,
-                        picture: user.picture,
-                        userId: user._id,
-                    },
+                    { userId: user._id },
                     process.env.JWT_SECRET,
                     { expiresIn: "1d" }
                 )
                 const message = {
                     signup_response: { etat: true, token },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             } catch (error) {
@@ -135,6 +129,7 @@ class UsersService {
                         etat: false,
                         error: error.message,
                     },
+                    id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
             }
@@ -169,6 +164,88 @@ class UsersService {
                         etat: false,
                         error: error.message,
                     },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
+        if (mesg.update_user_request) {
+            try {
+                const socketId = mesg.id
+                if (!socketId)
+                    throw new Error("Sender socket id not available for update")
+                // Use all received fields as update (partial update)
+                const fieldsToUpdate = mesg.update_user_request
+                // Retrieve user info based on socket id
+                const userInfo =
+                    await SocketIdentificationService.getUserInfoBySocketId(
+                        socketId
+                    )
+                if (!userInfo)
+                    throw new Error("User not found based on socket id")
+                // Update only the received fields
+                const user = await User.findOneAndUpdate(
+                    { _id: userInfo._id },
+                    fieldsToUpdate,
+                    { new: true }
+                )
+                if (!user) throw new Error("User not found")
+                const newUserInfo = {
+                    id: user._id,
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    email: user.email,
+                    picture: user.picture,
+                }
+                const message = {
+                    update_user_response: {
+                        etat: true,
+                        newUserInfo,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } catch (error) {
+                const message = {
+                    update_user_response: {
+                        etat: false,
+                        error: error.message,
+                        newUserInfo: null,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
+        if (mesg.user_info_request) {
+            try {
+                const { userId } = mesg.user_info_request
+                const user = await User.findById(
+                    userId,
+                    "firstname lastname email picture"
+                )
+
+                if (user) {
+                    const userInfo = {
+                        id: user._id,
+                        firstname: user.firstname,
+                        lastname: user.lastname,
+                        email: user.email,
+                        picture: user.picture,
+                    }
+                    const message = {
+                        user_info_response: { etat: true, userInfo },
+                        id: [mesg.id],
+                    }
+                    this.controleur.envoie(this, message)
+                } else {
+                    throw new Error("User not found")
+                }
+            } catch (error) {
+                const message = {
+                    user_info_response: { etat: false, error: error.message },
                     id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)

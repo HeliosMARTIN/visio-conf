@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation"
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
 import { User } from "@/types/User"
-import jwt from "jsonwebtoken"
 
 interface AppContextType {
     controleur: Controleur
@@ -42,25 +41,16 @@ export const AppContextProvider = ({
     }
 
     const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [token, setToken] = useState<string | null>(
+        typeof window !== "undefined" ? localStorage.getItem("token") : null
+    )
 
     useEffect(() => {
-        const token = localStorage.getItem("token")
-        if (token) {
-            if (!currentUser) {
-                const user = jwt.decode(token) as User
-                setCurrentUser(user)
-            }
-        } else {
+        if (!token) {
             setCurrentUser(null)
             router.push("/login")
         }
-    }, [currentUser, router])
-
-    useEffect(() => {
-        return () => {
-            canalRef.current?.socket.disconnect()
-        }
-    }, [])
+    }, [token])
 
     return (
         <AppContext.Provider

@@ -31,8 +31,6 @@ export default function SignupForm() {
                 } else {
                     const token = msg.signup_response.token
                     if (token) {
-                        const user = jwt.decode(token) as User
-                        setCurrentUser(user)
                         localStorage.setItem("token", token)
                     }
                     router.push("/")
