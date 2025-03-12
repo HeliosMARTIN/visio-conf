@@ -75,7 +75,7 @@ export default function Menu() {
                             className={styles.profil}
                             src={currentUser?.picture
                                 ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
-                                : "/default-avatar.png"
+                                : `https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png`
                             }
                             alt="profil"
                             width={40}
