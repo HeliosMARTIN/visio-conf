@@ -11,15 +11,16 @@ class UsersService {
         "login_response",
         "signup_response",
         "users_list_response",
-        "update_user_response"
+        "update_user_response",
+        "user_info_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
         "signup_request",
         "users_list_request",
-        "update_user_request"
+        "update_user_request",
+        "user_info_request"
     )
-    listeJoueurs = new Object()
 
     constructor(c, nom) {
         this.controleur = c
@@ -75,7 +76,11 @@ class UsersService {
                     password: hashedPassword,
                 })
                 if (user) {
-                    const token = this.createToken(user);
+                    const token = jwt.sign(
+                        { userId: user._id },
+                        process.env.JWT_SECRET,
+                        { expiresIn: "1d" }
+                    )
                     const message = {
                         login_response: { etat: true, token },
                         id: [mesg.id],
@@ -124,7 +129,11 @@ class UsersService {
                     picture: "default_profile_picture.png",
                 })
                 await user.save()
-                const token = this.createToken(user);
+                const token = jwt.sign(
+                    { userId: user._id },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "1d" }
+                )
                 const message = {
                     signup_response: { etat: true, token },
                     id: [mesg.id],
@@ -222,6 +231,39 @@ class UsersService {
                         error: error.message,
                         newUserInfo: null,
                     },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
+        if (mesg.user_info_request) {
+            try {
+                const { userId } = mesg.user_info_request
+                const user = await User.findById(
+                    userId,
+                    "firstname lastname email picture"
+                )
+
+                if (user) {
+                    const userInfo = {
+                        id: user._id,
+                        firstname: user.firstname,
+                        lastname: user.lastname,
+                        email: user.email,
+                        picture: user.picture,
+                    }
+                    const message = {
+                        user_info_response: { etat: true, userInfo },
+                        id: [mesg.id],
+                    }
+                    this.controleur.envoie(this, message)
+                } else {
+                    throw new Error("User not found")
+                }
+            } catch (error) {
+                const message = {
+                    user_info_response: { etat: false, error: error.message },
                     id: [mesg.id],
                 }
                 this.controleur.envoie(this, message)
