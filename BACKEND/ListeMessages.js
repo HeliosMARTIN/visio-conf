@@ -9,14 +9,14 @@ export const ListeMessagesEmis = [
   "users_list_request", // No data
   "upload_request", // { media: string }
   "update_user_request", // { any field of User }
+  "user_info_request", // { user_info_request: { userId: string } }
   //---- DISCUSS ----
-  "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
-  "message_send_response", // { etat: boolean, error?: string }
-  "user_info_response", // { etat: boolean, token?: string, error?: string }
-  "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
-  "users_shearch_response", // {  etat: boolean, users?: User[], error?: string }
-  "discuss_remove_member_response", // { etat: boolean, error?: string }
-  "discuss_remove_message_response", // { etat: boolean, error?: string }
+  "messages_get_request", // { convId: uuid }
+  "message_send_request", // { userEmail: string, otherUserEmail?: string[], convId?:uuid , text: string }
+  "discuss_list_request", // { userId : uuid }
+  "users_shearch_request", // { requestArgs : string }
+  "discuss_remove_member_request", // { UserId : uuid, convId : uuid }
+  "discuss_remove_message_request", // { messageId : uuid, convId : uuid }
   //---- ROLES ----
   "roles_list_request", // No data
   "one_role_request", // { role_id : ObjectId}
@@ -38,10 +38,10 @@ export const ListeMessagesRecus = [
   "users_list_response", // { etat: boolean, users?: User[], error?: string }
   "upload_response", // { etat: boolean, error?: string, fileName?: string }
   "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
+  "user_info_response", // { user_info_response: { etat: boolean, userInfo?: User, error?: string } }
   //---- DISCUSS ----
   "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
   "message_send_response", // { etat: boolean, error?: string }
-  "user_info_response", // { etat: boolean, token?: string, error?: string }
   "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
   "users_shearch_response", // {  etat: boolean, users?: User[], error?: string }
   "discuss_remove_member_response", // { etat: boolean, error?: string }

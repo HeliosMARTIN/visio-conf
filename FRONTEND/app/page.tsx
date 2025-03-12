@@ -5,10 +5,12 @@ import styles from "./page.module.css"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
-import { useSocket } from "@/context/SocketProvider"
+import { useAppContext } from "@/context/AppContext"
+import jwt from "jsonwebtoken"
+import { fetchUserInfo } from "@/services/userInfoService"
 
 export default function Home() {
-    const { controleur, canal, currentUser, setCurrentUser } = useSocket()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
 
     const nomDInstance = "HomePage"
@@ -138,6 +140,21 @@ export default function Home() {
         }
     }, [router, controleur, canal])
 
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        if (token) {
+            const { userId } = jwt.decode(token) as { userId: string }
+            fetchUserInfo(controleur, userId)
+                .then((user) => setCurrentUser(user))
+                .catch((error) =>
+                    console.error("User info fetch error:", error)
+                )
+            if (canal?.socket) {
+                canal.socket.emit("authenticate", token)
+            }
+        }
+    }, [])
+
     const fetchUsersList = () => {
         try {
             const T = { users_list_request: {} }
@@ -196,6 +213,9 @@ export default function Home() {
             <main className={styles.main}>
                 <h1>Accueil - Visioconf</h1>
                 {error && <div className={styles.error}>{error}</div>}
+                {uploadMessage && (
+                    <div className={styles.info}>{uploadMessage}</div>
+                )}
                 <button onClick={fetchUsersList}>Fetch Users List</button>
                 <UsersList
                     users={users}

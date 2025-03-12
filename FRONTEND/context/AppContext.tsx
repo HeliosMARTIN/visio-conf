@@ -1,25 +1,32 @@
 "use client"
-
 import React, {
     createContext,
     useContext,
     useEffect,
-    useRef,
     useState,
+    useRef,
 } from "react"
+import { useRouter } from "next/navigation"
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
+import { User } from "@/types/User"
 
-interface SocketContextType {
+interface AppContextType {
     controleur: Controleur
     canal: CanalSocketio
-    currentUser: any
-    setCurrentUser: React.Dispatch<React.SetStateAction<any>>
+    currentUser: User | null
+    setCurrentUser: (user: User | null) => void
 }
 
-const SocketContext = createContext<SocketContextType | null>(null)
+const AppContext = createContext<AppContextType | null>(null)
 
-export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+export const AppContextProvider = ({
+    children,
+}: {
+    children: React.ReactNode
+}) => {
+    const router = useRouter()
+
     const controleurRef = useRef<Controleur>(null)
     const canalRef = useRef<CanalSocketio>(null)
 
@@ -33,16 +40,25 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         )
     }
 
-    const [currentUser, setCurrentUser] = useState(null)
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [token, setToken] = useState<string | null>(null)
 
     useEffect(() => {
+        setToken(localStorage.getItem("token"))
         return () => {
             canalRef.current?.socket.disconnect()
         }
     }, [])
 
+    useEffect(() => {
+        if (!(currentUser || token)) {
+            setCurrentUser(null)
+            router.push("/login")
+        }
+    }, [token])
+
     return (
-        <SocketContext.Provider
+        <AppContext.Provider
             value={{
                 controleur: controleurRef.current,
                 canal: canalRef.current,
@@ -51,13 +67,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             }}
         >
             {children}
-        </SocketContext.Provider>
+        </AppContext.Provider>
     )
 }
 
-export const useSocket = () => {
-    const context = useContext(SocketContext)
+export const useAppContext = () => {
+    const context = useContext(AppContext)
     if (!context)
-        throw new Error("useSocket must be used within a SocketProvider")
+        throw new Error("useApp must be used within an AppContextProvider")
     return context
 }
