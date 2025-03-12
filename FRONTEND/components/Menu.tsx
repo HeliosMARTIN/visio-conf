@@ -1,19 +1,17 @@
 "use client";
 import Image from "next/image";
 import styles from './Menu.module.css';
-import LinkTo from "@/components/LinkTo";
 import { useAppContext } from "@/context/AppContext"
-
+import Link from "next/link";
 
 export default function Menu() {
-
     const { currentUser } = useAppContext()
 
     return (
         <section className={styles.section}>
             <div className={styles.menu}>
                 <div>
-                    <LinkTo to="/" className={styles.logo}>
+                    <Link href="/" className={styles.logo}>
                         <Image
                             className={styles.logoImage}
                             src="/logo_Univ.png"
@@ -23,11 +21,11 @@ export default function Menu() {
                             priority
                         />
                         <h2 className={styles.menuText}>Université de Toulon</h2>
-                    </LinkTo>
+                    </Link>
                 </div>
                 <div>
                     <ul className={styles.allIcones}>
-                        <LinkTo to="/discussions" className={styles.link}>
+                        <Link href="/discussions" className={styles.link}>
                             <Image
                                 src="/conversation.svg"
                                 alt="Icone Conversation"
@@ -35,9 +33,9 @@ export default function Menu() {
                                 height={25}
                                 priority
                             />
-                            <h2 className={styles.menuText}>Conversations</h2>
-                        </LinkTo>
-                        <LinkTo to="/utilisateurs" className={styles.link}>
+                            <h2 className={styles.menuText}>Discussions</h2>
+                        </Link>
+                        <Link href="/utilisateurs" className={styles.link}>
                             <Image
                                 src="/users.svg"
                                 alt="Icone User"
@@ -46,9 +44,8 @@ export default function Menu() {
                                 priority
                             />
                             <h2 className={styles.menuText}>Utilisateurs</h2>
-
-                        </LinkTo>
-                        <LinkTo to="/dossiers" className={styles.link}>
+                        </Link>
+                        <Link href="/dossiers" className={styles.link}>
                             <Image
                                 src="/folder.svg"
                                 alt="Icone dossier"
@@ -57,8 +54,8 @@ export default function Menu() {
                                 priority
                             />
                             <h2 className={styles.menuText}>Dossiers</h2>
-                        </LinkTo>
-                        <LinkTo to="/annuaire" className={styles.link}>
+                        </Link>
+                        <Link href="/annuaire" className={styles.link}>
                             <Image
                                 src="/livre.svg"
                                 alt="Icone livre"
@@ -67,24 +64,26 @@ export default function Menu() {
                                 priority
                             />
                             <h2 className={styles.menuText}>Annuaire</h2>
-                        </LinkTo>
+                        </Link>
                     </ul>
                 </div>
             </div>
             <div>
                 <div className={styles.profil}>
-                    <LinkTo to="/">
-
+                    <Link href="/profil">
                         <Image
                             className={styles.profil}
-                            src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser?.picture}`}
+                            src={currentUser?.picture
+                                ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
+                                : "/default-avatar.png"
+                            }
                             alt="profil"
                             width={40}
                             height={40}
                             priority
                             unoptimized
                         />
-                    </LinkTo>
+                    </Link>
                 </div>
             </div>
         </section>

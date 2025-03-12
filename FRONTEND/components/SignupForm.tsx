@@ -25,6 +25,11 @@ export default function SignupForm() {
                 token?: string
             }
         }) => {
+            if (verbose || controleur.verboseall)
+                console.log(
+                    `INFO: (${nomDInstance}) - traitementMessage - `,
+                    msg
+                )
             if (msg.signup_response) {
                 if (!msg.signup_response.etat) {
                     setError("Signup failed. Please try again.")
