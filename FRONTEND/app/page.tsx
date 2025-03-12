@@ -6,6 +6,7 @@ import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
 import { useAppContext } from "@/context/AppContext"
+import ProfilPopUp from "@/components/ProfilPopUp"
 
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
@@ -182,6 +183,7 @@ export default function Home() {
                 <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
+            <ProfilPopUp />
         </div>
     )
 }

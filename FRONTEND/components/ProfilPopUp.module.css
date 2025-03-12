@@ -1,29 +1,48 @@
 .container {
     display: inline-block;
+    position: absolute !important;
+    left: 20px;
+    bottom: 20px;
   }
   
   .profileButton {
-    background: none;
-    border: none;
-    cursor: pointer;
+    width: 50px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50px;
   }
   
   .profileImage {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50px;
   }
   
   .popUp {
     position: absolute;
-    top: -10px;
-    right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    padding: 10px;
+    top: 20px;
+    right: -380px;
+    width: 397px;
+    height: 330px;
+    flex-shrink: 0;
+    border-radius: 17px;
+    background: #F7FAFF;
+    box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25);
     z-index: 1000;
     transform: translateY(-100%);
   }
+
+  .photoProfil{
+    width: 86px;
+    height: 82px;
+    flex-shrink: 0;
+    border-radius: 86px;
+  }
   
+  .infosProfil{
+    width: 100%;
+    height: 97px;
+    display: flex;
+    align-items: center;
+    margin: 15px;
+  }

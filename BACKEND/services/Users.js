@@ -38,6 +38,22 @@ class UsersService {
         )
     }
 
+    createToken = (user) => {
+        return jwt.sign(
+            {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email,
+                picture: user.picture,
+                userId: user._id,
+                desc: user.desc,
+                job: user.job,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        )
+    };
+
     async traitementMessage(mesg) {
         if (this.controleur.verboseall || this.verbose) {
             console.log(
@@ -59,17 +75,7 @@ class UsersService {
                     password: hashedPassword,
                 })
                 if (user) {
-                    const token = jwt.sign(
-                        {
-                            firstname: user.firstname,
-                            lastname: user.lastname,
-                            email,
-                            picture: user.picture,
-                            userId: user._id,
-                        },
-                        process.env.JWT_SECRET,
-                        { expiresIn: "1d" }
-                    )
+                    const token = this.createToken(user);
                     const message = {
                         login_response: { etat: true, token },
                         id: [mesg.id],
@@ -118,17 +124,7 @@ class UsersService {
                     picture: "default_profile_picture.png",
                 })
                 await user.save()
-                const token = jwt.sign(
-                    {
-                        firstname,
-                        lastname,
-                        email,
-                        picture: user.picture,
-                        userId: user._id,
-                    },
-                    process.env.JWT_SECRET,
-                    { expiresIn: "1d" }
-                )
+                const token = this.createToken(user);
                 const message = {
                     signup_response: { etat: true, token },
                     id: [mesg.id],
@@ -158,6 +154,8 @@ class UsersService {
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
+                    desc: user.desc,
+                    job : user.job,
                 }))
                 const message = {
                     users_list_response: {

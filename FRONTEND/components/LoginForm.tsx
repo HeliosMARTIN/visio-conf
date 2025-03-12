@@ -42,8 +42,6 @@ export default function LoginForm() {
                         localStorage.setItem("token", token)
                     }
                     router.push("/")
-                } else {
-                    setError("Login failed. Please check your credentials.")
                 }
             }
         },
