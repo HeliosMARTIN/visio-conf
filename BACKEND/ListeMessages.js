@@ -25,6 +25,13 @@ export const ListeMessagesEmis = [
   "delete_role_request", // {role_id : ObjectId}
   //---- PERMISSIONS ----
   "perms_list_request", // No data
+  //---- VISIO&CALL ----
+  "new_call",
+  "send_offer",
+  "send_answer",
+  "send_ice_candidate",
+  "reject_offer",
+  "hang_up",
 ];
 
 /**
@@ -55,4 +62,12 @@ export const ListeMessagesRecus = [
   "deleted_role", // {state : boolean}
   //---- PERMISSIONS ----
   "perms_list_response", // { perms?: Permission[]}
+  //---- VISIO&CALL ----
+  "receive_offer",
+  "receive_answer",
+  "receive_ice_candidate",
+  "offer_rejected",
+  "call_created",
+  "hung_up",
+  "call_connected_users",
 ];
