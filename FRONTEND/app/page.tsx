@@ -28,7 +28,7 @@ export default function Home() {
                 users?: User[]
                 error?: string
             }
-        }) => {
+        }) => { 
             if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
