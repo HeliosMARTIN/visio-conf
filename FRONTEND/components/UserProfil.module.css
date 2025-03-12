@@ -1,33 +1,3 @@
-.page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #F7FAFF;
-    padding: 1rem;
-}
-
-.main {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    color: #000;
-    width: 100%;
-    max-width: 400px;
-    gap: 44px;
-}
-
-.profilSection {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding-top: 45px;
-}
-
 .picture {
     z-index: 2;
     position: absolute;
