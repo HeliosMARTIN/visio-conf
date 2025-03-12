@@ -51,7 +51,7 @@ export const AppContextProvider = ({
     }, [])
 
     useEffect(() => {
-        if (!(currentUser || token)) {
+        if (!(currentUser || !token)) {
             setCurrentUser(null)
             router.push("/login")
         }
