@@ -1,132 +1,173 @@
-import { useEffect, useState } from "react";
-import { useSocket } from "@/context/SocketProvider";
+"use client";
 
-export function CreateDiscussion() {
-    const { controleur } = useSocket();
-    const [users, setUsers] = useState<any[]>([]);
-    const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
-    const [error, setError] = useState("");
-    const [showList, setShowList] = useState(false);
-    const [searchInput, setSearchInput] = useState("");
-    const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+import React, { useState, useEffect } from 'react';
+import { useSocket } from '@/context/SocketProvider';
+import { X, CirclePlus, Send } from 'lucide-react';
 
-    const handler = {
-        nomDInstance: "CreateDiscussion",
-        traitementMessage: (msg: { users_list_response?: { etat: boolean; users?: any[]; error?: string } }) => {
-            if (msg.users_list_response) {
-                if (!msg.users_list_response.etat) {
-                    setError(`Fetching users failed: ${msg.users_list_response.error}`);
-                } else {
-                    setUsers(msg.users_list_response.users || []);
-                }
-            }
-        },
-    };
-
-    useEffect(() => {
-        if (controleur) {
-            controleur.inscription(handler, ["users_list_request"], ["users_list_response"]);
-        }
-        return () => {
-            if (controleur) {
-                controleur.desincription(handler, ["users_list_request"], ["users_list_response"]);
-            }
-        };
-    }, [controleur]);
-
-    const fetchUsersList = () => {
-        try {
-            const T = { users_list_request: {} };
-            controleur?.envoie(handler, T);
-        } catch (err) {
-            setError("Failed to fetch users list. Please try again.");
-        }
-    };
-
- 
-
-    const handleUserSelect = (user: any) => {
-        if (!selectedUsers.find(u => u.email === user.email)) {
-            setSelectedUsers([...selectedUsers, user]);
-        }
-        setSearchInput("");
-        setShowList(false);
-    };
-
-    const handleRemoveUser = (userToRemove: any) => {
-        setSelectedUsers(selectedUsers.filter(user => user.email !== userToRemove.email));
-    };
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        setSearchInput(value);
-        if (value.length >= 1) {
-            setShowList(true);
-            fetchUsersList();
-            setFilteredUsers(users.filter(user => 
-                !selectedUsers.find(u => u.email === user.email) && (
-                    user.firstname.toLowerCase().includes(value.toLowerCase()) ||
-                    user.lastname.toLowerCase().includes(value.toLowerCase())
-                )
-            ));
-        } else {
-            setShowList(false);
-            setFilteredUsers([]);
-        }
-    };
-
-    return (
-        <div className="relative">
-            <div className="flex flex-wrap gap-2 mb-2">
-                {selectedUsers.map((user) => (
-                    <div 
-                        key={user.email}
-                        className="flex items-center bg-gray-100 rounded px-2 py-1"
-                    >
-                        <span>{user.firstname} {user.lastname}</span>
-                        <button 
-                            onClick={() => handleRemoveUser(user)}
-                            className="ml-2 text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex items-center">
-                <input 
-                    type="text" 
-                    id="discussionMembers" 
-                    name="discussionMembers" 
-                    placeholder="Recherchez des membres ..." 
-                    value={searchInput}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded"
-                />
-            </div>
-
-            {showList && filteredUsers.length > 0 && (
-                <>
-                    <div className="resultList">
-                        <p>Résultats pertinents :</p>
-                        <ul>
-                            {filteredUsers.map((user) => (
-                                <li 
-                                    key={user.email}
-                                    onClick={() => handleUserSelect(user)}
-                                    className="p-2 hover:bg-gray-100 cursor-pointer"
-                                >
-                                    {user.firstname} {user.lastname}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </>
-            )}
-            <textarea name="message" id="message"></textarea>
-            <button>Envoyer</button>
-            {error && <div className="text-red-500 mt-2">{error}</div>}
-        </div>
-    );
+interface User {
+  id: string;
+  firstname: string;
+  lastname: string;
+  picture: string;
 }
+
+interface CreateDiscussionProps {
+  onDiscussionCreated: () => void;
+  searchResults: User[];
+  controleur: any;
+  handler: any;
+}
+
+export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({ 
+  onDiscussionCreated, 
+  searchResults, 
+  controleur, 
+  handler 
+}) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const { currentUser } = useSocket();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const filteredSearchResults = searchResults.filter(user => {
+    const isCurrentUser = user.id === currentUser?.userId;
+    const isAlreadySelected = selectedUsers.some(selectedUser => selectedUser.id === user.id);
+    return !isCurrentUser && !isAlreadySelected;
+  });
+
+  const searchUsers = (query: string) => {
+    if (!query.trim() || !controleur) return;
+    const message = {
+      users_shearch_request: query
+    };
+    controleur.envoie(handler, message);
+  };
+
+  useEffect(() => {
+    const debounceTimeout = setTimeout(() => {
+      if (searchQuery.length >= 1) {
+        searchUsers(searchQuery);
+      }
+    }, 300);
+    return () => clearTimeout(debounceTimeout);
+  }, [searchQuery]);
+
+  const handleUserSelect = (user: User) => {
+    setSelectedUsers([...selectedUsers, user]);
+    setSearchQuery('');
+  };
+
+  const removeSelectedUser = (userId: string) => {
+    setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
+  };
+
+  const handleCreateDiscussion = async () => {
+    if (!currentUser || selectedUsers.length === 0 || !message.trim()) {
+      setError('Veuillez sélectionner au moins un utilisateur et écrire un message');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+
+      const otherUserIds = selectedUsers.map(user => user.id);
+      
+      const message_request = {
+        message_send_request: {
+          userEmail: currentUser.userId,
+          otherUserEmail: otherUserIds,
+          text: message,
+          discussion_creator: currentUser.userId,
+          discussion_uuid: crypto.randomUUID(), // Génère un UUID unique
+          message_content: message,
+          message_uuid: crypto.randomUUID() // Génère un UUID unique pour le message
+        }
+      };
+
+      controleur.envoie(handler, message_request);
+      
+      setMessage('');
+      setSelectedUsers([]);
+      
+    } catch (error) {
+      setError('Erreur lors de la création de la discussion');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="create-discussion">
+      <div className="search-users">
+        <div className="selected-users">
+          {selectedUsers.map(user => (
+            <div key={user.id} className="selected-user-chip">
+              <span>{`${user.firstname} ${user.lastname}`}</span>
+              <X 
+                size={16}
+                onClick={() => removeSelectedUser(user.id)}
+                className="remove-user"
+              />
+            </div>
+          ))}
+        </div>
+        
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Rechercher des utilisateurs..."
+          className="search-input"
+        />
+      </div>
+
+      {filteredSearchResults.length > 0 && searchQuery && (
+        <div className="search-results">
+          <h4>Résultats pertinents :</h4>
+          {filteredSearchResults.map(user => (
+            <div
+              key={user.id}
+              onClick={() => handleUserSelect(user)}
+              className="search-result-item"
+            >
+              <div className="user-info">
+                <img src={user.picture} alt="" className="user-avatar" />
+                <span>{`${user.firstname} ${user.lastname}`}</span>
+              </div>
+              <CirclePlus size={16} className="add-user" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="message-input-container">
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Écrivez votre message..."
+          className="message-input"
+        />
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+      
+      <button 
+        onClick={handleCreateDiscussion}
+        disabled={isCreating || selectedUsers.length === 0 || !message.trim()}
+        className="create-button"
+      >
+        {isCreating ? (
+          'Création...'
+        ) : (
+          <>
+            <span>Créer et envoyer</span>
+            <Send size={16} />
+          </>
+        )}
+      </button>
+    </div>
+  );
+};

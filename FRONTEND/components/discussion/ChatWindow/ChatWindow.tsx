@@ -1,0 +1,192 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Discussion, Message, User } from '@/types';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useSocket } from '@/context/SocketProvider';
+import { v4 as uuidv4 } from 'uuid';
+
+interface ChatWindowProps {
+  discussion?: Discussion;
+  messages: Message[];
+  currentUser: User;
+}
+
+const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUser }) => {
+  const [newMessage, setNewMessage] = useState('');
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const { controleur } = useSocket();
+  const nomDInstance = "ChatWindow";
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const listeMessageEmis = ["message_send_request", "messages_get_request"];
+  const listeMessageRecus = ["message_send_response", "messages_get_response"];
+
+  // Initialiser les messages locaux quand les messages props changent
+  useEffect(() => {
+    setLocalMessages(messages);
+    scrollToBottom();
+  }, [messages]);
+
+  // Scroll to bottom when localMessages changes
+  useEffect(() => {
+    scrollToBottom();
+  }, [localMessages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handler = {
+    nomDInstance,
+    traitementMessage: (msg: any) => {
+      if (msg.message_send_response) {
+        if (!msg.message_send_response.etat) {
+          console.error("Erreur lors de l'envoi du message:", msg.message_send_response.error);
+        } else {
+          // Rafraîchir les messages après un envoi réussi
+          fetchMessages();
+          
+          // Déclencher l'événement pour mettre à jour la liste des discussions
+          if (discussion) {
+            const event = new CustomEvent('discussion-updated', {
+              detail: {
+                discussionId: discussion.discussion_uuid,
+                lastMessage: {
+                  message_content: newMessage.trim(),
+                  message_date_create: new Date().toISOString()
+                }
+              }
+            });
+            document.dispatchEvent(event);
+          }
+        }
+      }
+
+      if (msg.messages_get_response) {
+        if (msg.messages_get_response.etat) {
+          setLocalMessages(msg.messages_get_response.messages || []);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Register handler when component mounts
+    if (controleur) {
+      controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+    }
+
+    // Unregister handler when component unmounts
+    return () => {
+      if (controleur) {
+        controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
+      }
+    };
+  }, [controleur]);
+
+  const fetchMessages = () => {
+    if (!discussion || !controleur) return;
+
+    const message = {
+      messages_get_request: {
+        convId: discussion.discussion_uuid
+      }
+    };
+    controleur.envoie(handler, message);
+  };
+
+  if (!discussion) {
+    return null;
+  }
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !controleur || !currentUser) return;
+
+    const messageUuid = uuidv4();
+    const currentDate = new Date();
+    
+    // Créer un message temporaire pour l'affichage immédiat
+    const tempMessage: Message = {
+      message_uuid: messageUuid,
+      message_content: newMessage.trim(),
+      message_sender: {
+        _id: currentUser.userId,
+        userId: currentUser.userId,
+        firstname: currentUser.firstname || "",
+        lastname: currentUser.lastname || "",
+        picture: currentUser.picture || ""
+      },
+      message_date_create: currentDate.toISOString(),
+      message_status: "sent"
+    };
+    
+    // Ajouter le message temporaire à l'état local
+    setLocalMessages(prev => [...prev, tempMessage]);
+    
+    const message = {
+      message_send_request: {
+        userEmail: currentUser.userId,
+        discussion_uuid: discussion.discussion_uuid,
+        message_uuid: messageUuid,
+        message_content: newMessage.trim(),
+        message_date_create: currentDate.toISOString(),
+      }
+    };
+
+    try {
+      controleur.envoie(handler, message);
+      setNewMessage('');
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message:", error);
+    }
+  };
+
+  return (
+    <div className="chat-window">
+      <div className="chat-header">
+        <h2>{discussion.discussion_name || 'Discussion'}</h2>
+      </div>
+      
+      <div className="messages-container">
+        {localMessages.map((message) => (
+          <div
+            key={message.message_uuid}
+            className={`message ${message.message_sender._id === currentUser.userId ? 'sent' : 'received'}`}
+          >
+            <div className="message-content">
+              {message.message_content}
+            </div>
+            <div className="message-info">
+              <span className="sender-name">
+                {message.message_sender._id === currentUser.userId ? 'Vous' : 
+                 `${message.message_sender.firstname} ${message.message_sender.lastname} `}
+              </span>
+              <span className="message-time">
+                {formatDistanceToNow(new Date(message.message_date_create), {
+                  addSuffix: true,
+                  locale: fr
+                })}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={handleSendMessage} className="message-input">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Écrivez votre message..."
+        />
+        <button type="submit">Envoyer</button>
+      </form>
+    </div>
+  );
+};
+
+export default ChatWindow;
