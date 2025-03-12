@@ -67,6 +67,7 @@ export default function UserListDisplay ({
                 autoPageSize
                 disableRowSelectionOnClick
                 sx={{  
+                    height : "80%",
                     '& .MuiDataGrid-columnHeader': {
                         backgroundColor: '#EAEAEA',
                         color: '#223A6A',

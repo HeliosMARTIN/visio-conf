@@ -41,16 +41,16 @@ export default function ChangeUserStatus({
                 </p>
             </DialogContent>
             <DialogActions sx={{display: "flex", justifyContent: "space-between"}}>
-                <Button 
+                <button
                     onClick={() => {setOpenChangeStatus(false)}}
                     style={{backgroundColor: "#0698D6"}}
                     className={styles.button}
-                >Annuler</Button>
-                <Button
+                >Annuler</button>
+                <button
                     onClick={handleChangeStatus}
                     style={{backgroundColor: "#E02727"}}
                     className={styles.button}
-                >{action === "activate" ? " Activer " : (action === "deactivate" ? " Désactiver " : " Bannir ")}</Button>
+                >{action === "activate" ? " Activer " : (action === "deactivate" ? " Désactiver " : " Bannir ")}</button>
             </DialogActions>
         </Dialog>
     )

@@ -22,6 +22,8 @@ export const ListeMessagesEmis = [
     //---- PERMISSIONS ----
     "perms_list_request", // No data
     "user_perms_request", //{ userId : ObjectId}
+    "update_perm_request", // { perm_id : ObjectId, newLabel : string}
+    "add_perm_request", // { newLabel : string, newUuid : string}
 ]
 
 /**
@@ -49,4 +51,6 @@ export const ListeMessagesRecus = [
     //---- PERMISSIONS ----
     "perms_list_response", // { perms?: Permission[]} 
     "user_perms_response", // { perms : Permission[]}
+    "update_perm_response", // { state : boolean }
+    "add_perm_response", // {message : string }
 ]

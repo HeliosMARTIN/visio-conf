@@ -165,12 +165,16 @@ export default function HomeUserGestion ({userPerms} : {userPerms : string[]}) {
                         <Pencil size={22} color="white" />
                     </div>
                     <div 
-                        style={{backgroundColor: params.row.status === "Actif" ? "#e07b00" : "#00bd13"}} 
+                        style={{backgroundColor: userPerms.includes("admin_desactiver_utilisateur") ? (
+                            params.row.status === "Actif" ? "#e07b00" : "#00bd13"
+                        ) : "gray"}} 
                         className={styles.iconContainer}
                         onClick={() => {
-                            setAction(params.row.status === "Actif" ? "deactivate" : "activate");
-                            setSelectedUser(params.row); 
-                            setOpenChangeStatus(true)
+                            if(userPerms.includes("admin_desactiver_utilisateur")){
+                                setAction(params.row.status === "Actif" ? "deactivate" : "activate");
+                                setSelectedUser(params.row); 
+                                setOpenChangeStatus(true)
+                            }
                         }}
                     >
                         <Power size={22} color="white" />

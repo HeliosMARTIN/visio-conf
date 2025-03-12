@@ -11,6 +11,7 @@ import HomeRoleGestion from "@/components/admin/role_gestion/HomeRoleGestion"
 import HomeUserGestion from "@/components/admin/user_gestion/HomeUserGestion"
 import { useAppContext } from "@/context/AppContext"
 import router from "next/router"
+import HomePermGestion from "./perm_gestion/HomePermGestion"
 
 export default function HomeAdmin({user} : {user : any}) {
     const [selectedTab, setSelectedTab] = useState<string>("");
@@ -122,6 +123,7 @@ export default function HomeAdmin({user} : {user : any}) {
                     <AdminMenu selectedTab={selectedTab} setSelectedTab={setSelectedTab} userPerms={userPerms}/>
                     {selectedTab === "Utilisateurs" && <HomeUserGestion userPerms={userPerms}/>}
                     {selectedTab === "Rôles" && <HomeRoleGestion  userPerms={userPerms}/>}
+                    {selectedTab === "Permissions" && <HomePermGestion userPerms={userPerms}/>}
                 </div>
             )
         ) : (

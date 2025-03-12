@@ -21,7 +21,7 @@ export default function AdminMenu({
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_utilisateurs")},
                 { label: "Modifier", condition: userPerms.includes("admin_modifier_utilisateur")},
                 { label: "Valider", condition: userPerms.includes("admin_ajouter_utilisateur")},
-                { label: "Désactiver", condition: userPerms.includes("")},
+                { label: "Désactiver", condition: userPerms.includes("admin_desactiver_utilisateur")},
                 { label: "Bannir", condition: userPerms.includes("admin_supprimer_utilisateur")},
             ], 
             click : () => setSelectedTab("Utilisateurs")
@@ -32,7 +32,7 @@ export default function AdminMenu({
             subOption :[
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_roles")},
                 { label: "Créer", condition: userPerms.includes("admin_ajouter_role")},
-                { label: "Dupliquer", condition: userPerms.includes("")},
+                { label: "Dupliquer", condition: userPerms.includes("admin_dupliquer_role")},
                 { label: "Modifier", condition: userPerms.includes("admin_modifier_role")},
                 { label: "Supprimer", condition: userPerms.includes("admin_supprimer_role")},
             ],
@@ -43,7 +43,8 @@ export default function AdminMenu({
             icon : <ListChecks size={40} />, 
             subOption : [
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_permissions") },
-                { label: "Créer", condition: userPerms.includes("") }
+                { label: "Créer", condition: userPerms.includes("admin_ajouter_permission") },
+                { label: "Modifier", condition: userPerms.includes("admin_modifier_permission")},
             ],
             click : () => setSelectedTab("Permissions")
         },
@@ -80,7 +81,7 @@ export default function AdminMenu({
                                 <div className={styles.tabOption}>
                                     {tab.subOption.map((option, index) => {
                                         return (
-                                            <div style={{position: "relative", width: "30%"}}>
+                                            <div key={index} style={{position: "relative", width: "30%"}}>
                                                 <p key={index} className={styles.option}>{option.label}</p>
                                                 {!option.condition && <X size={48} style={{
                                                     position : "absolute",

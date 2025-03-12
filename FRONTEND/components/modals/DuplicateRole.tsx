@@ -35,16 +35,16 @@ export default function DuplicateRole({
                 <p className={styles.text}>Souhaitez-vous vraiment dupliquer le rôle "{roleName}" ?</p>
             </DialogContent>
             <DialogActions sx={{display: "flex", justifyContent: "space-between"}}>
-                <Button 
+                <button 
                     onClick={() => {setOpenDuplicateRole(false)}}
                     style={{backgroundColor: "#0698D6"}}
                     className={styles.button}
-                >Annuler</Button>
-                <Button
+                >Annuler</button>
+                <button
                     onClick={handleDuplicateRole}
                     style={{backgroundColor: "#E02727"}}
                     className={styles.button}
-                >Dupliquer le rôle</Button>
+                >Dupliquer le rôle</button>
             </DialogActions>
         </Dialog>
     )

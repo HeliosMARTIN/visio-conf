@@ -136,10 +136,10 @@ export default function HomeRoleGestion ({userPerms} : {userPerms : string[]}) {
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
                     <div 
-                        style={{backgroundColor: userPerms.includes("") ? "#223A6A" : "gray"}} 
+                        style={{backgroundColor: userPerms.includes("admin_dupliquer_role") ? "#223A6A" : "gray"}} 
                         className={styles.iconContainer}
                         onClick={() => {
-                            if(userPerms.includes("")){
+                            if(userPerms.includes("admin_dupliquer_role")){
                                 setSelectedRole(params.row); 
                                 setOpenDuplicate(true);
                             }

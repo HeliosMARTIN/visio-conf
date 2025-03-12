@@ -1,6 +1,6 @@
 /*Author : Matthieu BIVILLE*/
 
-import styles from "./RoleDisplay.module.css"
+import styles from "./PermDisplay.module.css"
 import { InputAdornment, TextField, Typography } from "@mui/material";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DataGrid } from "@mui/x-data-grid";
@@ -8,35 +8,21 @@ import DeleteRole from "../../modals/DeleteRole";
 import CustomSnackBar from "../../SnackBar";
 import DuplicateRole from "@/components/modals/DuplicateRole";
 
-export default function RoleListDisplay ({
-    setAddUpdateRole,
+export default function PermListDisplay ({
+    setAddUpdatePerm,
     regex,
     setRegex,
     rows, 
     columns,
-    openDelete,
-    setOpenDelete,
-    selectedRole,
-    handleDeleteRole,
-    openDuplicate,
-    setOpenDuplicate,
-    handleDuplicateRole,
     openAlert,
     setOpenAlert,
     userPerms
 } : {
-    setAddUpdateRole : Function,
+    setAddUpdatePerm : Function,
     regex : string,
     setRegex : Function,
     rows : any, 
     columns : any,
-    openDelete : boolean,
-    setOpenDelete : Function,
-    selectedRole : any,
-    handleDeleteRole : any,
-    openDuplicate : boolean,
-    setOpenDuplicate : Function,
-    handleDuplicateRole : any,
     openAlert : boolean,
     setOpenAlert : any,
     userPerms : string[]
@@ -46,13 +32,13 @@ export default function RoleListDisplay ({
             <div style={{display: "flex", justifyContent: "space-between"}}>
                 <div style={{display : "flex", alignItems : "center", columnGap: "20px"}}>
                     <img src="./icons/User_Friend.svg" alt="" className={styles.icon}/>
-                    <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>Liste des rôles</Typography>
+                    <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>Liste des permissions</Typography>
                 </div>
                 <button 
                     onClick={() => {
-                        if(userPerms.includes("admin_ajouter_role")) setAddUpdateRole(true);
+                        if(userPerms.includes("admin_ajouter_permission")) setAddUpdatePerm(true);
                     }}
-                    style={{backgroundColor: userPerms.includes("admin_ajouter_role") ? "#223A6A" : "gray"}}
+                    style={{backgroundColor: userPerms.includes("admin_ajouter_permission") ? "#223A6A" : "gray"}}
                     className={styles.addButton}
                 >+ Ajouter</button>
             </div>
@@ -60,7 +46,7 @@ export default function RoleListDisplay ({
                 id="regex"
                 type="text"
                 name="regex"
-                placeholder="Rechercher un rôle"
+                placeholder="Rechercher une permission"
                 value={regex}
                 onChange={(e) => setRegex(e.target.value)}
                 className={styles.search}
@@ -76,7 +62,7 @@ export default function RoleListDisplay ({
             <DataGrid 
                 rows={rows} 
                 columns={columns} 
-                rowHeight={69}
+                rowHeight={75}
                 getRowId={(row) => row.id}
                 columnHeaderHeight={69}
                 className={styles.table}
@@ -106,18 +92,6 @@ export default function RoleListDisplay ({
                         backgroundColor: '#EAEAEA',
                     }
                 }}
-            />
-            <DuplicateRole
-                openDuplicateRole={openDuplicate}
-                setOpenDuplicateRole={setOpenDuplicate}
-                roleName={selectedRole?.name}
-                handleDuplicateRole={handleDuplicateRole}
-            />
-            <DeleteRole
-                openDeleteRole={openDelete}
-                setOpenDeleteRole={setOpenDelete}
-                roleName={selectedRole?.name}
-                handleDeleteRole={handleDeleteRole}
             />
             <CustomSnackBar
                 open={openAlert}

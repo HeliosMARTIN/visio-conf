@@ -1,16 +1,19 @@
 /* Authors: Matthieu BIVILLE */
 
 import Perm from "../models/permission.js"
-import { v4 as uuidv4 } from "uuid"
 
 class PermsService{
     controleur;
     verbose=false;
     listeDesMessagesEmis=[
         "perms_list_response",
+        "update_perm_response",
+        "add_perm_response"
     ];
     listeDesMessagesRecus=[
         "perms_list_request",
+        "update_perm_request",
+        "add_perm_request"
     ];
     
     constructor(c,nom){
@@ -32,6 +35,40 @@ class PermsService{
                 "perms_list_response" : perms,
                 id : [mesg.id]
             });
+        }
+
+        if(typeof mesg.update_perm_request != "undefined"){
+            await Perm.updateOne(
+                {_id : mesg.update_perm_request.perm_id},
+                {permission_label : mesg.update_perm_request.newLabel},
+            );
+            this.controleur.envoie(this, {
+                "update_perm_response" : {state : true},
+                id : [mesg.id]
+            });
+        }
+
+        if(typeof mesg.add_perm_request != "undefined"){
+            var perm = await Perm.findOne({ permission_uuid: mesg.add_perm_request.newUuid });
+            if(perm == null) {
+                var newPerm = new Perm({
+                    permission_uuid: mesg.add_perm_request.newUuid.toLowerCase(),
+                    permission_label: mesg.add_perm_request.newLabel,
+                })
+                var p = await newPerm.save();
+                if(p != null){
+                    this.controleur.envoie(this, {
+                        "add_perm_response" : {message : "done"},
+                        id : [mesg.id]
+                    });	
+                }			 
+            }
+            else{
+                this.controleur.envoie(this, {
+                    "add_perm_response" : {message : "already exists"},
+                    id : [mesg.id]
+                });
+            }
         }
     }
 }
