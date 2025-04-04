@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import styles from "./page.module.css"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
@@ -12,6 +12,7 @@ import { fetchUserInfo } from "@/services/userInfoService"
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
+    const pathname = usePathname()
 
     const nomDInstance = "HomePage"
     const verbose = false
@@ -138,22 +139,7 @@ export default function Home() {
                 )
             }
         }
-    }, [router, controleur, canal])
-
-    useEffect(() => {
-        const token = localStorage.getItem("token")
-        if (token) {
-            const { userId } = jwt.decode(token) as { userId: string }
-            fetchUserInfo(controleur, userId)
-                .then((user) => setCurrentUser(user))
-                .catch((error) =>
-                    console.error("User info fetch error:", error)
-                )
-            if (canal?.socket) {
-                canal.socket.emit("authenticate", token)
-            }
-        }
-    }, [])
+    }, [pathname, controleur, canal])
 
     const fetchUsersList = () => {
         try {
