@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Discussion} from '@/types';
+import { Discussion} from '@/types/Discussion';
 import { User } from '@/types/User';
 import { Message } from '@/types/Message';
 import { formatDistanceToNow } from 'date-fns';

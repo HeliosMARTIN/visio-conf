@@ -92,6 +92,7 @@ h3,h2, h1{
   .message.received {
     align-self: flex-start;
     background-color: #f0f0f0;
+    color: black;
   }
   
   .message-content {
@@ -117,6 +118,7 @@ h3,h2, h1{
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     background-color: white;
+    color: black;
   }
   
   .message-input button {

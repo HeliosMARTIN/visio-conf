@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Discussion } from "@/types";
+import { Discussion } from "@/types/Discussion";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import "./DiscussList.css";

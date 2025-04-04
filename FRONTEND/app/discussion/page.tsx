@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { useRouter } from "next/navigation";
-import { Discussion } from "@/types";
+import { Discussion } from "@/types/Discussion";
 import { Message } from "@/types/Message";
 import { CreateDiscussion } from "@/components/discussion/Create/page";
 import DiscussionsList from "@/components/discussion/DiscussList/DiscussList";
