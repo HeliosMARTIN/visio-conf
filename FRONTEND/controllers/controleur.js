@@ -1,4 +1,4 @@
-class Controleur {
+export class Controleur {
     listeEmission = new Object()
     listeAbonnement = new Object()
     verbose = false

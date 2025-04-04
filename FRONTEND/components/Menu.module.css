@@ -1,0 +1,84 @@
+.section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1E3664;
+    height: 100vh;
+    width: 5vw;
+    max-width: 100px;
+    padding: 20px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.section:hover {
+    width: 230px;
+    max-width: 230px;
+    align-items: flex-start;
+}
+
+.menuText {
+    display: none;
+    color: white;
+    margin-left: 10px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.section:hover .menuText {
+    display: block;
+    opacity: 1;
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    width: 100%;
+    color: white;
+    text-decoration: none;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.logoImage{
+    border-radius: 142.857px;
+background: var(--Background, #F7FAFF);
+}
+
+.menu{
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+.allIcones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.link:hover{
+    background-color: #1a2f4e;
+    border-radius: 10px;
+}
+
+.profil {
+    margin-top: auto;
+    border-radius: 50%;
+}

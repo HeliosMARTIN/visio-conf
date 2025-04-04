@@ -6,7 +6,6 @@ import Cookies from "js-cookie"
 import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
 import Link from "next/link"
-import jwt from "jsonwebtoken"
 import { useAppContext } from "@/context/AppContext"
 
 export default function LoginPage() {
@@ -21,7 +20,7 @@ export default function LoginPage() {
                 router.push("/")
             }
         }
-    }, [router])
+    }, [])
 
     return (
         <div className={styles.page}>
