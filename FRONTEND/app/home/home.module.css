@@ -4,8 +4,7 @@
     align-items: center;
     flex-direction: column;
     gap: 20px;
-    height: 100vh;
-    padding: 1rem;
+    height: 100%;
 
     background-color: #F7FAFF;
   }
@@ -16,7 +15,6 @@
     align-items: center;
     flex-direction: row;
     gap: 50px;
-    height: 100vh;
     padding: 1rem;
     
     background-color: #F7FAFF;
