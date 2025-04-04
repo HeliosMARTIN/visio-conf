@@ -42,7 +42,7 @@ export const AppContextProvider = ({
 
     const [currentUser, setCurrentUser] = useState<User | null>(null)
     const [token, setToken] = useState<string | null>(
-        localStorage.getItem("token")
+        typeof window !== "undefined" ? localStorage.getItem("token") : null
     )
 
     useEffect(() => {
