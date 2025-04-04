@@ -92,6 +92,7 @@
   font-size: 14px;
   background-color: #f9fafb;
   transition: all 0.2s ease;
+  color: #4f46e5;
 }
 
 .searchInput:focus {

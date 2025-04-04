@@ -54,6 +54,8 @@
 
 .modalBody {
   padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .modalFooter {
@@ -83,6 +85,8 @@
   border: 1px solid #e5e7eb;
   font-size: 14px;
   transition: all 0.2s ease;
+  background-color: #f7faff;
+  color: #4f46e5;
 }
 
 .input:focus {
@@ -188,6 +192,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   margin-top: 12px;
+  padding-right: 4px; /* Add some padding to prevent content from touching the scrollbar */
 }
 
 .folderItem {

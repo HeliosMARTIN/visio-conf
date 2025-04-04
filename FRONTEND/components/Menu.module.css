@@ -108,6 +108,7 @@
 }
 
 .mainLayout {
+  background-color: #F7FAFF;
   display: flex;
   width: 100%;
   min-height: 100vh;
@@ -117,7 +118,6 @@
   margin-left: 80px; 
   flex-grow: 1;
   transition: margin-left 0.3s ease;
-  padding: 20px;
 }
 
 .contentExpanded {
