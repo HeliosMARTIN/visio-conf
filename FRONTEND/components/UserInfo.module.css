@@ -99,6 +99,23 @@ a.secondary {
   flex-shrink: 0;
 }
 
+.reception_body_item{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+}
+
+.reception_body_item_content{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: row;
+  gap: 20px;
+  width: 100%;
+}
 
 .userInfo {
   display: flex;

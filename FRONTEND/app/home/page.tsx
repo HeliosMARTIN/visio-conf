@@ -1,48 +1,73 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
+import { usePathname, useRouter } from "next/navigation"
 import styles from "./home.module.css"
-import jwt from "jsonwebtoken"
 import { useAppContext } from "@/context/AppContext"
-import { Bell } from 'lucide-react';
-import { ChevronRight } from 'lucide-react';
-import Image from "next/image"
+import UsersList from "@/components/UsersList"
 import { User } from "@/types/User"
+import { Bell, Clock } from 'lucide-react';
 
 export default function HomePage() {
     const router = useRouter();
-    const { currentUser } = useAppContext();
-    const [isLoading, setIsLoading] = useState(true);
+    const pathname = usePathname();
+    const { controleur, canal, currentUser } = useAppContext();
     const [users, setUsers] = useState<User[]>([]);
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+
+    const nomDInstance = "HomePage";
+    const verbose = false;
+
+    const listeMessageEmis = ["users_list_request"];
+    const listeMessageRecus = ["users_list_response"];
+
+    const handler = {
+        nomDInstance,
+        traitementMessage: (msg: {
+            users_list_response?: {
+                etat: boolean;
+                users?: User[];
+                error?: string;
+            };
+        }) => {
+            if (verbose || controleur?.verboseall) {
+                console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg);
+            }
+            
+            if (msg.users_list_response) {
+                setIsLoading(false);
+                if (!msg.users_list_response.etat) {
+                    setError(`Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`);
+                } else {
+                    setUsers(msg.users_list_response.users || []);
+                }
+            }
+        },
+    };
 
     useEffect(() => {
-        if (currentUser) {
-            fetchUsers();
-        } else {
-            setIsLoading(false);
+        // Inscription au contrôleur pour recevoir les messages
+        if (controleur && canal) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+            fetchUsersList();
         }
-    }, [currentUser]);
-
-    const fetchUsers = async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
-                headers: {
-                    'Authorization': `Bearer ${Cookies.get('token')}`
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                const filteredUsers = data.filter((user: User) => user.id !== currentUser.id);
-                setUsers(filteredUsers);
-            } else {
-                console.error('Erreur lors de la récupération des utilisateurs');
+        
+        return () => {
+            if (controleur) {
+                controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-        } finally {
+        };
+    }, [pathname, controleur, canal, currentUser]);
+
+    const fetchUsersList = () => {
+        try {
+            if (controleur) {
+                const T = { users_list_request: {} };
+                controleur.envoie(handler, T);
+            }
+        } catch (err) {
+            setError("Erreur lors de la récupération des utilisateurs. Veuillez réessayer.");
             setIsLoading(false);
         }
     };
@@ -50,54 +75,42 @@ export default function HomePage() {
     if (isLoading) return <div>Chargement...</div>;
     if (!currentUser) return <div>Veuillez vous connecter</div>;
 
-    const handleMessage = (userId: string) => {
-        router.push(`/message?id=${userId}`)
-    }
-
     return (
         <div className={styles.page}>
             <main className={styles.main}>
                 <section className={styles.section}>
-                    <h1>Liste des utilisateurs</h1>
+                    <h1>Boite de réception</h1>
+                    {error && <div className={styles.error}>{error}</div>}
                     <div className={styles.reception}>
                         <div className={styles.reception_header}>
                             <Bell />
-                            <h3>Utilisateurs disponibles ({users.length})</h3>
+                            <h3>{users.length -1} nouvelles notifications non lues.</h3>
                         </div>
-                        <div className={styles.reception_body}>
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <div key={user.id} className={styles.reception_body_item}>
-                                        <Image
-                                            src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
-                                            alt={`${user.firstname} profile picture`}
-                                            width={50}
-                                            height={50}
-                                            unoptimized
-                                            className={styles.userImage}
-                                        />
-                                        <div>
-                                            <h3>{user.firstname} {user.lastname}</h3>
-                                            <p>{user.email}</p>
-                                        </div>
-                                        <ChevronRight 
-                                            onClick={() => handleMessage(user.id)} 
-                                            style={{ cursor: 'pointer' }} 
-                                        />
-                                    </div>
-                                ))
-                            ) : (
-                                <div className={styles.reception_body_item}>
-                                    <p>Aucun autre utilisateur disponible</p>
-                                </div>
-                            )}
-                        </div>
+                        <UsersList
+                            users={users}
+                            currentUserEmail={currentUser?.email || ""}
+                            variant="home-message"
+                            className={styles.reception_body}
+                        />
                     </div>
                 </section>
-                <section>
+                <section className={styles.section}>
                     <h1>Historique d'appels</h1>
+                    {error && <div className={styles.error}>{error}</div>}
+                    <div className={styles.reception}>
+                        <div className={styles.reception_header}>
+                        <Clock />
+                        <h3>{users.length -1} appel passé.</h3>
+                        </div>
+                        <UsersList
+                            users={users}
+                            currentUserEmail={currentUser?.email || ""}
+                            variant="home-call"
+                            className={styles.reception_body}
+                        />
+                    </div>
                 </section>
             </main>
         </div>
-    )
+    );
 }

@@ -37,6 +37,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 30rem;
     gap: 32px;
 
     border-radius: 16px;
@@ -57,7 +58,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
     width: 100%;
 }
 
