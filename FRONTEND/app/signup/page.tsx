@@ -15,7 +15,7 @@ export default function SignupPage() {
         if (loggedIn) {
             router.push("/")
         }
-    }, [router])
+    }, [])
 
     return (
         <div className={styles.page}>
