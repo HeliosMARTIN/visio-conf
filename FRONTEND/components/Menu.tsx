@@ -77,7 +77,7 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                             </span>
                         </Link>
 
-                        <Link href="/dossiers" className={styles.menuItem}>
+                        <Link href="/files" className={styles.menuItem}>
                             <div className={styles.menuIcon}>
                                 <Image
                                     src="/folder.svg"
@@ -91,7 +91,7 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                                     collapsed ? styles.hidden : ""
                                 }`}
                             >
-                                Dossiers
+                                Drive
                             </span>
                         </Link>
 
