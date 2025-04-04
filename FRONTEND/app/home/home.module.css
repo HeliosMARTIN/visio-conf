@@ -1,0 +1,80 @@
+.page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    height: 100vh;
+    padding: 1rem;
+
+    background-color: #F7FAFF;
+  }
+
+  .main{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 50px;
+    height: 100vh;
+    padding: 1rem;
+    
+    background-color: #F7FAFF;
+    color: var(--Texte, #060D19);
+  }
+
+  .section{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .reception{
+    display: flex;
+    padding: 16px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+
+    border-radius: 16px;
+    border: 1px solid rgba(210, 204, 175, 0.30);
+    box-shadow: 0px 0px 11px 0px rgba(30, 54, 100, 0.30);
+  }
+
+.reception_header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.reception_body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.reception_body_item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
+
+.reception_footer{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
