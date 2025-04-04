@@ -6,8 +6,6 @@ import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
 import { useAppContext } from "@/context/AppContext"
-import jwt from "jsonwebtoken"
-import { fetchUserInfo } from "@/services/userInfoService"
 
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
