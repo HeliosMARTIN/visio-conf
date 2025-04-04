@@ -282,6 +282,66 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
+    // CAS : DEMANDE DE SUPPRESSION MEMBRE D'UNE DISCUSSION
+    if (mesg.discuss_remove_member_request) {
+      try {
+        const [userId, discussId] = mesg.discuss_remove_member_request;
+        const discussion = await Discussion.findOneAndUpdate(
+          { discussion_uuid: discussId },
+          { $pull: { discussion_members: userId } },
+          { new: true }
+        );
+        if (discussion.discussion_members.length === 0) {
+          await Discussion.deleteOne({ discussion_uuid: discussId });
+        }
+        const message = {
+          discuss_remove_member_response: {
+            etat: true,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          users_shearch_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
+    }
+    // CAS : DEMANDE DE SUPPRESSION DE MESSAGE
+    if (mesg.discuss_remove_message_request) {
+      try {
+        const [messageId, convId] = mesg.discuss_remove_message_request;
+
+        const discussion = await Discussion.findOneAndUpdate(
+          { discussion_uuid: convId },
+          { $pull: { discussion_messages: { message_uuid: messageId } } },
+          { new: true }
+        );
+
+        const message = {
+          discuss_remove_message_response: {
+            etat: true,
+          },
+          id: [mesg.id],
+        };
+
+        this.controleur.envoie(this, message);
+      } catch (error) {
+        const message = {
+          users_shearch_response: {
+            etat: false,
+            error: error.message,
+          },
+          id: [mesg.id],
+        };
+        this.controleur.envoie(this, message);
+      }
+    }
   }
 }
 
