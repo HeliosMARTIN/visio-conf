@@ -1,8 +1,8 @@
-"use client";
-import Image from "next/image";
-import styles from './Menu.module.css';
+"use client"
+import Image from "next/image"
+import styles from "./Menu.module.css"
 import { useAppContext } from "@/context/AppContext"
-import Link from "next/link";
+import Link from "next/link"
 
 export default function Menu() {
     const { currentUser } = useAppContext()
@@ -20,7 +20,9 @@ export default function Menu() {
                             height={40}
                             priority
                         />
-                        <h2 className={styles.menuText}>Université de Toulon</h2>
+                        <h2 className={styles.menuText}>
+                            Université de Toulon
+                        </h2>
                     </Link>
                 </div>
                 <div>
@@ -45,7 +47,7 @@ export default function Menu() {
                             />
                             <h2 className={styles.menuText}>Utilisateurs</h2>
                         </Link>
-                        <Link href="/dossiers" className={styles.link}>
+                        <Link href="/files" className={styles.link}>
                             <Image
                                 src="/folder.svg"
                                 alt="Icone dossier"
@@ -53,7 +55,7 @@ export default function Menu() {
                                 height={25}
                                 priority
                             />
-                            <h2 className={styles.menuText}>Dossiers</h2>
+                            <h2 className={styles.menuText}>Drive</h2>
                         </Link>
                         <Link href="/annuaire" className={styles.link}>
                             <Image
@@ -73,9 +75,10 @@ export default function Menu() {
                     <Link href="/profil">
                         <Image
                             className={styles.profil}
-                            src={currentUser?.picture
-                                ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
-                                : `https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png`
+                            src={
+                                currentUser?.picture
+                                    ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
+                                    : `https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png`
                             }
                             alt="profil"
                             width={40}
@@ -87,5 +90,5 @@ export default function Menu() {
                 </div>
             </div>
         </section>
-    );
+    )
 }

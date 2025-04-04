@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.4",
     "@mui/x-data-grid": "^7.26.0",
+    "framer-motion": "^12.6.3",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.475.0",
