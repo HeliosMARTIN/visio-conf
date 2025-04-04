@@ -30,7 +30,6 @@ export default function SignupForm() {
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
                 )
-
             if (msg.signup_response) {
                 if (!msg.signup_response.etat) {
                     setError("Signup failed. Please try again.")
