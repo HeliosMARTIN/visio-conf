@@ -25,7 +25,7 @@ export default function Menu() {
                 </div>
                 <div>
                     <ul className={styles.allIcones}>
-                        <Link href="/discussions" className={styles.link}>
+                        <Link href="/discussion" className={styles.link}>
                             <Image
                                 src="/conversation.svg"
                                 alt="Icone Conversation"
