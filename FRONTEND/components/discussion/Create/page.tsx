@@ -1,15 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useSocket } from '@/context/SocketProvider';
+import { useAppContext } from '@/context/AppContext';
 import { X, CirclePlus, Send } from 'lucide-react';
-
-interface User {
-  id: string;
-  firstname: string;
-  lastname: string;
-  picture: string;
-}
+import { User } from '@/types/User';
 
 interface CreateDiscussionProps {
   onDiscussionCreated: () => void;
@@ -25,15 +19,23 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
   handler 
 }) => {
   const [isCreating, setIsCreating] = useState(false);
-  const { currentUser } = useSocket();
+  const { currentUser } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const filteredSearchResults = searchResults.filter(user => {
-    const isCurrentUser = user.id === currentUser?.userId;
-    const isAlreadySelected = selectedUsers.some(selectedUser => selectedUser.id === user.id);
+    // Compatibilité avec les deux types d'ID
+    const currentUserId = currentUser?.id || currentUser?.userId;
+    const userId = user.id || user.userId;
+    
+    const isCurrentUser = userId === currentUserId;
+    const isAlreadySelected = selectedUsers.some(selectedUser => 
+      (selectedUser.id && selectedUser.id === userId) || 
+      (selectedUser.userId && selectedUser.userId === userId)
+    );
+    
     return !isCurrentUser && !isAlreadySelected;
   });
 
@@ -60,7 +62,9 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
   };
 
   const removeSelectedUser = (userId: string) => {
-    setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
+    setSelectedUsers(selectedUsers.filter(user => 
+      (user.id !== userId) && (user.userId !== userId)
+    ));
   };
 
   const handleCreateDiscussion = async () => {
@@ -72,18 +76,21 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
     try {
       setIsCreating(true);
       
-
-      const otherUserIds = selectedUsers.map(user => user.id);
+      // Compatibilité avec les deux types d'ID
+      const currentUserId = currentUser.id || currentUser.userId;
+      
+      const otherUserIds = selectedUsers.map(user => user.id || user.userId);
       
       const message_request = {
         message_send_request: {
-          userEmail: currentUser.userId,
+          userEmail: currentUserId,
           otherUserEmail: otherUserIds,
           text: message,
-          discussion_creator: currentUser.userId,
-          discussion_uuid: crypto.randomUUID(), // Génère un UUID unique
+          discussion_creator: currentUserId,
+          discussion_uuid: crypto.randomUUID(),
           message_content: message,
-          message_uuid: crypto.randomUUID() // Génère un UUID unique pour le message
+          message_uuid: crypto.randomUUID(),
+          message_date_create: new Date().toISOString()
         }
       };
 
@@ -104,11 +111,11 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
       <div className="search-users">
         <div className="selected-users">
           {selectedUsers.map(user => (
-            <div key={user.id} className="selected-user-chip">
+            <div key={user.id || user.userId} className="selected-user-chip">
               <span>{`${user.firstname} ${user.lastname}`}</span>
               <X 
                 size={16}
-                onClick={() => removeSelectedUser(user.id)}
+                onClick={() => removeSelectedUser(user.id || user.userId || '')}
                 className="remove-user"
               />
             </div>
@@ -129,12 +136,12 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
           <h4>Résultats pertinents :</h4>
           {filteredSearchResults.map(user => (
             <div
-              key={user.id}
+              key={user.id || user.userId}
               onClick={() => handleUserSelect(user)}
               className="search-result-item"
             >
               <div className="user-info">
-                <img src={user.picture} alt="" className="user-avatar" />
+                <img src={user.picture || "/images/default_profile_picture.png"} alt="" className="user-avatar" />
                 <span>{`${user.firstname} ${user.lastname}`}</span>
               </div>
               <CirclePlus size={16} className="add-user" />

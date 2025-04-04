@@ -10,12 +10,16 @@ class MessagesService {
     "message_send_response",
     "discuss_list_response",
     "users_shearch_response",
+    "discuss_remove_member_response",
+    "discuss_remove_message_response",
   ];
   listeDesMessagesRecus = [
     "messages_get_request",
     "message_send_request",
     "discuss_list_request",
     "users_shearch_request",
+    "discuss_remove_member_request",
+    "discuss_remove_message_request",
   ];
 
   constructor(c, nom) {
@@ -39,7 +43,7 @@ class MessagesService {
       );
       console.log(mesg);
     }
-
+    // CAS : DEMANDE DE LA LISTE DES MESSAGES D'UNE DISCUSSION
     if (mesg.messages_get_request) {
       try {
         const { convId } = mesg.messages_get_request;
@@ -109,25 +113,42 @@ class MessagesService {
         } 
         // Cas d'un message dans une discussion existante
         else {
-          const discussion = await Discussion.findOne({ discussion_uuid });
+          const discussion = await Discussion.findOne({ discussion_uuid })
+            .populate({
+              path: 'discussion_members',
+              model: 'User',
+              select: '_id email'
+            });
           
           if (!discussion) {
             throw new Error("Discussion non trouvée");
           }
-    
-          // Vérifier que l'utilisateur fait partie de la discussion
-          if (!discussion.discussion_members.includes(userEmail)) {
+      
+          // Récupérer l'utilisateur à partir de son email
+          const user = await User.findOne({ email: userEmail });
+          if (!user) {
+            throw new Error("Utilisateur non trouvé");
+          }
+      
+          // Vérifier que l'utilisateur fait partie de la discussion en utilisant son _id
+          const isMember = discussion.discussion_members.some(member => 
+            member._id.toString() === user._id.toString()
+          );
+      
+          if (!isMember) {
+            console.log("Membres de la discussion:", discussion.discussion_members.map(m => m._id));
+            console.log("ID de l'utilisateur:", user._id);
             throw new Error("Utilisateur non autorisé à envoyer des messages dans cette discussion");
           }
-    
-          // Ajouter le nouveau message à la discussion
+      
+          // Ajouter le nouveau message à la discussion en utilisant l'ID de l'utilisateur
           discussion.discussion_messages.push({
             message_uuid,
-            message_sender: userEmail,
+            message_sender: user._id, // Utiliser l'ID au lieu de l'email
             message_content,
             message_date_create: message_date_create || new Date()
           });
-    
+      
           await discussion.save();
         }
     

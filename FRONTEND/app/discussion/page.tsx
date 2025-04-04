@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSocket } from "@/context/SocketProvider";
+import { useAppContext } from "@/context/AppContext";
 import { useRouter } from "next/navigation";
-import { Discussion, Message } from "@/types";
+import { Discussion } from "@/types";
+import { Message } from "@/types/Message";
 import { CreateDiscussion } from "@/components/discussion/Create/page";
 import DiscussionsList from "@/components/discussion/DiscussList/DiscussList";
 import ChatWindow from "@/components/discussion/ChatWindow/ChatWindow";
@@ -11,7 +12,7 @@ import { sortDiscussionsByLatestMessage } from "@/utils/discussion";
 import "./discussion.css";
 
 export default function DiscussionPage() {
-    const { controleur, canal, currentUser } = useSocket();
+    const { controleur, canal, currentUser } = useAppContext();
     const router = useRouter();
     const [discussions, setDiscussions] = useState<Discussion[]>([]);
     const [selectedDiscussion, setSelectedDiscussion] = useState<string | null>(null);
@@ -39,6 +40,8 @@ export default function DiscussionPage() {
     const handler = {
         nomDInstance,
         traitementMessage: (msg: any) => {
+        console.log("DEBUG: DiscussionPage - currentUser", currentUser);
+
             if (verbose || controleur?.verboseall) {
                 console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg);
             }
@@ -74,8 +77,19 @@ export default function DiscussionPage() {
                 if (!msg.message_send_response.etat) {
                     setError(`Erreur: ${msg.message_send_response.error || "Inconnu"}`);
                 } else {
-                    fetchDiscussions(); // Rafraîchir la liste des discussions après création
-                    setShowCreateDiscussion(false); // Fermer la fenêtre de création
+                    fetchDiscussions(); // Rafraîchir la liste des discussions
+                    
+                    // Rafraîchir les messages de la discussion actuelle
+                    if (selectedDiscussion) {
+                        const messageGetRequest = {
+                            messages_get_request: {
+                                convId: selectedDiscussion
+                            }
+                        };
+                        controleur.envoie(handler, messageGetRequest);
+                    }
+                    
+                    setShowCreateDiscussion(false);
                 }
             }
         }
@@ -127,7 +141,10 @@ export default function DiscussionPage() {
         if (!currentUser) return;
         
         try {
-            const message = { discuss_list_request: currentUser.userId };
+            // Compatibilité avec les deux types d'ID
+            const userId = currentUser.id || currentUser.userId;
+            
+            const message = { discuss_list_request: userId };
             controleur.envoie(handler, message);
         } catch (err) {
             setError("Erreur lors de la récupération des discussions.");
@@ -161,7 +178,8 @@ export default function DiscussionPage() {
                 {error && <div className="error">{error}</div>}
                 <DiscussionsList 
                     discussions={discussions}
-                    currentUserId={currentUser.userId}
+                    currentUserId={currentUser.id || currentUser.userId || ''}
+                    currentUserEmail={currentUser.email || ''} // Add the email prop
                     onSelectDiscussion={handleSelectDiscussion}
                     selectedDiscussionId={selectedDiscussion}
                     onNewDiscussClick={toggleCreateDiscussion}

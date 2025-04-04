@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Discussion, Message, User } from '@/types';
+import { Discussion} from '@/types';
+import { User } from '@/types/User';
+import { Message } from '@/types/Message';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useSocket } from '@/context/SocketProvider';
+import { useAppContext } from '@/context/AppContext';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatWindowProps {
@@ -16,7 +18,7 @@ interface ChatWindowProps {
 const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUser }) => {
   const [newMessage, setNewMessage] = useState('');
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
-  const { controleur } = useSocket();
+  const { controleur } = useAppContext();
   const nomDInstance = "ChatWindow";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +38,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUs
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
+  const isCurrentUserMessage = (message: Message): boolean => {
+    const senderId = message.message_sender.id || message.message_sender._id || message.message_sender.userId || message.message_sender.uuid;
+    const currentUserId = currentUser.id || currentUser._id || currentUser.userId || currentUser.uuid;
+    
+    // Si l'email est disponible, c'est la méthode la plus fiable pour comparer
+    if (message.message_sender.email && currentUser.email) {
+      return message.message_sender.email === currentUser.email;
+    }
+    
+    // Sinon, essayer les différents IDs
+    return senderId === currentUserId;
   };
 
   const handler = {
@@ -104,6 +120,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUs
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !controleur || !currentUser) return;
+    console.log("Message sender:", currentUser);
 
     const messageUuid = uuidv4();
     const currentDate = new Date();
@@ -113,11 +130,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUs
       message_uuid: messageUuid,
       message_content: newMessage.trim(),
       message_sender: {
-        _id: currentUser.userId,
+        id: currentUser.userId,
         userId: currentUser.userId,
         firstname: currentUser.firstname || "",
         lastname: currentUser.lastname || "",
-        picture: currentUser.picture || ""
+        picture: currentUser.picture || "",
+        email: currentUser.email,
+        uuid: currentUser.uuid
       },
       message_date_create: currentDate.toISOString(),
       message_status: "sent"
@@ -128,7 +147,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUs
     
     const message = {
       message_send_request: {
-        userEmail: currentUser.userId,
+        userEmail: currentUser.email,
         discussion_uuid: discussion.discussion_uuid,
         message_uuid: messageUuid,
         message_content: newMessage.trim(),
@@ -154,15 +173,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ discussion, messages, currentUs
         {localMessages.map((message) => (
           <div
             key={message.message_uuid}
-            className={`message ${message.message_sender._id === currentUser.userId ? 'sent' : 'received'}`}
+            className={`message ${isCurrentUserMessage(message) ? 'sent' : 'received'}`}
           >
             <div className="message-content">
               {message.message_content}
             </div>
             <div className="message-info">
               <span className="sender-name">
-                {message.message_sender._id === currentUser.userId ? 'Vous' : 
-                 `${message.message_sender.firstname} ${message.message_sender.lastname} `}
+                {isCurrentUserMessage(message) ? 'Vous' : 
+                 `${message.message_sender.firstname || ''} ${message.message_sender.lastname || ''}`}
               </span>
               <span className="message-time">
                 {formatDistanceToNow(new Date(message.message_date_create), {

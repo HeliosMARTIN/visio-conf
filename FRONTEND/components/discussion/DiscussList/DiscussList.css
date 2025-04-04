@@ -54,6 +54,7 @@ background-color: white;
     display: flex;
     flex-direction: column;
     gap: 5px;
+    width: 100%;
 }
 
 .discussion-header {

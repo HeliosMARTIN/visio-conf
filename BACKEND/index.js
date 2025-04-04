@@ -11,6 +11,10 @@ import CanalSocketio from "./canalsocketio.js"
 import Controleur from "./controleur.js"
 import UsersService from "./services/Users.js"
 import MessagesService from "./services/Messages.js"
+import AwsS3Service from "./services/AwsS3Service.js"
+import RolesService from "./services/Roles.js"
+import PermsService from "./services/Perms.js"
+import SocketIdentificationService from "./services/SocketIdentification.js"
 
 dotenv.config()
 
@@ -22,6 +26,24 @@ const app = express()
 const port = process.env.PORT || 3220
 const server = createServer(app)
 const io = new Server(server, { cors: { origin: "*" } })
+
+io.on("connection", (socket) => {
+    socket.on("authenticate", async (token) => {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET)
+            const userId = decoded.userId
+            await SocketIdentificationService.updateUserSocket(
+                userId,
+                socket.id
+            )
+            console.log(
+                `Socket updated for user ${userId} with socket id ${socket.id}`
+            )
+        } catch (err) {
+            console.error("Authentication failed:", err.message)
+        }
+    })
+})
 
 server.listen(port, () => {
     console.log(`Visioconf app listening on port ${port}`)
@@ -37,9 +59,12 @@ controleur.verboseall = verbose
 // Instanciation des services pour les initialiser et déclencher leur enregistrement auprès du contrôleur
 const usersService = new UsersService(controleur, "UsersService")
 const messagesService = new MessagesService(controleur, "MessagesService")
+const rolesService = new RolesService(controleur, "RolesService")
+const permsService = new PermsService(controleur, "PermsService")
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
+const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
 
-main().catch((err) => console.log(err))
+main().catch((err) => console.error("Error during startup:", err))
 
 async function main() {
     await mongoose.connect(process.env.MONGO_URI, {
