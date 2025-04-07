@@ -8,4 +8,6 @@ export interface User {
     email: string
     picture?: string
     socket_id? : string
+    phone: string
+
 }
