@@ -39,7 +39,7 @@
 
 .navButton:hover:not(:disabled) {
   background-color: #f3f4f6;
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .navButton:disabled {
@@ -60,7 +60,7 @@
 
 .breadcrumbLink {
   cursor: pointer;
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .breadcrumbLink:hover {
@@ -92,12 +92,12 @@
   font-size: 14px;
   background-color: #f9fafb;
   transition: all 0.2s ease;
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1E3664;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
@@ -126,7 +126,7 @@
 
 .viewButton.active {
   background-color: #f3f4f6;
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .listHeader {
@@ -148,7 +148,7 @@
 }
 
 .listHeaderItem:hover {
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .nameHeader {

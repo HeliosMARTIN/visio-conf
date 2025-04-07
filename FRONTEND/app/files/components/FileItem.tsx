@@ -79,7 +79,7 @@ export default function FileItem({
     }
 
     const getIconColor = () => {
-        if (file.type === "folder") return "#4F46E5"
+        if (file.type === "folder") return "#1E3664"
 
         const extension = file.extension?.toLowerCase() || ""
         const mimeType = file.mimeType || ""
@@ -184,7 +184,7 @@ export default function FileItem({
                 <motion.div
                     className={styles.fileName}
                     animate={{
-                        color: isHovered ? "#4F46E5" : "#1f2937",
+                        color: isHovered ? "#1E3664" : "#1f2937",
                     }}
                 >
                     {file.name}
