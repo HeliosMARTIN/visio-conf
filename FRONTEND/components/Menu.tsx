@@ -9,7 +9,6 @@ import { useAppContext } from "@/context/AppContext"
 export default function Menu({ children }: { children: React.ReactNode }) {
     const { currentUser } = useAppContext()
     const [collapsed, setCollapsed] = useState(true)
-
     return (
         <div className={styles.mainLayout}>
             <div
@@ -41,7 +40,7 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <nav className={styles.menuItems}>
-                        <Link href="/discussions" className={styles.menuItem}>
+                        <Link href="/discussion" className={styles.menuItem}>
                             <div className={styles.menuIcon}>
                                 <Image
                                     src="/conversation.svg"

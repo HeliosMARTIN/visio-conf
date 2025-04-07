@@ -1,0 +1,108 @@
+.create-discussion {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .search-users {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .selected-users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .selected-user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    border-radius: 16px;
+  }
+  
+  .remove-user {
+    cursor: pointer;
+  }
+  
+  .search-input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+  }
+  
+  .search-results {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+  }
+  
+  .search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .message-input-container {
+    width: 100%;
+  }
+  
+  .message-input {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+  }
+  
+  .error-message {
+    color: #ff0000;
+    font-size: 14px;
+  }
+  
+  .create-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #56B454;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .create-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
