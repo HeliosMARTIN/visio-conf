@@ -15,7 +15,9 @@ import AwsS3Service from "./services/AwsS3Service.js";
 import RolesService from "./services/Roles.js";
 import PermsService from "./services/Perms.js";
 import SocketIdentificationService from "./services/SocketIdentification.js";
-import WebRTC from "./services/WebRTC.js";
+import FileService from "./services/FileService.js";
+import ThumbnailService from "./services/ThumbnailService.js";
+
 dotenv.config();
 
 // Pour __dirname en ES modules
@@ -46,7 +48,7 @@ server.listen(port, () => {
   console.log(`Visioconf app listening on port ${port}`);
 });
 app.use(cors());
-app.use(express.static(path.join(__dirname, "../FRONTEND/public")));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 var verbose = process.env.VERBOSE === "true";
@@ -60,7 +62,8 @@ const rolesService = new RolesService(controleur, "RolesService");
 const permsService = new PermsService(controleur, "PermsService");
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio");
 const awsS3Service = new AwsS3Service(controleur, "AwsS3Service");
-const webRTC = new WebRTC(controleur, "WebRTC");
+const fileService = new FileService(controleur, "FileService");
+const thumbnailService = new ThumbnailService(controleur, "FileService");
 
 main().catch((err) => console.error("Error during startup:", err));
 

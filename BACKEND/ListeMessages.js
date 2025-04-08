@@ -25,6 +25,15 @@ export const ListeMessagesEmis = [
   "delete_role_request", // {role_id : ObjectId}
   //---- PERMISSIONS ----
   "perms_list_request", // No data
+  //---- FILES ----
+  "files_list_request", // { folderId?: string }
+  "file_upload_request", // { name: string, size: number, mimeType: string, extension: string, parentId?: string }
+  "file_delete_request", // { fileId: string }
+  "file_rename_request", // { fileId: string, newName: string }
+  "file_move_request", // { fileId: string, newParentId: string }
+  "file_share_request", // { fileId: string, isPublic: boolean, userIds?: string[] }
+  "folder_create_request", // { name: string, parentId?: string }
+  "file_download_request", // { fileId: string }
   //---- VISIO&CALL ----
   "new_call",
   "send_offer",
@@ -62,6 +71,15 @@ export const ListeMessagesRecus = [
   "deleted_role", // {state : boolean}
   //---- PERMISSIONS ----
   "perms_list_response", // { perms?: Permission[]}
+  //---- FILES ----
+  "files_list_response", // { etat: boolean, files?: File[], error?: string }
+  "file_upload_response", // { etat: boolean, error?: string, fileId?: string, fileName?: string, signedUrl?: string }
+  "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
+  "file_rename_response", // { etat: boolean, fileId?: string, newName?: string, error?: string }
+  "file_move_response", // { etat: boolean, fileId?: string, newParentId?: string, error?: string }
+  "file_share_response", // { etat: boolean, fileId?: string, error?: string }
+  "folder_create_response", // { etat: boolean, folderId?: string, folderName?: string, error?: string }
+  "file_download_response", // { etat: boolean, fileId?: string, downloadUrl?: string, error?: string }
   //---- VISIO&CALL ----
   "receive_offer",
   "receive_answer",

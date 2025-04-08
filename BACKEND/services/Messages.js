@@ -1,5 +1,5 @@
 import Discussion from "../models/discussion.js";
-import User from "../models/discussion.js";
+import User from "../models/user.js";
 import { v4 as uuidv4 } from "uuid";
 
 class MessagesService {
@@ -78,104 +78,147 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
-    // CAS : DEMANDE D'ENVOI DE MESSAGE & CREATION DE DISCUSSION
+
     if (mesg.message_send_request) {
       try {
-        if (mesg.message_send_request.otherUserEmail != "undefined") {
-          const { userEmail, otherUserEmail, text } = mesg.message_send_request;
+        const {
+          userEmail,
+          otherUserEmail,
+          discussion_creator,
+          discussion_uuid,
+          message_content,
+          message_uuid,
+          message_date_create
+        } = mesg.message_send_request;
+    
+        // Cas d'une nouvelle discussion
+        if (otherUserEmail) {
           const discussionMembers = [userEmail, ...otherUserEmail];
-          if (otherUserEmail.Lenght === 1) {
-            await Discussion.findOneAndUpdate(
+          
+          const newDiscussion = {
+            discussion_uuid: discussion_uuid,
+            discussion_creator: discussion_creator,
+            discussion_members: discussionMembers,
+            discussion_messages: [
               {
-                discussion_members: {
-                  $all: [userEmail, otherUserEmail],
-                },
-              },
-              {
-                $push: {
-                  discussion_messages: {
-                    _id: uuidv4(),
-                    message_sender: userEmail,
-                    text: text,
-                    timestamp: new Date(),
-                  },
-                },
-              },
-              { new: true, upsert: true }
-            );
-          } else {
-            await Discussion.create({
-              discussion_members: discussionMembers,
-              discussion_messages: [
-                {
-                  _id: uuidv4(),
-                  message_sender: userEmail,
-                  text: text,
-                  timestamp: new Date(),
-                },
-              ],
+                message_uuid: message_uuid,
+                message_sender: userEmail,
+                message_content: message_content,
+                message_date_create: message_date_create || new Date()
+              }
+            ]
+          };
+    
+          await Discussion.create(newDiscussion);
+        } 
+        // Cas d'un message dans une discussion existante
+        else {
+          const discussion = await Discussion.findOne({ discussion_uuid })
+            .populate({
+              path: 'discussion_members',
+              model: 'User',
+              select: '_id email'
             });
+          
+          if (!discussion) {
+            throw new Error("Discussion non trouvée");
           }
-        } else if (mesg.message_send_request.convId != "undefined") {
-          const { userEmail, convId, text } = mesg.message_send_request;
-          await Discussion.findOneAndUpdate(
-            {
-              convId: convId,
-            },
-            {
-              $push: {
-                discussion_messages: {
-                  _id: uuidv4(),
-                  message_sender: userEmail,
-                  text: text,
-                  timestamp: new Date(),
-                },
-              },
-            },
-            { new: true, upsert: true }
+      
+          // Récupérer l'utilisateur à partir de son email
+          const user = await User.findOne({ email: userEmail });
+          if (!user) {
+            throw new Error("Utilisateur non trouvé");
+          }
+      
+          // Vérifier que l'utilisateur fait partie de la discussion en utilisant son _id
+          const isMember = discussion.discussion_members.some(member => 
+            member._id.toString() === user._id.toString()
           );
+      
+          if (!isMember) {
+            console.log("Membres de la discussion:", discussion.discussion_members.map(m => m._id));
+            console.log("ID de l'utilisateur:", user._id);
+            throw new Error("Utilisateur non autorisé à envoyer des messages dans cette discussion");
+          }
+      
+          // Ajouter le nouveau message à la discussion en utilisant l'ID de l'utilisateur
+          discussion.discussion_messages.push({
+            message_uuid,
+            message_sender: user._id, // Utiliser l'ID au lieu de l'email
+            message_content,
+            message_date_create: message_date_create || new Date()
+          });
+      
+          await discussion.save();
         }
+    
         const message = {
           message_send_response: {
-            etat: true,
+            etat: true
           },
-          id: [mesg.id],
+          id: [mesg.id]
         };
         this.controleur.envoie(this, message);
+    
       } catch (error) {
+        console.error("Erreur lors de l'envoi du message:", error);
         const message = {
           message_send_response: {
             etat: false,
-            error: error.message,
+            error: error.message
           },
-          id: [mesg.id],
+          id: [mesg.id]
         };
         this.controleur.envoie(this, message);
       }
     }
-    // CAS : DEMANDE DE LA LISTE DES DISCUSSION DE L'UTILISATEUR
     if (mesg.discuss_list_request) {
       try {
         const userId = mesg.discuss_list_request;
         const discussions = await Discussion.find({
           discussion_members: userId,
         })
-          .select(
-            "discussion_uuid discussion_name discussion_description discussion_type discussion_date_create"
-          )
-          .populate({
-            path: "discussion_messages.message_sender",
-            select: "firstname lastname picture socket_id uuid",
-          });
-
+        .populate({
+          path: "discussion_members",
+          model: "User",
+          select: "_id firstname lastname picture is_online"
+        });
+    
+        const formattedDiscussions = discussions.map(discussion => {
+          // Récupérer le dernier message de la discussion
+          const lastMessage = discussion.discussion_messages.length > 0 
+            ? discussion.discussion_messages[discussion.discussion_messages.length - 1] 
+            : null;
+          
+          return {
+            discussion_uuid: discussion.discussion_uuid,
+            discussion_name: discussion.discussion_name,
+            discussion_description: discussion.discussion_description,
+            discussion_type: discussion.discussion_type,
+            discussion_date_create: discussion.discussion_date_create,
+            discussion_members: discussion.discussion_members.map(member => ({
+              _id: member._id.toString(),
+              firstname: member.firstname,
+              lastname: member.lastname,
+              picture: member.picture,
+              is_online: member.is_online
+            })),
+            // Ajouter le dernier message
+            last_message: lastMessage ? {
+              message_content: lastMessage.message_content,
+              message_date_create: lastMessage.message_date_create,
+              message_sender: lastMessage.message_sender
+            } : null
+          };
+        });
+    
         const message = {
           discuss_list_response: {
             etat: true,
-            messages: discussions,
+            messages: formattedDiscussions,
           },
           id: [mesg.id],
         };
-
         this.controleur.envoie(this, message);
       } catch (error) {
         const message = {
@@ -188,25 +231,36 @@ class MessagesService {
         this.controleur.envoie(this, message);
       }
     }
-    // CAS : RECHERCHE DE CONTACT
+
     if (mesg.users_shearch_request) {
       try {
-        const args = users_shearch_request;
+        const searchQuery = mesg.users_shearch_request;
+        console.log("Recherche avec la requête:", searchQuery);
+    
         const query = {
           $or: [
-            { firstname: new RegExp(args, "i") },
-            { lastname: new RegExp(args, "i") },
-            { email: new RegExp(args, "i") },
+            { firstname: new RegExp(searchQuery, "i") },
+            { lastname: new RegExp(searchQuery, "i") },
+            { email: new RegExp(searchQuery, "i") },
           ],
         };
-        const users = await User.find(query, "firstname lastname email");
-
+    
+        console.log("Query MongoDB:", query);
+        
+        // Assurez-vous que vous importez le bon modèle
+        const users = await User.find(query).select("_id firstname lastname email picture");
+        console.log("Utilisateurs trouvés:", users);
+    
         const formattedUsers = users.map((user) => ({
-          id: user._id,
+          id: user._id.toString(), // Convertir l'ObjectId en string
           firstname: user.firstname,
           lastname: user.lastname,
-          picture: user.picture,
+          email: user.email,
+          picture: user.picture || "",
         }));
+    
+        console.log("Utilisateurs formatés:", formattedUsers);
+    
         const message = {
           users_shearch_response: {
             etat: true,
@@ -214,10 +268,10 @@ class MessagesService {
           },
           id: [mesg.id],
         };
-        console.log("on renvoie la response");
-
+    
         this.controleur.envoie(this, message);
       } catch (error) {
+        console.error("Erreur lors de la recherche:", error);
         const message = {
           users_shearch_response: {
             etat: false,

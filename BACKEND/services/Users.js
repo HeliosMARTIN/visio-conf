@@ -139,7 +139,7 @@ class UsersService {
             try {
                 const users = await User.find(
                     {},
-                    "firstname lastname email picture"
+                    "firstname lastname email picture phone"
                 )
                 const formattedUsers = users.map((user) => ({
                     id: user._id,
@@ -147,6 +147,7 @@ class UsersService {
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
+                    phone: user.phone,
                 }))
                 const message = {
                     users_list_response: {
@@ -197,6 +198,7 @@ class UsersService {
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
+                    phone: user.phone,
                 }
                 const message = {
                     update_user_response: {
@@ -224,7 +226,7 @@ class UsersService {
                 const { userId } = mesg.user_info_request
                 const user = await User.findById(
                     userId,
-                    "firstname lastname email picture"
+                    "firstname lastname email picture phone"
                 )
 
                 if (user) {
@@ -234,6 +236,7 @@ class UsersService {
                         lastname: user.lastname,
                         email: user.email,
                         picture: user.picture,
+                        phone: user.phone,
                     }
                     const message = {
                         user_info_response: { etat: true, userInfo },

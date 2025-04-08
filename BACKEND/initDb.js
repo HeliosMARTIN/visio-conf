@@ -344,7 +344,7 @@ const initializeDiscussions = async () => {
         {
             discussion_uuid: uuidv4(),
             discussion_creator: user3._id,
-            ids: [user3._id, user4._id],
+            discussion_members: [user3._id, user4._id],
         },
     ]
 
