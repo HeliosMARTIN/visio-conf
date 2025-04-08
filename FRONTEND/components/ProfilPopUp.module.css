@@ -1,8 +1,5 @@
 .container {
     display: inline-block;
-    position: absolute !important;
-    left: 20px;
-    bottom: 20px;
   }
   
   .profileButton {
