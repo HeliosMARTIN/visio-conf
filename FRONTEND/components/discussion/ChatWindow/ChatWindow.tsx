@@ -46,16 +46,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
     const isCurrentUserMessage = (message: Message): boolean => {
-        const senderId =
-            message.message_sender.id ||
-            message.message_sender._id ||
-            message.message_sender.userId ||
-            message.message_sender.uuid
-        const currentUserId =
-            currentUser.id ||
-            currentUser._id ||
-            currentUser.userId ||
-            currentUser.uuid
+        const senderId = message.message_sender.id
+
+        const currentUserId = currentUser.id
 
         // Si l'email est disponible, c'est la méthode la plus fiable pour comparer
         if (message.message_sender.email && currentUser.email) {
@@ -150,13 +143,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             message_uuid: messageUuid,
             message_content: newMessage.trim(),
             message_sender: {
-                id: currentUser.userId,
-                userId: currentUser.userId,
+                id: currentUser.id,
                 firstname: currentUser.firstname || "",
                 lastname: currentUser.lastname || "",
                 picture: currentUser.picture || "",
                 email: currentUser.email,
-                uuid: currentUser.uuid,
                 phone: currentUser.phone || "",
             },
             message_date_create: currentDate.toISOString(),

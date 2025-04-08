@@ -27,14 +27,12 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
 
     const filteredSearchResults = searchResults.filter((user) => {
         // Compatibilité avec les deux types d'ID
-        const currentUserId = currentUser?.id || currentUser?.userId
-        const userId = user.id || user.userId
+        const currentUserId = currentUser?.id
+        const userId = user.id
 
         const isCurrentUser = userId === currentUserId
         const isAlreadySelected = selectedUsers.some(
-            (selectedUser) =>
-                (selectedUser.id && selectedUser.id === userId) ||
-                (selectedUser.userId && selectedUser.userId === userId)
+            (selectedUser) => selectedUser.id && selectedUser.id === userId
         )
 
         return !isCurrentUser && !isAlreadySelected
@@ -63,11 +61,7 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
     }
 
     const removeSelectedUser = (userId: string) => {
-        setSelectedUsers(
-            selectedUsers.filter(
-                (user) => user.id !== userId && user.userId !== userId
-            )
-        )
+        setSelectedUsers(selectedUsers.filter((user) => user.id !== userId))
     }
 
     const handleCreateDiscussion = async () => {
@@ -82,11 +76,9 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
             setIsCreating(true)
 
             // Compatibilité avec les deux types d'ID
-            const currentUserId = currentUser.id || currentUser.userId
+            const currentUserId = currentUser.id
 
-            const otherUserIds = selectedUsers.map(
-                (user) => user.id || user.userId
-            )
+            const otherUserIds = selectedUsers.map((user) => user.id)
 
             const message_request = {
                 message_send_request: {
@@ -117,17 +109,12 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
             <div className="search-users">
                 <div className="selected-users">
                     {selectedUsers.map((user) => (
-                        <div
-                            key={user.id || user.userId}
-                            className="selected-user-chip"
-                        >
+                        <div key={user.id} className="selected-user-chip">
                             <span>{`${user.firstname} ${user.lastname}`}</span>
                             <X
                                 size={16}
                                 onClick={() =>
-                                    removeSelectedUser(
-                                        user.id || user.userId || ""
-                                    )
+                                    removeSelectedUser(user.id || "")
                                 }
                                 className="remove-user"
                             />
@@ -149,7 +136,7 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                     <h4>Résultats pertinents :</h4>
                     {filteredSearchResults.map((user) => (
                         <div
-                            key={user.id || user.userId}
+                            key={user.id}
                             onClick={() => handleUserSelect(user)}
                             className="search-result-item"
                         >

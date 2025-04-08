@@ -174,7 +174,7 @@ export default function DiscussionPage() {
 
         try {
             // Compatibilité avec les deux types d'ID
-            const userId = currentUser.id || currentUser.userId
+            const userId = currentUser.id
 
             const message = { discuss_list_request: userId }
             controleur.envoie(handler, message)
@@ -210,7 +210,7 @@ export default function DiscussionPage() {
                 {error && <div className="error">{error}</div>}
                 <DiscussionsList
                     discussions={discussions}
-                    currentUserId={currentUser.id || currentUser.userId || ""}
+                    currentUserId={currentUser.id || ""}
                     currentUserEmail={currentUser.email || ""} // Add the email prop
                     onSelectDiscussion={handleSelectDiscussion}
                     selectedDiscussionId={selectedDiscussion}
