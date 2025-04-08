@@ -45,7 +45,7 @@ class ThumbnailService {
             mesg.file_upload_response.generateThumbnail
         ) {
             try {
-                const { fileId } = mesg.file_upload_response
+                const { fileId, thumbnailUrl } = mesg.file_upload_response
 
                 // Find the file
                 const file = await File.findOne({ id: fileId })
@@ -59,8 +59,10 @@ class ThumbnailService {
                         const thumbnailPath =
                             await this.awsS3Service.generateThumbnail(file.path)
 
-                        // Update the file record with the thumbnail path
-                        file.thumbnail = thumbnailPath
+                        // Update the file record with the thumbnail path and URL
+                        file.thumbnail =
+                            thumbnailUrl ||
+                            this.awsS3Service.getPublicUrl(thumbnailPath)
                         await file.save()
 
                         if (this.verbose)

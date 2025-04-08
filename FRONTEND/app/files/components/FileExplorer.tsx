@@ -28,13 +28,13 @@ interface FileExplorerProps {
     currentPath: string[]
     isLoading: boolean
     onFetchFiles: (folderId?: string) => void
-    onCreateFolder: (name: string, parentId?: string) => void
-    onUploadFile: (file: File, parentId?: string) => void
+    onCreateFolder: (name: string) => void
+    onUploadFile: (file: File) => void
     onDeleteFile: (fileId: string) => void
     onRenameFile: (fileId: string, newName: string) => void
     onMoveFile: (fileId: string, newParentId: string) => void
     onShareFile: (fileId: string, isPublic: boolean) => void
-    onNavigate: (folderId?: string, folderName?: string) => void
+    onNavigate: (folderId?: string) => void
     onDownloadFile?: (fileId: string) => void
 }
 
@@ -64,6 +64,20 @@ export default function FileExplorer({
     const [showShareModal, setShowShareModal] = useState(false)
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Get folder names for breadcrumbs
+    const [folderNames, setFolderNames] = useState<Record<string, string>>({})
+
+    useEffect(() => {
+        // Update folder names from files
+        const newFolderNames: Record<string, string> = {}
+        files.forEach((file) => {
+            if (file.type === "folder") {
+                newFolderNames[file.id] = file.name
+            }
+        })
+        setFolderNames((prev) => ({ ...prev, ...newFolderNames }))
+    }, [files])
 
     useEffect(() => {
         let sorted = [...files]
@@ -124,10 +138,14 @@ export default function FileExplorer({
 
     const handleOpenFile = (file: FileItem) => {
         if (file.type === "folder") {
-            onNavigate(file.id, file.name)
+            onNavigate(file.id)
         } else {
-            // Handle file opening logic here
-            console.log("Opening file:", file.name)
+            // For image files, open the thumbnail or download
+            if (file.mimeType?.startsWith("image/") && file.thumbnail) {
+                window.open(file.thumbnail, "_blank")
+            } else if (onDownloadFile) {
+                onDownloadFile(file.id)
+            }
         }
     }
 
@@ -160,12 +178,7 @@ export default function FileExplorer({
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0]
-            onUploadFile(
-                file,
-                currentPath.length > 0
-                    ? currentPath[currentPath.length - 1]
-                    : undefined
-            )
+            onUploadFile(file)
 
             // Reset the file input
             if (fileInputRef.current) {
@@ -174,13 +187,8 @@ export default function FileExplorer({
         }
     }
 
-    const handleCreateFolder = (name: string) => {
-        onCreateFolder(
-            name,
-            currentPath.length > 0
-                ? currentPath[currentPath.length - 1]
-                : undefined
-        )
+    const handleConfirmCreateFolder = (name: string) => {
+        onCreateFolder(name)
         setShowCreateFolderModal(false)
     }
 
@@ -192,28 +200,22 @@ export default function FileExplorer({
         }
     }
 
-    const handleConfirmRename = (newName: string) => {
-        if (selectedFile) {
-            onRenameFile(selectedFile.id, newName)
-            setShowRenameModal(false)
-            setSelectedFile(null)
-        }
+    const handleConfirmRename = (fileId: string, newName: string) => {
+        onRenameFile(fileId, newName)
+        setShowRenameModal(false)
+        setSelectedFile(null)
     }
 
-    const handleConfirmMove = (newParentId: string) => {
-        if (selectedFile) {
-            onMoveFile(selectedFile.id, newParentId)
-            setShowMoveModal(false)
-            setSelectedFile(null)
-        }
+    const handleConfirmMove = (fileId: string, newParentId: string) => {
+        onMoveFile(fileId, newParentId)
+        setShowMoveModal(false)
+        setSelectedFile(null)
     }
 
-    const handleConfirmShare = (isPublic: boolean) => {
-        if (selectedFile) {
-            onShareFile(selectedFile.id, isPublic)
-            setShowShareModal(false)
-            setSelectedFile(null)
-        }
+    const handleConfirmShare = (fileId: string, isPublic: boolean) => {
+        onShareFile(fileId, isPublic)
+        setShowShareModal(false)
+        setSelectedFile(null)
     }
 
     const handleNavigateUp = () => {
@@ -231,6 +233,16 @@ export default function FileExplorer({
 
     const handleNavigateHome = () => {
         onNavigate()
+    }
+
+    const handleNavigateToBreadcrumb = (index: number) => {
+        if (index === -1) {
+            // Navigate to root
+            onNavigate()
+        } else {
+            // Navigate to the folder at the specified index
+            onNavigate(currentPath[index])
+        }
     }
 
     return (
@@ -260,18 +272,44 @@ export default function FileExplorer({
                             <>
                                 <span
                                     className={`${styles.breadcrumbItem} ${styles.breadcrumbLink}`}
-                                    onClick={handleNavigateHome}
+                                    onClick={() =>
+                                        handleNavigateToBreadcrumb(-1)
+                                    }
                                 >
                                     Home
                                 </span>
-                                <span className={styles.breadcrumbSeparator}>
-                                    /
-                                </span>
-                                {/* Display the current folder name */}
-                                <span className={styles.breadcrumbItem}>
-                                    {/* This would be the folder name, assuming it's the last item in the path */}
-                                    Current Folder
-                                </span>
+                                {currentPath.map((folderId, index) => (
+                                    <span key={folderId}>
+                                        <span
+                                            className={
+                                                styles.breadcrumbSeparator
+                                            }
+                                        >
+                                            /
+                                        </span>
+                                        <span
+                                            className={`${
+                                                styles.breadcrumbItem
+                                            } ${
+                                                index < currentPath.length - 1
+                                                    ? styles.breadcrumbLink
+                                                    : ""
+                                            }`}
+                                            onClick={() => {
+                                                if (
+                                                    index <
+                                                    currentPath.length - 1
+                                                ) {
+                                                    handleNavigateToBreadcrumb(
+                                                        index
+                                                    )
+                                                }
+                                            }}
+                                        >
+                                            {folderNames[folderId] || "Folder"}
+                                        </span>
+                                    </span>
+                                ))}
                             </>
                         )}
                     </div>
@@ -403,42 +441,45 @@ export default function FileExplorer({
             <AnimatePresence>
                 {showCreateFolderModal && (
                     <CreateFolderModal
-                        onClose={() => setShowCreateFolderModal(false)}
-                        onConfirm={handleCreateFolder}
+                        isOpen={showCreateFolderModal}
+                        onCreateFolder={handleConfirmCreateFolder}
+                        onCloseModal={() => setShowCreateFolderModal(false)}
                     />
                 )}
 
                 {showRenameModal && selectedFile && (
                     <RenameModal
+                        isOpen={showRenameModal}
                         file={selectedFile}
-                        onClose={() => setShowRenameModal(false)}
-                        onConfirm={handleConfirmRename}
+                        onRenameFile={handleConfirmRename}
+                        onCloseModal={() => setShowRenameModal(false)}
                     />
                 )}
 
                 {showDeleteModal && selectedFile && (
                     <DeleteModal
+                        isOpen={showDeleteModal}
                         file={selectedFile}
-                        onClose={() => setShowDeleteModal(false)}
-                        onConfirm={handleConfirmDelete}
+                        onDeleteFile={handleConfirmDelete}
+                        onCloseModal={() => setShowDeleteModal(false)}
                     />
                 )}
 
                 {showMoveModal && selectedFile && (
                     <MoveFileModal
+                        isOpen={showMoveModal}
                         file={selectedFile}
-                        currentPath={currentPath}
-                        onClose={() => setShowMoveModal(false)}
-                        onConfirm={handleConfirmMove}
-                        onFetchFolders={onFetchFiles}
+                        onMoveFile={handleConfirmMove}
+                        onCloseModal={() => setShowMoveModal(false)}
                     />
                 )}
 
                 {showShareModal && selectedFile && (
                     <ShareModal
+                        isOpen={showShareModal}
                         file={selectedFile}
-                        onClose={() => setShowShareModal(false)}
-                        onConfirm={handleConfirmShare}
+                        onShareFile={handleConfirmShare}
+                        onCloseModal={() => setShowShareModal(false)}
                     />
                 )}
             </AnimatePresence>

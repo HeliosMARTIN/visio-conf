@@ -1,25 +1,28 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type React from "react"
 
 import { motion } from "framer-motion"
 import styles from "./Modal.module.css"
 import { X, Copy, Check } from "lucide-react"
-import type { FileItem } from "../../../types/File"
-
-interface ShareModalProps {
-    file: FileItem
-    onClose: () => void
-    onConfirm: (isPublic: boolean) => void
-}
+import type { ShareModalProps } from "./ModalTypes"
 
 export default function ShareModal({
+    isOpen,
     file,
-    onClose,
-    onConfirm,
+    onShareFile,
+    onCloseModal,
 }: ShareModalProps) {
-    const [isPublic, setIsPublic] = useState(file.shared || false)
+    const [isPublic, setIsPublic] = useState(false)
     const [copied, setCopied] = useState(false)
+
+    useEffect(() => {
+        if (file) {
+            setIsPublic(file.shared || false)
+        }
+    }, [file])
+
+    if (!file) return null
 
     const shareUrl = `https://example.com/shared/${file.id}`
 
@@ -31,11 +34,11 @@ export default function ShareModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        onConfirm(isPublic)
+        onShareFile(file.id, isPublic)
     }
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onCloseModal}>
             <motion.div
                 className={styles.modal}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -46,7 +49,10 @@ export default function ShareModal({
             >
                 <div className={styles.modalHeader}>
                     <h3>Share {file.name}</h3>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        className={styles.closeButton}
+                        onClick={onCloseModal}
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -98,7 +104,7 @@ export default function ShareModal({
                         <button
                             type="button"
                             className={styles.cancelButton}
-                            onClick={onClose}
+                            onClick={onCloseModal}
                         >
                             Cancel
                         </button>

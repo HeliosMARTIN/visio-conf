@@ -5,15 +5,12 @@ import type React from "react"
 import { motion } from "framer-motion"
 import styles from "./Modal.module.css"
 import { X } from "lucide-react"
-
-interface CreateFolderModalProps {
-    onClose: () => void
-    onConfirm: (name: string) => void
-}
+import type { CreateFolderModalProps } from "./ModalTypes"
 
 export default function CreateFolderModal({
-    onClose,
-    onConfirm,
+    isOpen,
+    onCreateFolder,
+    onCloseModal,
 }: CreateFolderModalProps) {
     const [folderName, setFolderName] = useState("")
     const [error, setError] = useState("")
@@ -26,11 +23,11 @@ export default function CreateFolderModal({
             return
         }
 
-        onConfirm(folderName.trim())
+        onCreateFolder(folderName.trim())
     }
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onCloseModal}>
             <motion.div
                 className={styles.modal}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -41,7 +38,10 @@ export default function CreateFolderModal({
             >
                 <div className={styles.modalHeader}>
                     <h3>Create New Folder</h3>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        className={styles.closeButton}
+                        onClick={onCloseModal}
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -71,7 +71,7 @@ export default function CreateFolderModal({
                         <button
                             type="button"
                             className={styles.cancelButton}
-                            onClick={onClose}
+                            onClick={onCloseModal}
                         >
                             Cancel
                         </button>

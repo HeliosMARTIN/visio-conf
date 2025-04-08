@@ -6,7 +6,7 @@ import {
     HeadObjectCommand,
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
-import sharp from "sharp"
+import sharp from "sharp" // For image processing and thumbnail generation
 
 class AwsS3Service {
     constructor(controleur, nom) {
@@ -114,6 +114,16 @@ class AwsS3Service {
                 // Check if it's an image and we should generate a thumbnail
                 const shouldGenerateThumbnail = mimeType.startsWith("image/")
 
+                // Generate a public URL for the thumbnail
+                const thumbnailUrl = shouldGenerateThumbnail
+                    ? this.getPublicUrl(
+                          `files/${ownerId}/${fileId}/${fileName.replace(
+                              /(\.[^/.]+)?$/,
+                              "_thumbnail.jpg"
+                          )}`
+                      )
+                    : null
+
                 const message = {
                     file_upload_response: {
                         etat: true,
@@ -121,6 +131,7 @@ class AwsS3Service {
                         fileName,
                         signedUrl,
                         generateThumbnail: shouldGenerateThumbnail,
+                        thumbnailUrl: thumbnailUrl,
                     },
                     id: [mesg.id],
                 }
@@ -281,6 +292,7 @@ class AwsS3Service {
             // Generate a thumbnail using sharp
             const thumbnailBuffer = await sharp(buffer)
                 .resize(200, 200, { fit: "inside" })
+                .jpeg({ quality: 80 })
                 .toBuffer()
 
             // Create a thumbnail path

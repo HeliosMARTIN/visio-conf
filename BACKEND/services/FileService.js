@@ -1,36 +1,34 @@
 import File from "../models/file.js"
 import { v4 as uuidv4 } from "uuid"
 import SocketIdentificationService from "./SocketIdentification.js"
-import AwsS3Service from "./AwsS3Service.js" // Assuming you have this service for S3 operations
 
 class FileService {
-    controleur
-    verbose = false
-    listeDesMessagesEmis = [
-        "files_list_response",
-        "file_upload_response",
-        "file_delete_response",
-        "file_rename_response",
-        "file_move_response",
-        "file_share_response",
-        "folder_create_response",
-        "file_download_response",
-    ]
-    listeDesMessagesRecus = [
-        "files_list_request",
-        "file_upload_request",
-        "file_delete_request",
-        "file_rename_request",
-        "file_move_request",
-        "file_share_request",
-        "folder_create_request",
-        "file_download_request",
-    ]
-
-    constructor(c, nom) {
-        this.controleur = c
+    constructor(controleur, nom) {
+        this.controleur = controleur
         this.nomDInstance = nom
-        this.awsS3Service = new AwsS3Service(c, "AwsS3Service")
+        this.verbose = false
+        this.listeDesMessagesEmis = [
+            "files_list_response",
+            "folders_list_response",
+            "file_upload_response",
+            "file_delete_response",
+            "file_rename_response",
+            "file_move_response",
+            "file_share_response",
+            "folder_create_response",
+            "file_download_response",
+        ]
+        this.listeDesMessagesRecus = [
+            "files_list_request",
+            "folders_list_request",
+            "file_upload_request",
+            "file_delete_request",
+            "file_rename_request",
+            "file_move_request",
+            "file_share_request",
+            "folder_create_request",
+            "file_download_request",
+        ]
 
         if (this.controleur.verboseall || this.verbose)
             console.log(
@@ -67,6 +65,8 @@ class FileService {
                     await SocketIdentificationService.getUserInfoBySocketId(
                         socketId
                     )
+                console.log("ici socket id", socketId)
+
                 if (!userInfo)
                     throw new Error("User not found based on socket id")
 
@@ -126,6 +126,85 @@ class FileService {
             }
         }
 
+        // Handle folders list request (for move file modal)
+        if (mesg.folders_list_request) {
+            try {
+                const socketId = mesg.id
+                if (!socketId) throw new Error("Sender socket id not available")
+
+                // Get user info from socket ID
+                const userInfo =
+                    await SocketIdentificationService.getUserInfoBySocketId(
+                        socketId
+                    )
+                if (!userInfo)
+                    throw new Error("User not found based on socket id")
+
+                const { excludeFolderId } = mesg.folders_list_request
+
+                // Query parameters - only get folders
+                const query = {
+                    ownerId: userInfo.uuid,
+                    type: "folder",
+                    deleted: false,
+                }
+
+                // If excludeFolderId is provided, exclude that folder and its descendants
+                let excludedFolderIds = []
+                if (excludeFolderId) {
+                    // Get the folder to exclude
+                    excludedFolderIds.push(excludeFolderId)
+
+                    // Get all descendant folders to exclude
+                    const descendantFolders =
+                        await this.getAllDescendantFolders(
+                            excludeFolderId,
+                            userInfo.uuid
+                        )
+                    excludedFolderIds = [
+                        ...excludedFolderIds,
+                        ...descendantFolders.map((folder) => folder.id),
+                    ]
+
+                    // Add the excluded folder IDs to the query
+                    query.id = { $nin: excludedFolderIds }
+                }
+
+                // Get folders
+                const folders = await File.find(query).sort({ name: 1 })
+
+                // Format the response
+                const formattedFolders = folders.map((folder) => ({
+                    id: folder.id,
+                    name: folder.name,
+                    type: folder.type,
+                    createdAt: folder.createdAt,
+                    updatedAt: folder.updatedAt,
+                    parentId: folder.parentId,
+                    ownerId: folder.ownerId,
+                }))
+
+                const message = {
+                    folders_list_response: {
+                        etat: true,
+                        folders: formattedFolders,
+                    },
+                    id: [mesg.id],
+                }
+
+                this.controleur.envoie(this, message)
+            } catch (error) {
+                const message = {
+                    folders_list_response: {
+                        etat: false,
+                        error: error.message,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
+
         // Handle file upload request
         if (mesg.file_upload_request) {
             try {
@@ -147,7 +226,7 @@ class FileService {
                 const fileId = uuidv4()
 
                 // Generate a unique path for the file in S3
-                const filePath = `${userInfo.uuid}/${fileId}/${name}`
+                const filePath = `files/${userInfo.uuid}/${fileId}/${name}`
 
                 // Create a new file record
                 const newFile = new File({
@@ -165,23 +244,20 @@ class FileService {
                 // Save the file record
                 await newFile.save()
 
-                // Generate a signed URL for uploading the file to S3
-                const signedUrl = await this.awsS3Service.getSignedUploadUrl(
-                    filePath,
-                    mimeType
-                )
-
-                const message = {
-                    file_upload_response: {
-                        etat: true,
+                // Forward the request to the AwsS3Service to get a signed URL
+                const uploadRequest = {
+                    file_upload_request: {
                         fileId,
                         fileName: name,
-                        signedUrl,
+                        mimeType,
+                        parentId,
+                        ownerId: userInfo.uuid,
                     },
-                    id: [mesg.id],
+                    id: mesg.id,
                 }
 
-                this.controleur.envoie(this, message)
+                // The AwsS3Service will handle the response directly
+                this.controleur.envoie(this, uploadRequest)
             } catch (error) {
                 const message = {
                     file_upload_response: {
@@ -546,20 +622,17 @@ class FileService {
                         "File not found or you don't have permission"
                     )
 
-                // Generate a signed URL for downloading the file from S3
-                const downloadUrl =
-                    await this.awsS3Service.getSignedDownloadUrl(file.path)
-
-                const message = {
-                    file_download_response: {
-                        etat: true,
+                // Forward the request to the AwsS3Service to get a signed URL
+                const downloadRequest = {
+                    file_download_request: {
                         fileId,
-                        downloadUrl,
+                        filePath: file.path,
                     },
-                    id: [mesg.id],
+                    id: mesg.id,
                 }
 
-                this.controleur.envoie(this, message)
+                // The AwsS3Service will handle the response directly
+                this.controleur.envoie(this, downloadRequest)
             } catch (error) {
                 const message = {
                     file_download_response: {
@@ -571,6 +644,33 @@ class FileService {
                 this.controleur.envoie(this, message)
             }
         }
+    }
+
+    // Helper method to get all descendant folders of a given folder
+    async getAllDescendantFolders(folderId, ownerId) {
+        const descendants = []
+
+        // Get immediate children
+        const children = await File.find({
+            parentId: folderId,
+            type: "folder",
+            ownerId: ownerId,
+            deleted: false,
+        })
+
+        // Add children to descendants
+        descendants.push(...children)
+
+        // Recursively get descendants of each child
+        for (const child of children) {
+            const childDescendants = await this.getAllDescendantFolders(
+                child.id,
+                ownerId
+            )
+            descendants.push(...childDescendants)
+        }
+
+        return descendants
     }
 
     // Helper method to recursively mark files and folders as deleted

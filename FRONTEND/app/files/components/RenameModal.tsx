@@ -5,32 +5,29 @@ import type React from "react"
 import { motion } from "framer-motion"
 import styles from "./Modal.module.css"
 import { X } from "lucide-react"
-import type { FileItem } from "../../../types/File"
-
-interface RenameModalProps {
-    file: FileItem
-    onClose: () => void
-    onConfirm: (newName: string) => void
-}
+import type { RenameModalProps } from "./ModalTypes"
 
 export default function RenameModal({
+    isOpen,
     file,
-    onClose,
-    onConfirm,
+    onRenameFile,
+    onCloseModal,
 }: RenameModalProps) {
-    const [newName, setNewName] = useState(file.name)
+    const [newName, setNewName] = useState("")
     const [error, setError] = useState("")
 
     useEffect(() => {
-        // If it's a file, select just the name part without extension
-        if (file.type === "file" && file.extension) {
-            const nameWithoutExt = file.name.slice(
-                0,
-                -(file.extension.length + 1)
-            )
-            setNewName(nameWithoutExt)
-        } else {
-            setNewName(file.name)
+        if (file) {
+            // If it's a file, select just the name part without extension
+            if (file.type === "file" && file.extension) {
+                const nameWithoutExt = file.name.slice(
+                    0,
+                    -(file.extension.length + 1)
+                )
+                setNewName(nameWithoutExt)
+            } else {
+                setNewName(file.name)
+            }
         }
     }, [file])
 
@@ -42,17 +39,21 @@ export default function RenameModal({
             return
         }
 
+        if (!file) return
+
         // For files, append the extension back
         let finalName = newName.trim()
         if (file.type === "file" && file.extension) {
             finalName = `${finalName}.${file.extension}`
         }
 
-        onConfirm(finalName)
+        onRenameFile(file.id, finalName)
     }
 
+    if (!file) return null
+
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onCloseModal}>
             <motion.div
                 className={styles.modal}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -63,7 +64,10 @@ export default function RenameModal({
             >
                 <div className={styles.modalHeader}>
                     <h3>Rename {file.type === "folder" ? "Folder" : "File"}</h3>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        className={styles.closeButton}
+                        onClick={onCloseModal}
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -100,7 +104,7 @@ export default function RenameModal({
                         <button
                             type="button"
                             className={styles.cancelButton}
-                            onClick={onClose}
+                            onClick={onCloseModal}
                         >
                             Cancel
                         </button>

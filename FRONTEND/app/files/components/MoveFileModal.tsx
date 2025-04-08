@@ -1,64 +1,84 @@
 "use client"
 import { useState, useEffect } from "react"
 import type React from "react"
-
+import { useAppContext } from "@/context/AppContext"
 import { motion } from "framer-motion"
 import styles from "./Modal.module.css"
-import { X, Folder, ChevronRight } from "lucide-react"
+import { X, Folder, ChevronRight, FolderOpen } from "lucide-react"
 import type { FileItem } from "../../../types/File"
-
-interface MoveFileModalProps {
-    file: FileItem
-    currentPath: string[]
-    onClose: () => void
-    onConfirm: (newParentId: string) => void
-    onFetchFolders: (folderId?: string) => void
-}
+import type { MoveModalProps } from "./ModalTypes"
 
 export default function MoveFileModal({
+    isOpen,
     file,
-    currentPath,
-    onClose,
-    onConfirm,
-    onFetchFolders,
-}: MoveFileModalProps) {
+    onMoveFile,
+    onCloseModal,
+}: MoveModalProps) {
+    const { controleur } = useAppContext()
     const [folders, setFolders] = useState<FileItem[]>([])
     const [selectedFolderId, setSelectedFolderId] = useState<string>("")
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const nomDInstance = "MoveFileModal"
+    const verbose = false
+
+    const listeMessageEmis = ["folders_list_request"]
+    const listeMessageRecus = ["folders_list_response"]
+
+    const handler = {
+        nomDInstance,
+        traitementMessage: (msg: any) => {
+            if (verbose || controleur?.verboseall) {
+                console.log(
+                    `INFO: (${nomDInstance}) - traitementMessage - `,
+                    msg
+                )
+            }
+
+            // Handle folders list response
+            if (msg.folders_list_response) {
+                setIsLoading(false)
+                if (!msg.folders_list_response.etat) {
+                    setError(
+                        `Fetching folders failed: ${msg.folders_list_response.error}`
+                    )
+                } else {
+                    setFolders(msg.folders_list_response.folders || [])
+                }
+            }
+        },
+    }
 
     useEffect(() => {
-        // Fetch folders for the root level initially
-        fetchFolders()
-    }, [])
+        if (controleur && isOpen && file) {
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            fetchFolders()
+        }
+        return () => {
+            if (controleur) {
+                controleur.desincription(
+                    handler,
+                    listeMessageEmis,
+                    listeMessageRecus
+                )
+            }
+        }
+    }, [controleur, isOpen, file])
 
-    const fetchFolders = async (folderId?: string) => {
+    const fetchFolders = () => {
         setIsLoading(true)
+        setError(null)
         try {
-            // This would be replaced with your actual folder fetching logic
-            onFetchFolders(folderId)
-            // For now, we'll simulate some folders
-            const mockFolders: FileItem[] = [
-                {
-                    id: "folder1",
-                    name: "Documents",
-                    type: "folder",
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    ownerId: "user1",
+            const T = {
+                folders_list_request: {
+                    excludeFolderId:
+                        file?.type === "folder" ? file.id : undefined,
                 },
-                {
-                    id: "folder2",
-                    name: "Images",
-                    type: "folder",
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    ownerId: "user1",
-                },
-            ]
-            setFolders(mockFolders)
-        } catch (error) {
-            console.error("Error fetching folders:", error)
-        } finally {
+            }
+            controleur?.envoie(handler, T)
+        } catch (err) {
+            setError("Failed to fetch folders. Please try again.")
             setIsLoading(false)
         }
     }
@@ -69,13 +89,15 @@ export default function MoveFileModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        if (selectedFolderId) {
-            onConfirm(selectedFolderId)
+        if (file) {
+            onMoveFile(file.id, selectedFolderId)
         }
     }
 
+    if (!file) return null
+
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onCloseModal}>
             <motion.div
                 className={styles.modal}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -86,7 +108,10 @@ export default function MoveFileModal({
             >
                 <div className={styles.modalHeader}>
                     <h3>Move {file.type === "folder" ? "Folder" : "File"}</h3>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        className={styles.closeButton}
+                        onClick={onCloseModal}
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -94,6 +119,10 @@ export default function MoveFileModal({
                 <form onSubmit={handleSubmit}>
                     <div className={styles.modalBody}>
                         <p>Select destination folder:</p>
+
+                        {error && (
+                            <div className={styles.errorMessage}>{error}</div>
+                        )}
 
                         <div className={styles.folderList}>
                             <div
@@ -104,8 +133,8 @@ export default function MoveFileModal({
                                 }`}
                                 onClick={() => handleFolderClick("")}
                             >
-                                <Folder size={18} />
-                                <span>Home</span>
+                                <FolderOpen size={18} />
+                                <span>Home (Root)</span>
                             </div>
 
                             {isLoading ? (
@@ -134,6 +163,12 @@ export default function MoveFileModal({
                                     </div>
                                 ))
                             )}
+
+                            {!isLoading && folders.length === 0 && (
+                                <div className={styles.emptyMessage}>
+                                    No other folders available
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -141,15 +176,11 @@ export default function MoveFileModal({
                         <button
                             type="button"
                             className={styles.cancelButton}
-                            onClick={onClose}
+                            onClick={onCloseModal}
                         >
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            className={styles.confirmButton}
-                            disabled={!selectedFolderId}
-                        >
+                        <button type="submit" className={styles.confirmButton}>
                             Move
                         </button>
                     </div>

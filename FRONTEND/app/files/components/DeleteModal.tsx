@@ -3,20 +3,15 @@ import { motion } from "framer-motion"
 import styles from "./Modal.module.css"
 import { X, AlertTriangle } from "lucide-react"
 import type { FileItem } from "../../../types/File"
-
-interface DeleteModalProps {
-    file: FileItem
-    onClose: () => void
-    onConfirm: () => void
-}
+import { DeleteModalProps } from "./ModalTypes"
 
 export default function DeleteModal({
     file,
-    onClose,
-    onConfirm,
+    onCloseModal,
+    onDeleteFile,
 }: DeleteModalProps) {
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onCloseModal}>
             <motion.div
                 className={styles.modal}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -27,7 +22,10 @@ export default function DeleteModal({
             >
                 <div className={styles.modalHeader}>
                     <h3>Delete {file.type === "folder" ? "Folder" : "File"}</h3>
-                    <button className={styles.closeButton} onClick={onClose}>
+                    <button
+                        className={styles.closeButton}
+                        onClick={onCloseModal}
+                    >
                         <X size={18} />
                     </button>
                 </div>
@@ -50,14 +48,14 @@ export default function DeleteModal({
                     <button
                         type="button"
                         className={styles.cancelButton}
-                        onClick={onClose}
+                        onClick={onCloseModal}
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
                         className={`${styles.confirmButton} ${styles.deleteButton}`}
-                        onClick={onConfirm}
+                        onClick={() => onDeleteFile(file.id)}
                     >
                         Delete
                     </button>

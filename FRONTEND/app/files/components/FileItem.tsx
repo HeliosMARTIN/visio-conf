@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type React from "react"
 
 import { motion } from "framer-motion"
@@ -8,7 +8,7 @@ import styles from "./FileItem.module.css"
 import {
     File,
     Folder,
-    Image,
+    ImageIcon,
     FileText,
     FileCode,
     FileSpreadsheet,
@@ -47,6 +47,12 @@ export default function FileItem({
 }: FileItemProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
+    const [thumbnailError, setThumbnailError] = useState(false)
+
+    // Reset thumbnail error when file changes
+    useEffect(() => {
+        setThumbnailError(false)
+    }, [file.id])
 
     const getFileIcon = () => {
         if (file.type === "folder")
@@ -56,7 +62,7 @@ export default function FileItem({
         const extension = file.extension?.toLowerCase() || ""
 
         if (mimeType.startsWith("image/"))
-            return <Image size={viewMode === "grid" ? 40 : 24} />
+            return <ImageIcon size={viewMode === "grid" ? 40 : 24} />
         if (mimeType.startsWith("video/"))
             return <Video size={viewMode === "grid" ? 40 : 24} />
         if (mimeType.startsWith("audio/"))
@@ -104,7 +110,7 @@ export default function FileItem({
     const cardVariants = {
         initial: {
             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)",
-            backgroundColor: "white",
+            backgroundColor: "rgba(249, 250, 251, 1)",
         },
         hover: {
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
@@ -119,7 +125,18 @@ export default function FileItem({
     }
 
     const handleClick = () => {
-        onOpen(file)
+        // Only trigger onOpen if it's a folder or an image with a thumbnail
+        if (
+            file.type === "folder" ||
+            (file.type === "file" &&
+                file.mimeType?.startsWith("image/") &&
+                file.thumbnail)
+        ) {
+            onOpen(file)
+        } else if (file.type === "file" && onDownload) {
+            // For other files, trigger download directly
+            onDownload(file)
+        }
     }
 
     const handleMenuClick = (e: React.MouseEvent) => {
@@ -150,6 +167,16 @@ export default function FileItem({
         }
     }
 
+    const handleThumbnailError = () => {
+        setThumbnailError(true)
+    }
+
+    const shouldShowThumbnail =
+        file.thumbnail &&
+        !thumbnailError &&
+        file.type === "file" &&
+        file.mimeType?.startsWith("image/")
+
     return (
         <motion.div
             className={`${styles.fileItem} ${styles[viewMode]}`}
@@ -169,11 +196,12 @@ export default function FileItem({
                 variants={iconVariants}
                 style={{ color: getIconColor() }}
             >
-                {file.thumbnail ? (
+                {shouldShowThumbnail ? (
                     <img
                         src={file.thumbnail || "/placeholder.svg"}
                         alt={file.name}
                         className={styles.thumbnail}
+                        onError={handleThumbnailError}
                     />
                 ) : (
                     getFileIcon()
