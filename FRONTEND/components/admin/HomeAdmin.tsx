@@ -81,8 +81,9 @@ export default function HomeAdmin({user} : {user : any}) {
     }, [router, controleur, canal])
 
     useEffect(() => {
+        console.log("USER => ", user);
         controleur.envoie(handler, {
-            "user_perms_request" : {userId : user?.userId}
+            "user_perms_request" : {userId : user?.id}
         })
     }, [user])
 

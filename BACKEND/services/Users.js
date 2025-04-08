@@ -14,7 +14,8 @@ class UsersService {
         "update_user_response",
         "update_user_status_response",
         "update_user_roles_response",
-        "user_perms_response"
+        "user_perms_response",
+        "user_info_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
@@ -24,7 +25,8 @@ class UsersService {
         "update_user_status_request",
         "update_user_roles_request",
         "delete_role_request",
-        "user_perms_request"      
+        "user_perms_request",
+        "user_info_request"
     )
     listeJoueurs = new Object()
 
@@ -304,8 +306,8 @@ class UsersService {
                 }
                 this.controleur.envoie(this, message)
             }
-            this.controleur.envoie(this, message)
         }
+        
         if (mesg.update_user_roles_request){
             const socketId = mesg.id
             if (!socketId) throw new Error("Sender socket id not available for update") 
