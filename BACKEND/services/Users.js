@@ -58,22 +58,21 @@ class UsersService {
         }
 
         if (mesg.users_list_request) {
-            await this.handleUsersList(mesg)
+            await this.getUsersList(mesg)
         }
 
         if (mesg.update_user_request) {
-            await this.handleUpdateUser(mesg)
+            await this.updateUser(mesg)
         }
 
         if (mesg.user_info_request) {
-            await this.handleUserInfo(mesg)
+            await this.getUserInfo(mesg)
         }
     }
 
     async handleLogin(mesg) {
         try {
             const { email, password } = mesg.login_request
-            console.log(email, password)
 
             const hashedPassword = await this.sha256(password)
             const user = await User.findOne({
@@ -149,7 +148,7 @@ class UsersService {
         }
     }
 
-    async handleUsersList(mesg) {
+    async getUsersList(mesg) {
         try {
             const users = await User.find(
                 {},
@@ -170,7 +169,6 @@ class UsersService {
                 },
                 id: [mesg.id],
             }
-            console.log("on renvoie la response")
 
             this.controleur.envoie(this, message)
         } catch (error) {
@@ -185,7 +183,7 @@ class UsersService {
         }
     }
 
-    async handleUpdateUser(mesg) {
+    async updateUser(mesg) {
         try {
             const socketId = mesg.id
             if (!socketId)
@@ -234,7 +232,7 @@ class UsersService {
         }
     }
 
-    async handleUserInfo(mesg) {
+    async getUserInfo(mesg) {
         try {
             const { userId } = mesg.user_info_request
             const user = await User.findById(

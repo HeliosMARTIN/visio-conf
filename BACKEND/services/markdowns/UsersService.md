@@ -62,9 +62,9 @@ Point d'entrée principal pour le traitement des messages reçus. Cette méthode
 2. Délègue le traitement à la méthode spécialisée correspondante:
     - `login_request` → `handleLogin`
     - `signup_request` → `handleSignup`
-    - `users_list_request` → `handleUsersList`
-    - `update_user_request` → `handleUpdateUser`
-    - `user_info_request` → `handleUserInfo`
+    - `users_list_request` → `getUsersList`
+    - `update_user_request` → `updateUser`
+    - `user_info_request` → `getUserInfo`
 
 ### `handleLogin(mesg)`
 
@@ -82,7 +82,7 @@ Traite les demandes d'inscription en créant un nouvel utilisateur.
 
 -   `mesg`: Le message contenant la demande d'inscription
 
-### `handleUsersList(mesg)`
+### `getUsersList(mesg)`
 
 Récupère et renvoie la liste de tous les utilisateurs.
 
@@ -90,7 +90,7 @@ Récupère et renvoie la liste de tous les utilisateurs.
 
 -   `mesg`: Le message contenant la demande de liste d'utilisateurs
 
-### `handleUpdateUser(mesg)`
+### `updateUser(mesg)`
 
 Met à jour les informations d'un utilisateur existant.
 
@@ -98,7 +98,7 @@ Met à jour les informations d'un utilisateur existant.
 
 -   `mesg`: Le message contenant la demande de mise à jour d'utilisateur
 
-### `handleUserInfo(mesg)`
+### `getUserInfo(mesg)`
 
 Récupère et renvoie les informations d'un utilisateur spécifique.
 
