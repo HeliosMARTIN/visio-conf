@@ -28,7 +28,6 @@ class UsersService {
         "user_perms_request",
         "user_info_request"
     )
-    listeJoueurs = new Object()
 
     constructor(c, nom) {
         this.controleur = c
@@ -307,7 +306,7 @@ class UsersService {
                 this.controleur.envoie(this, message)
             }
         }
-        
+
         if (mesg.update_user_roles_request){
             const socketId = mesg.id
             if (!socketId) throw new Error("Sender socket id not available for update") 
