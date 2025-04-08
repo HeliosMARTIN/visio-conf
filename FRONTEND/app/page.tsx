@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import styles from "./page.module.css"
 import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
+import ProfilPopUp from "../components/ProfilPopUp"
 import { User } from "../types/User"
 import { useAppContext } from "@/context/AppContext"
 import jwt from "jsonwebtoken"
@@ -232,7 +233,7 @@ export default function Home() {
                 <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
-            <ProfilPopUp />
+            {currentUser && <ProfilPopUp /> }
         </div>
     )
 }
