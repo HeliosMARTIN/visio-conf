@@ -15,7 +15,6 @@ class UsersService {
         "update_user_status_response",
         "update_user_roles_response",
         "user_perms_response"
-        "user_info_response"
     )
     listeDesMessagesRecus = new Array(
         "login_request",
@@ -25,9 +24,9 @@ class UsersService {
         "update_user_status_request",
         "update_user_roles_request",
         "delete_role_request",
-        "user_perms_request"    
-        "user_info_request"
+        "user_perms_request"      
     )
+    listeJoueurs = new Object()
 
     constructor(c, nom) {
         this.controleur = c
@@ -68,7 +67,13 @@ class UsersService {
                 })
                 if (user) {
                     const token = jwt.sign(
-                        { userId: user._id },
+                        {
+                            firstname: user.firstname,
+                            lastname: user.lastname,
+                            email,
+                            picture: user.picture,
+                            userId: user._id,
+                        },
                         process.env.JWT_SECRET,
                         { expiresIn: "1d" }
                     )
@@ -121,7 +126,13 @@ class UsersService {
                 })
                 await user.save()
                 const token = jwt.sign(
-                    { userId: user._id },
+                    {
+                        firstname,
+                        lastname,
+                        email,
+                        picture: user.picture,
+                        userId: user._id,
+                    },
                     process.env.JWT_SECRET,
                     { expiresIn: "1d" }
                 )
@@ -228,14 +239,12 @@ class UsersService {
                 this.controleur.envoie(this, message)
             }
         }
-      
         if(typeof mesg.delete_role_request != "undefined"){
             await User.updateMany(
                 {}, 
                 { $pull: { roles: mesg.delete_role_request.role_id } }
             );              
         }
-      
         if (mesg.update_user_status_request){
             const socketId = mesg.id
             if (!socketId) throw new Error("Sender socket id not available for update") 
@@ -307,39 +316,6 @@ class UsersService {
                 id: [mesg.id],
             }
             this.controleur.envoie(this, message)
-        }
-
-        if (mesg.user_info_request) {
-            try {
-                const { userId } = mesg.user_info_request
-                const user = await User.findById(
-                    userId,
-                    "firstname lastname email picture"
-                )
-
-                if (user) {
-                    const userInfo = {
-                        id: user._id,
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email,
-                        picture: user.picture,
-                    }
-                    const message = {
-                        user_info_response: { etat: true, userInfo },
-                        id: [mesg.id],
-                    }
-                    this.controleur.envoie(this, message)
-                } else {
-                    throw new Error("User not found")
-                }
-            } catch (error) {
-                const message = {
-                    user_info_response: { etat: false, error: error.message },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
         }
     }
 
