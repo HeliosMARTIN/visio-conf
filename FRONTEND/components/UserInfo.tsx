@@ -28,7 +28,7 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
     // Generate a consistent color based on fullName
     const getColorFromName = (name: string) => {
         const colors = [
-            "#4F46E5", // indigo
+            "#1E3664", // indigo
             "#0EA5E9", // sky
             "#10B981", // emerald
             "#F59E0B", // amber

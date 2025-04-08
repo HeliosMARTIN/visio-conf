@@ -25,12 +25,12 @@
   font-size: 14px;
   background-color: white;
   transition: all 0.2s ease;
-  color: #4f46e5;
+  color: #1E3664;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1E3664;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
@@ -44,6 +44,8 @@
   width: 100%;
   overflow-y: auto;
   max-height: calc(100vh - 280px); /* Adjust based on your header and other elements */
+  border-radius: 8px;
+  padding-right: 4px; /* Add some padding to prevent content from touching the scrollbar */
 }
 
 .usersList {
