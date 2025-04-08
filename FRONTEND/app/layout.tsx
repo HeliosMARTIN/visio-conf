@@ -1,6 +1,9 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import "../styles/scrollbar.css"
+
 import { AppContextProvider } from "@/context/AppContext"
+import LayoutClient from "@/components/layoutClient"
 
 export const metadata: Metadata = {
     title: "VisioConf",
@@ -15,7 +18,9 @@ export default function RootLayout({
     return (
         <html lang="fr">
             <body>
-                <AppContextProvider>{children}</AppContextProvider>
+                <AppContextProvider>
+                    <LayoutClient>{children}</LayoutClient>
+                </AppContextProvider>
             </body>
         </html>
     )

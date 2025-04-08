@@ -167,7 +167,7 @@ class UsersService {
                     picture: user.picture,
                     status : user.status,
                     roles : user.roles,
-                    online : user.is_online
+                    online : user.is_online,
                 }))
                 const message = {
                     users_list_response: {
@@ -218,6 +218,7 @@ class UsersService {
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
+                    phone: user.phone,
                 }
                 const message = {
                     update_user_response: {
@@ -267,6 +268,41 @@ class UsersService {
                     action : action
                 },
                 id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+
+        if (mesg.user_info_request) {
+            try {
+                const { userId } = mesg.user_info_request
+                const user = await User.findById(
+                    userId,
+                    "firstname lastname email picture phone"
+                )
+
+                if (user) {
+                    const userInfo = {
+                        id: user._id,
+                        firstname: user.firstname,
+                        lastname: user.lastname,
+                        email: user.email,
+                        picture: user.picture,
+                        phone: user.phone,
+                    }
+                    const message = {
+                        user_info_response: { etat: true, userInfo },
+                        id: [mesg.id],
+                    }
+                    this.controleur.envoie(this, message)
+                } else {
+                    throw new Error("User not found")
+                }
+            } catch (error) {
+                const message = {
+                    user_info_response: { etat: false, error: error.message },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
             }
             this.controleur.envoie(this, message)
         }
