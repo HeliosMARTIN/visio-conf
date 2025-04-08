@@ -12,6 +12,7 @@ import HomeUserGestion from "@/components/admin/user_gestion/HomeUserGestion"
 import { useAppContext } from "@/context/AppContext"
 import router from "next/router"
 import HomePermGestion from "./perm_gestion/HomePermGestion"
+import HomeTeamGestion from "./team_gestion/HomeTeamGestion"
 
 export default function HomeAdmin({user} : {user : any}) {
     const [selectedTab, setSelectedTab] = useState<string>("");
@@ -23,7 +24,7 @@ export default function HomeAdmin({user} : {user : any}) {
         {name : "Utilisateurs", icon : <UsersRound size={60} color="#0272DA"/>, color : "#0272DA", click : () => setSelectedTab("Utilisateurs")},
         {name : "Rôles", icon : <Drama size={60} color="#63B367"/>, color : "#63B367", click : () => setSelectedTab("Rôles")},
         {name : "Permissions", icon : <ListChecks size={60} color="#DA1F63"/>, color : "#DA1F63", click : () => setSelectedTab("Permissions")},
-        {name : "Equipes", icon : <MessagesSquare size={60} color="#444447"/>, color : "#444447", click : () => setSelectedTab("Groupes")},
+        {name : "Equipes", icon : <MessagesSquare size={60} color="#444447"/>, color : "#444447", click : () => setSelectedTab("Equipes")},
     ]
 
     const nomDInstance = "Home Admin"
@@ -140,6 +141,7 @@ export default function HomeAdmin({user} : {user : any}) {
                     {selectedTab === "Utilisateurs" && <HomeUserGestion userPerms={userPerms}/>}
                     {selectedTab === "Rôles" && <HomeRoleGestion  userPerms={userPerms}/>}
                     {selectedTab === "Permissions" && <HomePermGestion userPerms={userPerms}/>}
+                    {selectedTab === "Equipes" && <HomeTeamGestion userPerms={userPerms}/>}
                 </div>
             )
         ) : (

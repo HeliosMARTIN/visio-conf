@@ -52,12 +52,13 @@ export default function AdminMenu({
             name : "Equipes", 
             icon : <MessagesSquare size={40} />, 
             subOption : [
-                { label: "Lister", condition: userPerms.includes("") },
-                { label: "Créer", condition: userPerms.includes("") },
-                { label: "Modifier", condition: userPerms.includes("") },
-                { label: "Supprimer", condition: userPerms.includes("") },
+                { label: "Lister", condition: userPerms.includes("admin_demande_liste_equipes") },
+                { label: "Créer", condition: userPerms.includes("admin_ajouter_equipe") },
+                { label: "Dupliquer", condition: userPerms.includes("admin_dupliquer_equipe")},
+                { label: "Modifier", condition: userPerms.includes("admin_modifier_equipe") },
+                { label: "Supprimer", condition: userPerms.includes("admin_supprimer_equipe") },
             ],
-            click : () => setSelectedTab("Groupes")
+            click : () => setSelectedTab("Equipes")
         },
     ]
 
