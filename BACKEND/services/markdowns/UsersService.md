@@ -48,15 +48,6 @@ Initialise le service et l'inscrit auprès du contrôleur.
 -   `c`: Le contrôleur central
 -   `nom`: Le nom d'instance du service
 
-**Fonctionnement:**
-
-1. Stocke les références au contrôleur et au nom d'instance
-2. Affiche un message de log si le mode verbose est activé
-3. S'inscrit auprès du contrôleur en fournissant:
-    - Une référence à l'instance courante (`this`)
-    - La liste des messages que le service peut émettre
-    - La liste des messages que le service peut recevoir
-
 ### `traitementMessage(mesg)`
 
 Point d'entrée principal pour le traitement des messages reçus. Cette méthode agit comme un routeur qui délègue le traitement aux méthodes spécialisées.
@@ -67,9 +58,8 @@ Point d'entrée principal pour le traitement des messages reçus. Cette méthode
 
 **Fonctionnement:**
 
-1. Affiche le message reçu dans les logs si le mode verbose est activé
-2. Identifie le type de message en vérifiant la présence de propriétés spécifiques
-3. Délègue le traitement à la méthode spécialisée correspondante:
+1. Identifie le type de message en vérifiant la présence de propriétés spécifiques
+2. Délègue le traitement à la méthode spécialisée correspondante:
     - `login_request` → `handleLogin`
     - `signup_request` → `handleSignup`
     - `users_list_request` → `handleUsersList`
@@ -84,18 +74,6 @@ Traite les demandes de connexion en vérifiant les identifiants de l'utilisateur
 
 -   `mesg`: Le message contenant la demande de connexion
 
-**Fonctionnement:**
-
-1. Extrait les informations de login et mot de passe du message
-2. Hache le mot de passe avec SHA-256 pour comparaison sécurisée
-3. Recherche l'utilisateur dans la base de données avec le login et le mot de passe haché
-4. Si l'utilisateur est trouvé:
-    - Génère un token JWT contenant l'ID de l'utilisateur avec une expiration de 1 jour
-    - Envoie une réponse positive avec le token
-5. Si l'utilisateur n'est pas trouvé ou en cas d'erreur:
-    - Envoie une réponse négative avec un message d'erreur
-6. Utilise un bloc try-catch pour gérer les erreurs potentielles
-
 ### `handleSignup(mesg)`
 
 Traite les demandes d'inscription en créant un nouvel utilisateur.
@@ -103,20 +81,6 @@ Traite les demandes d'inscription en créant un nouvel utilisateur.
 **Paramètres:**
 
 -   `mesg`: Le message contenant la demande d'inscription
-
-**Fonctionnement:**
-
-1. Extrait toutes les informations utilisateur du message (login, password, firstname, lastname, etc.)
-2. Vérifie si un utilisateur avec le même login existe déjà
-3. Si l'utilisateur existe, renvoie une erreur
-4. Sinon:
-    - Hache le mot de passe avec SHA-256
-    - Crée un nouvel objet utilisateur avec un UUID généré
-    - Sauvegarde l'utilisateur dans la base de données
-    - Génère un token JWT pour l'authentification immédiate
-    - Envoie une réponse positive avec le token
-5. En cas d'erreur, envoie une réponse négative avec le message d'erreur
-6. Utilise un bloc try-catch pour gérer les erreurs potentielles
 
 ### `handleUsersList(mesg)`
 
@@ -126,15 +90,6 @@ Récupère et renvoie la liste de tous les utilisateurs.
 
 -   `mesg`: Le message contenant la demande de liste d'utilisateurs
 
-**Fonctionnement:**
-
-1. Interroge la base de données pour récupérer tous les utilisateurs
-2. Limite les champs retournés pour des raisons de sécurité et de performance (firstname, lastname, email, picture, phone)
-3. Formate les données des utilisateurs pour correspondre à la structure attendue par le frontend
-4. Envoie une réponse contenant la liste des utilisateurs formatée
-5. En cas d'erreur, envoie une réponse négative avec le message d'erreur
-6. Utilise un bloc try-catch pour gérer les erreurs potentielles
-
 ### `handleUpdateUser(mesg)`
 
 Met à jour les informations d'un utilisateur existant.
@@ -142,18 +97,6 @@ Met à jour les informations d'un utilisateur existant.
 **Paramètres:**
 
 -   `mesg`: Le message contenant la demande de mise à jour d'utilisateur
-
-**Fonctionnement:**
-
-1. Récupère l'ID du socket émetteur pour identifier l'utilisateur
-2. Vérifie que l'ID du socket est disponible
-3. Extrait les champs à mettre à jour du message
-4. Utilise le service SocketIdentificationService pour obtenir les informations de l'utilisateur à partir de l'ID du socket
-5. Met à jour uniquement les champs fournis dans la base de données
-6. Récupère les informations mises à jour de l'utilisateur
-7. Formate et renvoie les nouvelles informations utilisateur
-8. En cas d'erreur (utilisateur non trouvé, etc.), envoie une réponse négative
-9. Utilise un bloc try-catch pour gérer les erreurs potentielles
 
 ### `handleUserInfo(mesg)`
 
@@ -163,18 +106,6 @@ Récupère et renvoie les informations d'un utilisateur spécifique.
 
 -   `mesg`: Le message contenant la demande d'informations sur un utilisateur
 
-**Fonctionnement:**
-
-1. Extrait l'ID de l'utilisateur demandé du message
-2. Recherche l'utilisateur dans la base de données par son ID
-3. Limite les champs retournés pour des raisons de sécurité (firstname, lastname, email, picture, phone)
-4. Si l'utilisateur est trouvé:
-    - Formate les informations utilisateur
-    - Envoie une réponse positive avec les informations
-5. Si l'utilisateur n'est pas trouvé:
-    - Envoie une réponse négative avec un message d'erreur
-6. Utilise un bloc try-catch pour gérer les erreurs potentielles
-
 ### `sha256(text)`
 
 Génère un hash SHA-256 d'une chaîne de texte pour sécuriser les mots de passe.
@@ -182,14 +113,6 @@ Génère un hash SHA-256 d'une chaîne de texte pour sécuriser les mots de pass
 **Paramètres:**
 
 -   `text`: Le texte à hacher (généralement un mot de passe)
-
-**Fonctionnement:**
-
-1. Encode le texte en un tableau d'octets (Uint8Array) à l'aide de TextEncoder
-2. Utilise l'API SubtleCrypto pour générer le hash SHA-256
-3. Convertit le buffer résultant en une chaîne hexadécimale
-4. Retourne la chaîne hexadécimale représentant le hash
-5. Cette méthode est asynchrone et retourne une Promise
 
 ## Flux de travail typiques
 
