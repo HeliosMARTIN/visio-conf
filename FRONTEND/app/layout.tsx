@@ -21,6 +21,9 @@ export default function RootLayout({
                 <AppContextProvider>
                     <LayoutClient>{children}</LayoutClient>
                 </AppContextProvider>
+                <AppContextProvider>
+                    <LayoutClient>{children}</LayoutClient>
+                </AppContextProvider>
             </body>
         </html>
     )

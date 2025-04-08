@@ -45,6 +45,10 @@
   margin-left: 12px;
   font-size: 16px;
   transition: opacity 0.2s ease;
+  color: white;
+  margin-left: 12px;
+  font-size: 16px;
+  transition: opacity 0.2s ease;
 }
 
 .menuItems {
