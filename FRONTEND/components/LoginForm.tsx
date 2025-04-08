@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
 import { useAppContext } from "@/context/AppContext"
-import jwt from "jsonwebtoken"
-import { User } from "@/types/User"
 
 export default function LoginForm() {
     const { controleur, currentUser, setCurrentUser } = useAppContext()
@@ -37,8 +35,6 @@ export default function LoginForm() {
                 } else {
                     const token = msg.login_response.token
                     if (token) {
-                        const user = jwt.decode(token) as User
-                        setCurrentUser(user)
                         localStorage.setItem("token", token)
                     }
                     router.push("/")

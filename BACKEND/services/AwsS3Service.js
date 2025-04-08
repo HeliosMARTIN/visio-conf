@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 class AwsS3Service {
     constructor(controleur, nom) {
@@ -40,31 +41,30 @@ class AwsS3Service {
         if (mesg.upload_request) {
             // Expect media to be an object with { name, fileType, data }
             const { media } = mesg.upload_request
-            const fileName = media.name
+            const safeFileName = media.name.replace(/[^a-zA-Z0-9_.-]/g, "_")
             const fileType = media.fileType
-            const fileBuffer = Buffer.from(media.data, "base64")
-
             const params = {
                 Bucket: this.bucket,
-                Key: fileName,
-                Body: fileBuffer,
+                Key: safeFileName,
                 ContentType: fileType,
-                ACL: "public-read", // Ajout de l'ACL pour rendre l'objet public
+                ACL: "public-read",
             }
             const command = new PutObjectCommand(params)
             try {
-                await this.client.send(command)
+                const signedUrl = await getSignedUrl(this.client, command, {
+                    expiresIn: 60,
+                })
                 const message = {
                     upload_response: {
                         etat: true,
-                        url: `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`,
+                        fileName: safeFileName,
+                        signedUrl,
                     },
                 }
-
                 this.controleur.envoie(this, message)
             } catch (error) {
                 console.error(
-                    "AwsS3Service: Error uploading file to S3:",
+                    "AwsS3Service: Error generating presigned URL:",
                     error
                 )
                 const message = {

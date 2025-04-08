@@ -13,6 +13,14 @@ export const ListeMessagesEmis = [
     "update_user_request", // { any field of User }
     "update_user_status_request", // {user_id : ObjectId, action : string}
     "update_user_roles_request", // {user_id : ObjectId, roles : Role._id[]}
+    "user_info_request", // { user_info_request: { userId: string } }
+    //---- DISCUSS ----
+    "messages_get_request", // { convId: uuid }
+    "message_send_request", // { userEmail: string, otherUserEmail?: string[], convId?:uuid , text: string }
+    "discuss_list_request", // { userId : uuid }
+    "users_shearch_request", // { requestArgs : string }
+    "discuss_remove_member_request", // { UserId : uuid, convId : uuid }
+    "discuss_remove_message_request", // { messageId : uuid, convId : uuid }
     //---- ROLES ----
     "roles_list_request", // No data
     "one_role_request", // { role_id : ObjectId}
@@ -41,6 +49,14 @@ export const ListeMessagesRecus = [
     "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
     "update_user_status_response", // {etat: boolean, action : string}
     "update_user_roles_response", // {userId : ObjectId}
+    "user_info_response", // { user_info_response: { etat: boolean, userInfo?: User, error?: string } }
+    //---- DISCUSS ----
+    "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
+    "message_send_response", // { etat: boolean, error?: string }
+    "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
+    "users_shearch_response", // {  etat: boolean, users?: User[], error?: string }
+    "discuss_remove_member_response", // { etat: boolean, error?: string }
+    "discuss_remove_message_response", // { etat: boolean, error?: string }
     //---- ROLES ----
     "roles_list_response", // {role_list : Role[]}
     "one_role_response", // {role : Role}
