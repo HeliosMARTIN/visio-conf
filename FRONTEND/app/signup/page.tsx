@@ -16,7 +16,7 @@ export default function SignupPage() {
         if (loggedIn) {
             router.push("/")
         }
-    }, [router])
+    }, [])
 
     return (
 
