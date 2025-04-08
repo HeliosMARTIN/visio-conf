@@ -45,6 +45,10 @@
   margin-left: 12px;
   font-size: 16px;
   transition: opacity 0.2s ease;
+  color: white;
+  margin-left: 12px;
+  font-size: 16px;
+  transition: opacity 0.2s ease;
 }
 
 .menuItems {
@@ -108,6 +112,7 @@
 }
 
 .mainLayout {
+  background-color: #F7FAFF;
   display: flex;
   width: 100%;
   min-height: 100vh;
@@ -117,7 +122,6 @@
   margin-left: 80px; 
   flex-grow: 1;
   transition: margin-left 0.3s ease;
-  padding: 20px;
 }
 
 .contentExpanded {

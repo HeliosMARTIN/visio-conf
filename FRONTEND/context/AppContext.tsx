@@ -83,7 +83,11 @@ export const AppContextProvider = ({
     }, [])
 
     useEffect(() => {
-        if (!localStorage.getItem("token")) {
+        if (
+            !localStorage.getItem("token") &&
+            pathname !== "/login" &&
+            pathname !== "/signup"
+        ) {
             setCurrentUser(null)
             router.push("/login")
         }
