@@ -7,10 +7,10 @@ import { useAppContext } from "@/context/AppContext"
 import { motion } from "framer-motion"
 import { Users } from "lucide-react"
 
-export default function Home() {
+export default function AnnuairePage() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
 
-    const nomDInstance = "HomePage"
+    const nomDInstance = "AnnuairePage"
     const verbose = false
 
     const listeMessageEmis = ["users_list_request"]
