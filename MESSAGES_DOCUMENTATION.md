@@ -2,15 +2,15 @@
 
 Ce document décrit l'ensemble des messages utilisés dans l'application VisioConf, en précisant pour chacun :
 
--   **Format** attendu (les propriétés et leur type)
--   **Exemple de contenu** (un exemple représentatif)
--   **Émetteur** (la partie applicative qui envoie le message)
--   **Récepteur** (la partie applicative qui traite ou consomme le message)
+- **Format** attendu (les propriétés et leur type)
+- **Exemple de contenu** (un exemple représentatif)
+- **Émetteur** (la partie applicative qui envoie le message)
+- **Récepteur** (la partie applicative qui traite ou consomme le message)
 
 > **Note :** Pour chaque message `request`, le message `response` correspondant a les rôles inversés :
 >
-> -   _Émetteur de la response_ = _Récepteur de la request_
-> -   _Récepteur de la response_ = _Émetteur de la request_
+> - _Émetteur de la response_ = _Récepteur de la request_
+> - _Récepteur de la response_ = _Émetteur de la request_
 
 > **Note :** Vous pouvez retrouver des types Typescript dans la colonne `Format` (ex: User, File, Role...)
 >
@@ -69,6 +69,8 @@ Ce document décrit l'ensemble des messages utilisés dans l'application VisioCo
 | **discuss_remove_member_response**  | { etat: boolean, error?: string }                                             | { etat: true }                                                                                      | MessagesService (backend)  | DiscussionsPage (frontend) |
 | **discuss_remove_message_request**  | { messageId: uuid, convId: uuid }                                             | { messageId: "m1", convId: "c1" }                                                                   | DiscussionsPage (frontend) | MessagesService (backend)  |
 | **discuss_remove_message_response** | { etat: boolean, error?: string }                                             | { etat: true }                                                                                      | MessagesService (backend)  | DiscussionsPage (frontend) |
+| **calls_get_request**               | { convId: uuid }                                                              | { convId: "4fc3b11b-5be1-4e94-9616-183d90dbf6e3" }                                                  | Home (frontend)            | CallsService (backend)     |
+| **calls_get_response**              | { convId: uuid }                                                              | { convId: "4fc3b11b-5be1-4e94-9616-183d90dbf6e3" }                                                  | CallsService (frontend)    | Home (backend)             |
 
 ---
 
