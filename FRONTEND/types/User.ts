@@ -4,4 +4,6 @@ export interface User {
     lastname: string
     email: string
     picture: string
+    socket_id?: string
+    phone: string
 }

@@ -191,6 +191,10 @@ export default function Home() {
             alert("Please select a file first")
         }
     }
+    
+    const handleDiscussion = () => {
+        router.push("/discussion")
+    }
 
     return (
         <div className={styles.page}>
@@ -213,9 +217,12 @@ export default function Home() {
                     />
                     <button onClick={handleUpload}>Upload File</button>
                 </div>
+                <button onClick={handleDiscussion}>Discussion</button>
                 <button onClick={handleLogout}>Logout</button>
             </main>
             {currentUser && <CurrentUser user={currentUser} />}
         </div>
     )
 }
+
+

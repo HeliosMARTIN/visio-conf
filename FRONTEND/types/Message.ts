@@ -1,10 +1,12 @@
+import { User } from "./User";
+
 export interface Message {
-    _id: string
-    text: string
-    message_sender: {
-        firstname: string
-        lastname: string
-        picture: string
-    }
-    timestamp: string
-}
+    _id?: string;
+    message_uuid: string;
+    message_content: string;
+    text?: string;
+    timestamp?: string;
+    message_sender: User;
+    message_date_create: string;
+    message_status?: 'sent' | 'delivered' | 'read';
+  }

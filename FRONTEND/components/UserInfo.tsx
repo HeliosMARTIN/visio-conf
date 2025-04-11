@@ -1,9 +1,9 @@
 "use client";
-import { User } from "../types/User";
+import type { User } from "../types/User";
 import styles from "./UserInfo.module.css";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { Mail, Phone, MessageCircle } from "lucide-react";
 
 interface UserInfoProps {
   user: User;
@@ -11,105 +11,85 @@ interface UserInfoProps {
   variant?: "default" | "home-message" | "home-call";
 }
 
-export default function UserInfo({
-  user,
-  currentUserEmail,
-  variant = "default",
-}: UserInfoProps) {
-  const router = useRouter();
+export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isCurrentUser = user.email === currentUserEmail;
 
-  const handleMessage = () => {
-    console.log("user", user);
-    router.push(`/message?id=${user.id}`);
+  // Create a fullName from firstname and lastname
+  const fullName = `${user.firstname} ${user.lastname}`;
+
+  // Generate initials from fullName
+  const initials = fullName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
+  // Generate a consistent color based on fullName
+  const getColorFromName = (name: string) => {
+    const colors = [
+      "#1E3664", // indigo
+      "#0EA5E9", // sky
+      "#10B981", // emerald
+      "#F59E0B", // amber
+      "#EC4899", // pink
+      "#8B5CF6", // violet
+    ];
+
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    return colors[Math.abs(hash) % colors.length];
   };
-  const handleCall = () => {
-    console.log("user", user);
-    router.push(`/call?id=${user.id}`);
-  };
 
-  if (user.email === currentUserEmail) return null;
-
-  if (variant === "home-message") {
-    return (
-      <div
-        className={styles.reception_body_item}
-        onClick={handleMessage}
-        style={{ cursor: "pointer" }}
-      >
-        <div className={styles.reception_body_item_content}>
-          <Image
-            src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
-            alt={`${user.firstname} profile picture`}
-            width={50}
-            height={50}
-            unoptimized
-            className={styles.userImage}
-          />
-          <div>
-            <h3>
-              {user.firstname} {user.lastname}
-            </h3>
-            <p>Exemple message reçu</p>
-          </div>
-        </div>
-        <ChevronRight />
-      </div>
-    );
-  }
-
-  if (variant === "home-call") {
-    return (
-      <div
-        className={styles.reception_body_item}
-        onClick={handleCall}
-        style={{ cursor: "pointer" }}
-      >
-        <div className={styles.reception_body_item_content}>
-          <Image
-            src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
-            alt={`${user.firstname} profile picture`}
-            width={50}
-            height={50}
-            unoptimized
-            className={styles.userImage}
-          />
-          <div>
-            <h3>
-              {user.firstname} {user.lastname}
-            </h3>
-            <p>Durée call</p>
-          </div>
-        </div>
-        <p>Date call</p>
-      </div>
-    );
-  }
+  const avatarColor = getColorFromName(fullName);
 
   return (
-    <li className={styles.userInfo}>
+    <motion.li
+      className={`${styles.userCard} ${
+        isCurrentUser ? styles.currentUser : ""
+      }`}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+    >
       <div
-        className={styles.userInfoContent}
-        onClick={handleMessage}
-        style={{ cursor: "pointer" }}
+        className={styles.userAvatar}
+        style={{ backgroundColor: avatarColor }}
       >
-        <Image
-          src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
-          alt={`${user.firstname} profile picture`}
-          width={50}
-          height={50}
-          unoptimized
-          className={styles.userImage}
-        />
+        {initials}
+      </div>
+      <div className={styles.userInfo}>
+        <h3 className={styles.userName}>{fullName}</h3>
         <div className={styles.userDetails}>
-          <span>
-            {user.firstname} {user.lastname}
+          <span className={styles.userEmail}>
+            <Mail size={14} />
+            {user.email}
           </span>
-          <span className={styles.userEmail}>({user.email})</span>
+          {user.phone && (
+            <span className={styles.userPhone}>
+              <Phone size={14} />
+              {user.phone}
+            </span>
+          )}
         </div>
       </div>
-      <button className={styles.messageButton} onClick={handleMessage}>
-        Envoyer un message
-      </button>
-    </li>
+      <motion.div
+        className={styles.userActions}
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
+        transition={{ duration: 0.2 }}
+      >
+        <button className={styles.actionButton} aria-label="Message">
+          <MessageCircle size={18} />
+          <span>Message</span>
+        </button>
+      </motion.div>
+    </motion.li>
   );
 }
