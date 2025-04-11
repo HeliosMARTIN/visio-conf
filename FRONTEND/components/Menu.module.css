@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   height: 100vh;
-  background-color: #1E3664;
+  background-color: #1e3664;
   transition: width 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -37,7 +37,7 @@
 
 .logoImage {
   border-radius: 50%;
-  background: var(--Background, #F7FAFF);
+  background: var(--Background, #f7faff);
 }
 
 .menuText {
@@ -69,7 +69,7 @@
 }
 
 .menuItem:hover {
-  background-color: rgba(255, 255, 255, 0.1); 
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .menuIcon {
@@ -85,10 +85,9 @@
 }
 
 .profileContainer {
+  display: flex;
   margin-top: auto;
   padding-top: 20px;
-  display: flex;
-  justify-content: center;
 }
 
 .profileLink {
@@ -112,27 +111,27 @@
 }
 
 .mainLayout {
-  background-color: #F7FAFF;
+  background-color: #f7faff;
   display: flex;
   width: 100%;
   min-height: 100vh;
 }
 
 .contentContainer {
-  margin-left: 80px; 
+  margin-left: 80px;
   flex-grow: 1;
   transition: margin-left 0.3s ease;
 }
 
 .contentExpanded {
-  margin-left: 220px; 
+  margin-left: 220px;
 }
 
 @media (max-width: 768px) {
   .expanded {
     width: 180px;
   }
-  
+
   .contentExpanded {
     margin-left: 180px;
   }
