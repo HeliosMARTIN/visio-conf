@@ -2,31 +2,26 @@
 
 import { useAppContext } from "@/context/AppContext";
 import styles from "./profilPage.module.css";
-import { useState, useRef } from "react";
-import { ImageDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ImageDown, Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { User } from "@/types/User";
 
 export default function ProfilPage() {
-  const { currentUser } = useAppContext();
-  const [profileImage, setProfileImage] = useState("/default-avatar.png");
+  const { currentUser, controleur, canal, setCurrentUser } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const pendingFileRef = useRef<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const pathname = usePathname();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setProfileImage(e.target.result.toString());
-          // Ici, vous pourriez ajouter une fonction pour envoyer l'image au serveur
-          // uploadProfileImage(e.target.result);
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  };
+  const nomDInstance = "ProfilPage";
+  const verbose = false;
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
+  const listeMessageEmis = ["upload_request", "update_user_request"];
+
+  const listeMessageRecus = ["upload_response", "update_user_response"];
 
   // Fonction pour formater les dates avec gestion d'erreur
   const formatDate = (dateValue: string | Date | undefined) => {
@@ -47,6 +42,161 @@ export default function ProfilPage() {
     } catch (error) {
       return "Format de date invalide";
     }
+  };
+
+  const handler = {
+    nomDInstance,
+    traitementMessage: (msg: {
+      upload_response?: {
+        etat: boolean;
+        error?: string;
+        fileName?: string;
+        signedUrl?: string;
+      };
+      update_user_response?: {
+        etat: boolean;
+        newUserInfo: User | null;
+        error?: string;
+      };
+    }) => {
+      if (verbose || controleur?.verboseall)
+        console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg);
+
+      // ...existing code...
+
+      if (msg.upload_response) {
+        if (
+          msg.upload_response.etat &&
+          pendingFileRef.current &&
+          msg.upload_response.signedUrl
+        ) {
+          // Set mode to "cors" explicitly.
+          fetch(msg.upload_response.signedUrl, {
+            method: "PUT",
+            mode: "cors",
+            body: pendingFileRef.current,
+            headers: {
+              "Content-Type": pendingFileRef.current.type,
+            },
+          })
+            .then((response) => {
+              // Considérer les réponses "Slow Down" comme non critiques
+              if (
+                response.ok ||
+                response.status === 503 ||
+                response.statusText === "Slow Down"
+              ) {
+                const updateProfilePictureMessage = {
+                  update_user_request: {
+                    picture: msg.upload_response?.fileName,
+                  },
+                };
+                controleur.envoie(handler, updateProfilePictureMessage);
+                pendingFileRef.current = null;
+                setUploadError(null);
+              } else {
+                setUploadError(
+                  "Échec de l'upload sur S3: " + response.statusText
+                );
+              }
+              setIsUploading(false);
+            })
+            .catch((error) => {
+              // Ignorer les erreurs spécifiques liées au throttling
+              if (error.message.includes("Slow Down")) {
+                const updateProfilePictureMessage = {
+                  update_user_request: {
+                    picture: msg.upload_response?.fileName,
+                  },
+                };
+                controleur.envoie(handler, updateProfilePictureMessage);
+                pendingFileRef.current = null;
+                setUploadError(null);
+              } else {
+                setUploadError("Erreur d'upload sur S3: " + error.message);
+              }
+              setIsUploading(false);
+            });
+        } else {
+          setUploadError("Échec de l'upload: " + msg.upload_response.error);
+          setIsUploading(false);
+        }
+      }
+      if (msg.update_user_response) {
+        if (msg.update_user_response.etat) {
+          setCurrentUser(msg.update_user_response.newUserInfo);
+        } else {
+          setUploadError(
+            "Échec de la mise à jour du profil: " +
+              msg.update_user_response.error
+          );
+        }
+        setIsUploading(false);
+      }
+    },
+  };
+
+  useEffect(() => {
+    if (controleur && canal) {
+      controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+    }
+    return () => {
+      if (controleur) {
+        controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
+      }
+    };
+  }, [pathname, controleur, canal]);
+
+  // Déclencher le clic sur l'input file quand le bouton est cliqué
+  const handleEditPhotoClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Gérer le changement de fichier
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      uploadFile(file);
+    }
+  };
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB threshold
+
+  // Upload du fichier
+  const uploadFile = (file: File) => {
+    if (!controleur || !currentUser) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError(
+        "Le fichier est trop volumineux. Veuillez sélectionner un fichier plus petit."
+      );
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    // Sauvegarder le fichier dans la ref pour qu'il reste disponible dans le handler
+    pendingFileRef.current = file;
+    // Réinitialiser l'affichage de l'input file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    // Envoyer uniquement le nom et le type du fichier; le backend génère une URL signée
+    const uploadMessage = {
+      upload_request: {
+        media: {
+          name: file.name,
+          fileType: file.type,
+        },
+      },
+    };
+
+    controleur.envoie(handler, uploadMessage);
   };
 
   console.log("currentUser", currentUser);
@@ -84,19 +234,28 @@ export default function ProfilPage() {
               />
               <button
                 className={styles.editPhotoButton}
-                onClick={triggerFileInput}
                 aria-label="Modifier la photo de profil"
+                onClick={handleEditPhotoClick}
+                disabled={isUploading}
               >
-                <ImageDown />
+                {isUploading ? (
+                  <Loader2 className={styles.spinner} />
+                ) : (
+                  <ImageDown />
+                )}
               </button>
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageChange}
                 accept="image/*"
                 className={styles.fileInput}
+                onChange={handleFileChange}
               />
             </div>
+
+            {uploadError && (
+              <p className={styles.errorMessage}>{uploadError}</p>
+            )}
 
             <h3>
               {currentUser.firstname || "Prénom"}{" "}
