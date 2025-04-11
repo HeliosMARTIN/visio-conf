@@ -1,9 +1,11 @@
 import { User } from "./User";
 
 export interface Call {
-  id: string;
-  call_type: "incoming" | "outgoing" | "missed";
-  call_duration: number;
-  call_date: string;
-  participants: User[];
+  _id?: string;
+  call_uuid: string;
+  call_date_create: string;
+  call_date_end: string;
+  call_type: "missed" | "completed" | "rejected";
+  call_sender: User;
+  call_recipient: User;
 }

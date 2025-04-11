@@ -8,7 +8,6 @@ import { Mail, Phone, MessageCircle } from "lucide-react";
 interface UserInfoProps {
   user: User;
   currentUserEmail: string;
-  variant?: "default" | "home-message" | "home-call";
 }
 
 export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {

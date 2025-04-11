@@ -1,7 +1,7 @@
 "use client";
-import type { User } from "../types/User";
-import UserInfo from "./UserInfo";
-import { UsersListSkeleton } from "./UserSkeleton";
+import type { User } from "../../types/User";
+import UserInfo from "../UserInfo";
+import { UsersListSkeleton } from "../UserSkeleton";
 import styles from "./UsersListCall.module.css";
 import { useState, useEffect } from "react";
 import {
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Call } from "@/types/Call";
+import UserInfoCall from "./UserInfoCall";
 
 interface UsersListCallProps {
   users: User[];
@@ -39,7 +40,8 @@ export default function UsersListCall({
     // Trier les appels par date (les plus récents d'abord)
     const sortedCalls = [...calls].sort(
       (a, b) =>
-        new Date(b.call_date).getTime() - new Date(a.call_date).getTime()
+        new Date(b.call_date_create).getTime() -
+        new Date(a.call_date_create).getTime()
     );
 
     // Prendre seulement les 5 (ou limitCalls) plus récents
@@ -49,16 +51,30 @@ export default function UsersListCall({
     const latestCallsByUser = new Map<string, Call>();
 
     recentCalls.forEach((call) => {
-      // Trouver l'autre participant (pas l'utilisateur courant)
-      const otherParticipant = call.participants.find(
-        (participant) => participant.email !== currentUserEmail
-      );
+      // Vérifier si l'utilisateur courant est le destinataire de l'appel
+      if (call.call_recipient.email === currentUserEmail) {
+        // Si oui, associer l'appel à l'expéditeur
+        const otherParticipant = call.call_sender;
 
-      if (otherParticipant) {
         if (
           !latestCallsByUser.has(otherParticipant.email) ||
-          new Date(call.call_date) >
-            new Date(latestCallsByUser.get(otherParticipant.email)!.call_date)
+          new Date(call.call_date_create) >
+            new Date(
+              latestCallsByUser.get(otherParticipant.email)!.call_date_create
+            )
+        ) {
+          latestCallsByUser.set(otherParticipant.email, call);
+        }
+      } else if (call.call_sender.email === currentUserEmail) {
+        // Si l'utilisateur courant est l'expéditeur, associer l'appel au destinataire
+        const otherParticipant = call.call_recipient;
+
+        if (
+          !latestCallsByUser.has(otherParticipant.email) ||
+          new Date(call.call_date_create) >
+            new Date(
+              latestCallsByUser.get(otherParticipant.email)!.call_date_create
+            )
         ) {
           latestCallsByUser.set(otherParticipant.email, call);
         }
@@ -92,26 +108,30 @@ export default function UsersListCall({
   }, [searchTerm, users, currentUserEmail, calls, limitCalls]);
 
   // Fonction pour formater la durée de l'appel
-  const formatCallDuration = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds}s`;
+  const formatCallDuration = (call: Call): string => {
+    // Calculer la durée en secondes entre call_date_create et call_date_end
+    const startDate = new Date(call.call_date_create);
+    const endDate = new Date(call.call_date_end);
+    const durationSeconds = Math.floor(
+      (endDate.getTime() - startDate.getTime()) / 1000
+    );
+
+    if (durationSeconds < 60) {
+      return `${durationSeconds}s`;
     }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    const minutes = Math.floor(durationSeconds / 60);
+    const remainingSeconds = durationSeconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
   };
 
   // Fonction pour obtenir l'icône correspondant au type d'appel
-  const getCallIcon = (callType: string) => {
-    switch (callType) {
-      case "incoming":
-        return <PhoneIncoming className={styles.incomingCall} size={16} />;
-      case "outgoing":
-        return <PhoneOutgoing className={styles.outgoingCall} size={16} />;
-      case "missed":
-        return <PhoneMissed className={styles.missedCall} size={16} />;
-      default:
-        return <PhoneIncoming className={styles.incomingCall} size={16} />;
+  const getCallIcon = (callType: string, isOutgoing: boolean) => {
+    if (callType === "missed") {
+      return <PhoneMissed className={styles.missedCall} size={16} />;
+    } else if (isOutgoing) {
+      return <PhoneOutgoing className={styles.outgoingCall} size={16} />;
+    } else {
+      return <PhoneIncoming className={styles.incomingCall} size={16} />;
     }
   };
 
@@ -152,18 +172,22 @@ export default function UsersListCall({
                       }}
                       className={styles.userWithCallContainer}
                     >
-                      <UserInfo
+                      <UserInfoCall
                         user={user}
                         currentUserEmail={currentUserEmail}
                       />
                       {user.latestCall && (
                         <div className={styles.callInfo}>
                           <div className={styles.callType}>
-                            {getCallIcon(user.latestCall.call_type)}
+                            {getCallIcon(
+                              user.latestCall.call_type,
+                              user.latestCall.call_sender.email ===
+                                currentUserEmail
+                            )}
                           </div>
                           <span className={styles.callTime}>
                             {new Date(
-                              user.latestCall.call_date
+                              user.latestCall.call_date_create
                             ).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -171,15 +195,11 @@ export default function UsersListCall({
                               month: "2-digit",
                             })}
                           </span>
-                          {user.latestCall.call_duration > 0 &&
-                            user.latestCall.call_type !== "missed" && (
-                              <span className={styles.callDuration}>
-                                ·{" "}
-                                {formatCallDuration(
-                                  user.latestCall.call_duration
-                                )}
-                              </span>
-                            )}
+                          {user.latestCall.call_type !== "missed" && (
+                            <span className={styles.callDuration}>
+                              · {formatCallDuration(user.latestCall)}
+                            </span>
+                          )}
                         </div>
                       )}
                     </motion.div>
