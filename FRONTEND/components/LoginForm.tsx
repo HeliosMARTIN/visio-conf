@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import styles from "./LoginForm.module.css";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
   const { controleur, currentUser, setCurrentUser } = useAppContext();
