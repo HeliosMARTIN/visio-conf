@@ -7,20 +7,21 @@ import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
 import Image from "next/image";
 import Link from "next/link"
-import jwt from "jsonwebtoken"
+import { useAppContext } from "@/context/AppContext"
 
 export default function LoginPage() {
     const router = useRouter()
 
+    const { currentUser } = useAppContext()
+
     useEffect(() => {
         const token = localStorage.getItem("token")
         if (token) {
-            const user = jwt.decode(token)
-            if (user) {
+            if (currentUser) {
                 router.push("/")
             }
         }
-    }, [router])
+    }, [])
 
     return (
         <div className={styles.page}>

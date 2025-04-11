@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 const ObjectId = Schema.Types.ObjectId
 
 // Default values
-const DEFAULT_USER_PICTURE = "/others/default.png"
+const DEFAULT_USER_PICTURE = "default_profile_picture.png"
 const DEFAULT_ROLE = ["user"]
 const DEFAULT_STATUS = "waiting"
 const DEFAULT_DISTURB_STATUS = "available"
@@ -66,45 +66,5 @@ const UserSchema = new Schema({
     ],
 })
 
-// Virtual for user's full instanceName
-UserSchema.virtual("fullname").get(function () {
-    return this.firstname + " " + this.lastname
-})
-
-// Virtual for user's URL
-UserSchema.virtual("url").get(function () {
-    return "/user/" + this._id
-})
-
-UserSchema.virtual("info").get(function () {
-    return {
-        uuid: this.uuid,
-        firstname: this.firstname,
-        lastname: this.lastname,
-        email: this.email,
-        phone: this.phone,
-        status: this.status,
-        job: this.job,
-        desc: this.desc,
-        date_create: this.date_create,
-        picture: this.picture,
-        is_online: this.is_online,
-        socket_id: this.socket_id,
-        disturb_status: this.disturb_status,
-        last_connection: this.last_connection,
-        direct_manager: this.direct_manager,
-        roles: this.roles,
-    }
-})
-
-async function findBySocketId(socketId) {
-    return await this.model("User")
-        .findOne({ socket_id: socketId })
-        .select(
-            "uuid firstname lastname roles picture socket_id disturb_status is_online"
-        )
-}
-
 const User = mongoose.model("User", UserSchema)
 export default User
-export { findBySocketId }
