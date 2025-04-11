@@ -15,7 +15,6 @@ interface UsersListProps {
   messages?: Message[];
 }
 
-// Interface for user with their latest message
 interface UserWithMessage extends User {
   latestMessage?: Message;
 }
@@ -30,12 +29,10 @@ export default function UsersListMessage({
   const [filteredUsers, setFilteredUsers] = useState<UserWithMessage[]>([]);
 
   useEffect(() => {
-    // Filter messages with 'delivered' status
     const deliveredMessages = messages.filter(
       (msg) => msg.message_status === "delivered"
     );
 
-    // Create a map of user emails to their latest message
     const latestMessagesByUser = new Map<string, Message>();
 
     deliveredMessages.forEach((msg) => {
@@ -50,7 +47,6 @@ export default function UsersListMessage({
       }
     });
 
-    // Add latest message to each user
     const usersWithMessages: UserWithMessage[] = users
       .filter(
         (user) =>
@@ -66,7 +62,6 @@ export default function UsersListMessage({
       setFilteredUsers(usersWithMessages);
     } else {
       const filtered = usersWithMessages.filter((user) => {
-        // Combine firstname and lastname as full name
         const fullName = `${user.firstname} ${user.lastname}`.toLowerCase();
         return (
           fullName.includes(searchTerm.toLowerCase()) ||
@@ -81,19 +76,21 @@ export default function UsersListMessage({
     }
   }, [searchTerm, users, currentUserEmail, messages]);
 
+  console.log("messages:", messages);
   return (
     <div className={styles.usersListContainer}>
-      <div className={styles.searchContainer}>
-        <Search className={styles.searchIcon} size={18} />
-        <input
-          type="text"
-          placeholder="Rechercher un utilisateur ou un message..."
-          className={styles.searchInput}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
+      {messages.length == 0 ? null : (
+        <div className={styles.searchContainer}>
+          <Search className={styles.searchIcon} size={18} />
+          <input
+            type="text"
+            placeholder="Rechercher un utilisateur ou un message..."
+            className={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
       {isLoading ? (
         <ul className={styles.usersList}>
           <UsersListSkeleton />
@@ -141,7 +138,7 @@ export default function UsersListMessage({
                     animate={{ opacity: 1 }}
                     className={styles.noResults}
                   >
-                    Aucun message non lu trouvé
+                    Aucun message en attente trouvé
                   </motion.div>
                 )}
               </ul>

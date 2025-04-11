@@ -8,22 +8,33 @@ import UsersList from "@/components/UsersList";
 import { User } from "@/types/User";
 import { Bell, Clock } from "lucide-react";
 import UsersListMessage from "@/components/UsersListMessage";
+import UsersListCall from "@/components/UsersListCall";
 import { Message } from "@/types/Message";
+import { Call } from "@/types/Call";
 
 export default function HomePage() {
-  const router = useRouter();
   const pathname = usePathname();
   const { controleur, canal, currentUser } = useAppContext();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [calls, setCalls] = useState<Call[]>([]);
 
   const nomDInstance = "HomePage";
   const verbose = false;
 
-  const listeMessageEmis = ["users_list_request", "messages_list_request"];
-  const listeMessageRecus = ["users_list_response", "messages_list_response"];
+  const listeMessageEmis = [
+    "users_list_request",
+    "messages_get_request",
+    "calls_get_request",
+  ];
+
+  const listeMessageRecus = [
+    "users_list_response",
+    "messages_get_response",
+    "calls_get_response",
+  ];
 
   const handler = {
     nomDInstance,
@@ -33,9 +44,14 @@ export default function HomePage() {
         users?: User[];
         error?: string;
       };
-      messages_list_response?: {
+      messages_get_response?: {
         etat: boolean;
         messages?: Message[];
+        error?: string;
+      };
+      calls_get_response?: {
+        etat: boolean;
+        calls?: Call[];
         error?: string;
       };
     }) => {
@@ -54,13 +70,23 @@ export default function HomePage() {
         }
       }
 
-      if (msg.messages_list_response) {
-        if (!msg.messages_list_response.etat) {
+      if (msg.messages_get_response) {
+        if (!msg.messages_get_response.etat) {
           console.error(
-            `Erreur lors de la récupération des messages: ${msg.messages_list_response.error}`
+            `Erreur lors de la récupération des messages: ${msg.messages_get_response.error}`
           );
         } else {
-          setMessages(msg.messages_list_response.messages || []);
+          setMessages(msg.messages_get_response.messages || []);
+        }
+      }
+
+      if (msg.calls_get_response) {
+        if (!msg.calls_get_response.etat) {
+          console.error(
+            `Erreur lors de la récupération des appels: ${msg.calls_get_response.error}`
+          );
+        } else {
+          setCalls(msg.calls_get_response.calls || []);
         }
       }
     },
@@ -69,7 +95,7 @@ export default function HomePage() {
   const fetchMessagesList = () => {
     try {
       if (controleur) {
-        const T = { messages_list_request: {} };
+        const T = { messages_get_request: {} };
         controleur.envoie(handler, T);
       }
     } catch (err) {
@@ -77,12 +103,23 @@ export default function HomePage() {
     }
   };
 
+  const fetchCallsList = () => {
+    try {
+      if (controleur) {
+        const T = { calls_get_request: {} };
+        controleur.envoie(handler, T);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la récupération des appels.", err);
+    }
+  };
+
   useEffect(() => {
-    // Inscription au contrôleur pour recevoir les messages
     if (controleur && canal) {
       controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
       fetchUsersList();
-      fetchMessagesList(); // Ajouter cette ligne pour récupérer les messages
+      fetchMessagesList();
+      fetchCallsList();
     }
 
     return () => {
@@ -109,6 +146,11 @@ export default function HomePage() {
   if (isLoading) return <div>Chargement...</div>;
   if (!currentUser) return <div>Veuillez vous connecter</div>;
 
+  // Compter le nombre d'appels non manqués
+  const completedCallsCount = calls.filter(
+    (call) => call.call_type !== "missed"
+  ).length;
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -118,7 +160,11 @@ export default function HomePage() {
           <div className={styles.reception}>
             <div className={styles.reception_header}>
               <Bell />
-              <h3>{messages.length} nouvelles notifications non lues.</h3>
+              {messages.length === 0 ? (
+                <h3>Vous avez aucune notification</h3>
+              ) : (
+                <h3>{messages.length} messages en attente</h3>
+              )}
             </div>
             <UsersListMessage
               users={users}
@@ -134,11 +180,18 @@ export default function HomePage() {
           <div className={styles.reception}>
             <div className={styles.reception_header}>
               <Clock />
-              <h3>{users.length - 1} appel passé.</h3>
+              <h3>
+                {calls.length === 0
+                  ? "Aucun appel récent"
+                  : `${completedCallsCount} appels récents`}
+              </h3>
             </div>
-            <UsersList
+            <UsersListCall
               users={users}
+              calls={calls}
               currentUserEmail={currentUser?.email || ""}
+              isLoading={isLoading}
+              limitCalls={5} // Afficher seulement les 5 derniers appels
             />
           </div>
         </section>
