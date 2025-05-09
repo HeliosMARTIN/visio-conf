@@ -23,6 +23,7 @@ import {
     Move,
 } from "lucide-react"
 import { formatFileSize, formatDate } from "../../../utils/fileHelpers"
+import { useAppContext } from "@/context/AppContext"
 
 interface FileItemProps {
     file: FileItemType
@@ -32,7 +33,6 @@ interface FileItemProps {
     onRename: (file: FileItemType) => void
     onMove: (file: FileItemType) => void
     onShare: (file: FileItemType) => void
-    onDownload?: (file: FileItemType) => void
 }
 
 export default function FileItem({
@@ -43,16 +43,32 @@ export default function FileItem({
     onRename,
     onMove,
     onShare,
-    onDownload,
 }: FileItemProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
-    const [thumbnailError, setThumbnailError] = useState(false)
 
-    // Reset thumbnail error when file changes
-    useEffect(() => {
-        setThumbnailError(false)
-    }, [file.id])
+    const { currentUser } = useAppContext()
+
+    const downloadFile = async (file: FileItemType) => {
+        try {
+            const response = await fetch(
+                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}`
+            )
+            if (!response.ok) {
+                throw new Error("Failed to fetch the file")
+            }
+            const blob = await response.blob()
+            const link = document.createElement("a")
+            link.href = URL.createObjectURL(blob)
+            link.download = file.name // Set the file name for download
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(link.href) // Clean up the object URL
+        } catch (error) {
+            console.error("Error downloading the file:", error)
+        }
+    }
 
     const getFileIcon = () => {
         if (file.type === "folder")
@@ -128,14 +144,11 @@ export default function FileItem({
         // Only trigger onOpen if it's a folder or an image with a thumbnail
         if (
             file.type === "folder" ||
-            (file.type === "file" &&
-                file.mimeType?.startsWith("image/") &&
-                file.thumbnail)
+            (file.type === "file" && file.mimeType?.startsWith("image/"))
         ) {
             onOpen(file)
-        } else if (file.type === "file" && onDownload) {
-            // For other files, trigger download directly
-            onDownload(file)
+        } else if (file.type === "file") {
+            downloadFile(file)
         }
     }
 
@@ -162,20 +175,13 @@ export default function FileItem({
                 onShare(file)
                 break
             case "download":
-                if (onDownload && file.type === "file") onDownload(file)
+                if (file.type === "file") downloadFile(file)
                 break
         }
     }
 
-    const handleThumbnailError = () => {
-        setThumbnailError(true)
-    }
-
     const shouldShowThumbnail =
-        file.thumbnail &&
-        !thumbnailError &&
-        file.type === "file" &&
-        file.mimeType?.startsWith("image/")
+        file.type === "file" && file.mimeType?.startsWith("image/")
 
     return (
         <motion.div
@@ -198,10 +204,12 @@ export default function FileItem({
             >
                 {shouldShowThumbnail ? (
                     <img
-                        src={file.thumbnail || "/placeholder.svg"}
+                        src={
+                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}` ||
+                            "/placeholder.svg"
+                        }
                         alt={file.name}
                         className={styles.thumbnail}
-                        onError={handleThumbnailError}
                     />
                 ) : (
                     getFileIcon()

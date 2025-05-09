@@ -22,6 +22,7 @@ import RenameModal from "./RenameModal"
 import DeleteModal from "./DeleteModal"
 import MoveFileModal from "./MoveFileModal"
 import ShareModal from "./ShareModal"
+import { useAppContext } from "@/context/AppContext"
 
 interface FileExplorerProps {
     files: FileItem[]
@@ -50,7 +51,6 @@ export default function FileExplorer({
     onMoveFile,
     onShareFile,
     onNavigate,
-    onDownloadFile,
 }: FileExplorerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("grid")
     const [sortBy, setSortBy] = useState<SortBy>("name")
@@ -64,6 +64,8 @@ export default function FileExplorer({
     const [showShareModal, setShowShareModal] = useState(false)
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const { currentUser } = useAppContext()
 
     // Get folder names for breadcrumbs
     const [folderNames, setFolderNames] = useState<Record<string, string>>({})
@@ -141,10 +143,11 @@ export default function FileExplorer({
             onNavigate(file.id)
         } else {
             // For image files, open the thumbnail or download
-            if (file.mimeType?.startsWith("image/") && file.thumbnail) {
-                window.open(file.thumbnail, "_blank")
-            } else if (onDownloadFile) {
-                onDownloadFile(file.id)
+            if (file.mimeType?.startsWith("image/")) {
+                window.open(
+                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}`,
+                    "_blank"
+                )
             }
         }
     }
@@ -167,12 +170,6 @@ export default function FileExplorer({
     const handleShareFile = (file: FileItem) => {
         setSelectedFile(file)
         setShowShareModal(true)
-    }
-
-    const handleDownloadFile = (file: FileItem) => {
-        if (onDownloadFile && file.type === "file") {
-            onDownloadFile(file.id)
-        }
     }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,7 +409,6 @@ export default function FileExplorer({
                     onRenameFile={handleRenameFile}
                     onMoveFile={handleMoveFile}
                     onShareFile={handleShareFile}
-                    onDownloadFile={handleDownloadFile}
                 />
             </div>
 

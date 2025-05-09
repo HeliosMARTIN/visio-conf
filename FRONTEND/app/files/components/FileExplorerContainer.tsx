@@ -10,7 +10,7 @@ import {
 import styles from "../page.module.css"
 
 export default function FileExplorerContainer() {
-    const { controleur, canal } = useAppContext()
+    const { controleur, canal, currentUser } = useAppContext()
 
     const nomDInstance = "FilesPage"
     const verbose = false
@@ -247,7 +247,7 @@ export default function FileExplorerContainer() {
 
             const T = {
                 file_upload_request: {
-                    fileId: file.name + Date.now(),
+                    userId: currentUser?.id,
                     name: file.name,
                     size: file.size,
                     mimeType,
@@ -319,26 +319,6 @@ export default function FileExplorerContainer() {
         }
     }
 
-    const handleDownloadFile = (fileId: string) => {
-        console.log("download file is not implemented yet")
-        // TODO : fix bug (repetitive download request)
-        // // Prevent redundant download requests
-        // if (isLoading) return
-
-        // setIsLoading(true)
-        // try {
-        //     const T = {
-        //         file_download_request: {
-        //             fileId,
-        //         },
-        //     }
-        //     controleur?.envoie(handler, T)
-        // } catch (err) {
-        //     setError("Failed to download file. Please try again.")
-        //     setIsLoading(false)
-        // }
-    }
-
     const handleNavigate = (folderId?: string) => {
         if (folderId) {
             // Navigate to folder
@@ -387,7 +367,6 @@ export default function FileExplorerContainer() {
                 onMoveFile={handleMoveFile}
                 onShareFile={handleShareFile}
                 onNavigate={handleNavigate}
-                onDownloadFile={handleDownloadFile}
             />
         </>
     )

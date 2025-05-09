@@ -6,7 +6,6 @@ import {
     HeadObjectCommand,
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
-import sharp from "sharp" // For image processing and thumbnail generation
 
 class AwsS3Service {
     constructor(controleur, nom) {
@@ -99,11 +98,12 @@ class AwsS3Service {
         // Handle file upload request for the file explorer
         if (mesg.file_upload_request) {
             try {
-                const { fileId, name, mimeType, ownerId } =
-                    mesg.file_upload_request
+                const { userId, name, mimeType } = mesg.file_upload_request
+
+                const safeFileName = name.replace(/[^a-zA-Z0-9_.-]/g, "_")
 
                 // Generate a path for the file in S3
-                const filePath = `files/${ownerId}/${fileId}/${name}`
+                const filePath = `files/${userId}/${safeFileName}`
 
                 // Generate a signed URL for uploading
                 const signedUrl = await this.getSignedUploadUrl(
@@ -111,27 +111,10 @@ class AwsS3Service {
                     mimeType
                 )
 
-                // Check if it's an image and we should generate a thumbnail
-                const shouldGenerateThumbnail = mimeType.startsWith("image/")
-
-                // Generate a public URL for the thumbnail
-                const thumbnailUrl = shouldGenerateThumbnail
-                    ? this.getPublicUrl(
-                          `files/${ownerId}/${fileId}/${name.replace(
-                              /(\.[^/.]+)?$/,
-                              "_thumbnail.jpg"
-                          )}`
-                      )
-                    : null
-
                 const message = {
                     file_upload_response: {
                         etat: true,
-                        fileId,
-                        name,
                         signedUrl,
-                        generateThumbnail: shouldGenerateThumbnail,
-                        thumbnailUrl: thumbnailUrl,
                     },
                     id: [mesg.id],
                 }
@@ -251,79 +234,6 @@ class AwsS3Service {
             console.error("Error deleting file from S3:", error)
             throw error
         }
-    }
-
-    // Check if a file exists in S3
-    async fileExists(filePath) {
-        try {
-            const params = {
-                Bucket: this.bucket,
-                Key: filePath,
-            }
-
-            const command = new HeadObjectCommand(params)
-
-            await this.client.send(command)
-            return true
-        } catch (error) {
-            return false
-        }
-    }
-
-    // Generate a thumbnail for an image file
-    async generateThumbnail(filePath) {
-        try {
-            // Get the original image
-            const params = {
-                Bucket: this.bucket,
-                Key: filePath,
-            }
-
-            const command = new GetObjectCommand(params)
-            const response = await this.client.send(command)
-
-            // Convert the response body to a buffer
-            const chunks = []
-            for await (const chunk of response.Body) {
-                chunks.push(chunk)
-            }
-            const buffer = Buffer.concat(chunks)
-
-            // Generate a thumbnail using sharp
-            const thumbnailBuffer = await sharp(buffer)
-                .resize(200, 200, { fit: "inside" })
-                .jpeg({ quality: 80 })
-                .toBuffer()
-
-            // Create a thumbnail path
-            const thumbnailPath = filePath.replace(
-                /(\.[^/.]+)?$/,
-                "_thumbnail.jpg"
-            )
-
-            // Upload the thumbnail to S3
-            const uploadParams = {
-                Bucket: this.bucket,
-                Key: thumbnailPath,
-                Body: thumbnailBuffer,
-                ContentType: "image/jpeg",
-                ACL: "public-read",
-            }
-
-            const uploadCommand = new PutObjectCommand(uploadParams)
-            await this.client.send(uploadCommand)
-
-            // Return the thumbnail path
-            return thumbnailPath
-        } catch (error) {
-            console.error("Error generating thumbnail:", error)
-            throw error
-        }
-    }
-
-    // Get a public URL for a file (for files with public-read ACL)
-    getPublicUrl(filePath) {
-        return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${filePath}`
     }
 }
 
