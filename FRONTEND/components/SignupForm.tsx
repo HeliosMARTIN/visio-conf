@@ -6,6 +6,8 @@ import { useAppContext } from "@/context/AppContext";
 import { useRouter } from "next/navigation";
 import jwt from "jsonwebtoken";
 import { User } from "@/types/User";
+import { Eye, EyeOff } from "lucide-react"; // Import des icônes
+
 
 export default function SignupForm() {
   const { controleur, currentUser, setCurrentUser } = useAppContext();
@@ -62,6 +64,9 @@ export default function SignupForm() {
   const [desc, setDesc] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupError, setSignupError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +97,7 @@ export default function SignupForm() {
       {error && <div className={styles.error}>{error}</div>}
       <div className={styles.formGroupRow}>
         <div className={styles.formGroup}>
-          <label htmlFor="firstname">First Name:</label>
+          <label htmlFor="firstname">Prénom:</label>
           <input
             type="text"
             id="firstname"
@@ -102,7 +107,7 @@ export default function SignupForm() {
           />
         </div>
         <div className={styles.formGroup}>
-          <label htmlFor="lastname">Last Name:</label>
+          <label htmlFor="lastname">Nom:</label>
           <input
             type="text"
             id="lastname"
@@ -123,18 +128,28 @@ export default function SignupForm() {
         />
       </div>
       <div className={styles.formGroup}>
-        <label htmlFor="password">Password:</label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <label htmlFor="password">Mot de passe:</label>
+        <div className={styles.passwordContainer}>
+          <input
+            type={showPassword ? "text" : "password"}
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`${styles.input} ${signupError ? styles.error : ""}`}
+            required
+          />
+          <button
+            type="button"
+            className={styles.eyeButton}
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
       </div>
       <div className={styles.formGroupRow}>
         <div className={styles.formGroup}>
-          <label htmlFor="phone">Phone:</label>
+          <label htmlFor="phone">Téléphone:</label>
           <input
             type="text"
             id="phone"
@@ -165,7 +180,7 @@ export default function SignupForm() {
         />
       </div>
       <button type="submit" className={styles.submitButton} disabled={loading}>
-        {loading ? "Signing up..." : "Sign Up"}
+        {loading ? "Inscription en cours..." : "Inscription"}
       </button>
     </form>
   );

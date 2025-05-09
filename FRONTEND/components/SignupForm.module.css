@@ -2,8 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 600px; /* Adjusted width */
-  margin: 0 auto;
+  margin: 20px 40px;
 }
 
 .formGroup {
@@ -11,43 +10,66 @@
   flex-direction: column;
 }
 
-.formGroupRow {
-  display: flex;
-  gap: 1rem;
-}
-
 .formGroup label {
   margin-bottom: 0.5rem;
-  color: #e0e0e0; /* Light text color */
+  color: var(--Primaire, #1E3664);
 }
 
 .formGroup input {
   padding: 0.5rem;
   border: 1px solid #444;
   border-radius: 4px;
-  background-color: #333; /* Dark input background */
-  color: #e0e0e0; /* Light text color */
+  background-color: #fff; /* Dark input background */
+  color: var(--Primaire, #1E3664);
+}
+
+.passwordContainer{
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+
+.passwordContainer input{
+  width: 100%;
+}
+
+.eyeButton{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #444;
+  right: 3%;
 }
 
 .submitButton {
   padding: 0.75rem;
   border: none;
-  border-radius: 4px;
-  background-color: #0070f3;
+  border-radius: 8px;
+  background: var(--Primaire, #1E3664);
   color: white;
   cursor: pointer;
 }
 
 .submitButton:disabled {
-  background-color: #555; /* Darker gray for better contrast */
+  background-color: #555; 
   cursor: not-allowed;
 }
 
 .submitButton:hover:not(:disabled) {
-  background-color: #005bb5; /* Darker hover color for better contrast */
+  background-color: #005bb5;
 }
 
 .error {
-  color: #d32f2f; /* Darker red for better contrast */
-  margin-bottom: 1rem;
+  color: #d32f2f; 
+}
+
+.formGroupRow {
+  display: flex;
+  gap: 1rem;
 }
