@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
+import Image from "next/image";
 import Link from "next/link"
 import { useAppContext } from "@/context/AppContext"
 
@@ -24,16 +25,21 @@ export default function LoginPage() {
 
     return (
         <div className={styles.page}>
-            <h1>Login to Visioconf !</h1>
             <main className={styles.main}>
+                <Image
+                    src="/logo_Univ_grand.svg"
+                    alt="Logo"
+                    width={340}
+                    height={100}
+                    priority
+                />
                 <LoginForm />
+                <p className={styles.signup}>
+                    <Link href="/signup" className={styles.link}>
+                        Pas encore de compte ?
+                    </Link>
+                </p>
             </main>
-            <p>
-                Don't have an account?{" "}
-                <Link href="/signup" className={styles.link}>
-                    Sign up
-                </Link>
-            </p>
         </div>
     )
 }
