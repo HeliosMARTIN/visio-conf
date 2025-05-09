@@ -99,11 +99,11 @@ class AwsS3Service {
         // Handle file upload request for the file explorer
         if (mesg.file_upload_request) {
             try {
-                const { fileId, fileName, mimeType, parentId, ownerId } =
+                const { fileId, name, mimeType, ownerId } =
                     mesg.file_upload_request
 
                 // Generate a path for the file in S3
-                const filePath = `files/${ownerId}/${fileId}/${fileName}`
+                const filePath = `files/${ownerId}/${fileId}/${name}`
 
                 // Generate a signed URL for uploading
                 const signedUrl = await this.getSignedUploadUrl(
@@ -117,7 +117,7 @@ class AwsS3Service {
                 // Generate a public URL for the thumbnail
                 const thumbnailUrl = shouldGenerateThumbnail
                     ? this.getPublicUrl(
-                          `files/${ownerId}/${fileId}/${fileName.replace(
+                          `files/${ownerId}/${fileId}/${name.replace(
                               /(\.[^/.]+)?$/,
                               "_thumbnail.jpg"
                           )}`
@@ -128,7 +128,7 @@ class AwsS3Service {
                     file_upload_response: {
                         etat: true,
                         fileId,
-                        fileName,
+                        name,
                         signedUrl,
                         generateThumbnail: shouldGenerateThumbnail,
                         thumbnailUrl: thumbnailUrl,

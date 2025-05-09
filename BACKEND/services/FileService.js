@@ -243,30 +243,8 @@ class FileService {
 
                 // Save the file record
                 await newFile.save()
-
-                // Forward the request to the AwsS3Service to get a signed URL
-                const uploadRequest = {
-                    file_upload_request: {
-                        fileId,
-                        fileName: name,
-                        mimeType,
-                        parentId,
-                        ownerId: userInfo.uuid,
-                    },
-                    id: mesg.id,
-                }
-
-                // The AwsS3Service will handle the response directly
-                this.controleur.envoie(this, uploadRequest)
             } catch (error) {
-                const message = {
-                    file_upload_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
+                console.log("Error during file upload:", error)
             }
         }
 

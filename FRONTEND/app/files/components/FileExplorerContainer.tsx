@@ -247,6 +247,7 @@ export default function FileExplorerContainer() {
 
             const T = {
                 file_upload_request: {
+                    fileId: file.name + Date.now(),
                     name: file.name,
                     size: file.size,
                     mimeType,
