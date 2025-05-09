@@ -22,7 +22,7 @@ import {
     Share2,
     Move,
 } from "lucide-react"
-import { formatFileSize, formatDate } from "../../../utils/fileHelpers"
+import { formatFileSize, formatDate, getLink } from "../../../utils/fileHelpers"
 import { useAppContext } from "@/context/AppContext"
 
 interface FileItemProps {
@@ -50,10 +50,15 @@ export default function FileItem({
     const { currentUser } = useAppContext()
 
     const downloadFile = async (file: FileItemType) => {
-        try {
-            const response = await fetch(
-                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}`
+        if (!currentUser) {
+            console.error(
+                "No current user available to generate the file link."
             )
+            return
+        }
+
+        try {
+            const response = await fetch(getLink(currentUser, file.name))
             if (!response.ok) {
                 throw new Error("Failed to fetch the file")
             }

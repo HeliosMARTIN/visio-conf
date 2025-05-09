@@ -71,3 +71,7 @@ export function getMimeTypeFromExtension(extension: string): string {
 
     return mimeTypes[extension.toLowerCase()] || "application/octet-stream"
 }
+
+export function getLink(currentUser: { id: string }, fileName: string): string {
+    return `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser.id}/${fileName}`
+}

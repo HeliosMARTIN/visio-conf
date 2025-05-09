@@ -23,6 +23,7 @@ import DeleteModal from "./DeleteModal"
 import MoveFileModal from "./MoveFileModal"
 import ShareModal from "./ShareModal"
 import { useAppContext } from "@/context/AppContext"
+import { getLink } from "../../../utils/fileHelpers"
 
 interface FileExplorerProps {
     files: FileItem[]
@@ -143,11 +144,8 @@ export default function FileExplorer({
             onNavigate(file.id)
         } else {
             // For image files, open the thumbnail or download
-            if (file.mimeType?.startsWith("image/")) {
-                window.open(
-                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}`,
-                    "_blank"
-                )
+            if (file.mimeType?.startsWith("image/") && currentUser) {
+                window.open(getLink(currentUser, file.name), "_blank")
             }
         }
     }
