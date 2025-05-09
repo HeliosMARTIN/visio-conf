@@ -83,7 +83,7 @@ class UsersService {
                 const token = jwt.sign(
                     { userId: user._id },
                     process.env.JWT_SECRET,
-                    { expiresIn: "1d" }
+                    { expiresIn: "7d" }
                 )
                 const message = {
                     login_response: { etat: true, token },
@@ -129,7 +129,7 @@ class UsersService {
             const token = jwt.sign(
                 { userId: user._id },
                 process.env.JWT_SECRET,
-                { expiresIn: "1d" }
+                { expiresIn: "7d" }
             )
             const message = {
                 signup_response: { etat: true, token },

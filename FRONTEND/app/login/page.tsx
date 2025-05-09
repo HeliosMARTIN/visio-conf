@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import LoginForm from "../../components/LoginForm"
 import styles from "./login.module.css"
-import Image from "next/image";
+import Image from "next/image"
 import Link from "next/link"
 import { useAppContext } from "@/context/AppContext"
 
@@ -15,7 +15,7 @@ export default function LoginPage() {
     const { currentUser } = useAppContext()
 
     useEffect(() => {
-        const token = localStorage.getItem("token")
+        const token = Cookies.get("token") // Use cookies instead of localStorage
         if (token) {
             if (currentUser) {
                 router.push("/")
