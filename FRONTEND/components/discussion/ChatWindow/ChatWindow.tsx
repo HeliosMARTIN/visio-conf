@@ -46,7 +46,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
     const isCurrentUserMessage = (message: Message): boolean => {
-        const senderId = message.message_sender.id
+        const senderId = message.message_sender._id
 
         const currentUserId = currentUser.id
 
@@ -143,6 +143,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             message_uuid: messageUuid,
             message_content: newMessage.trim(),
             message_sender: {
+                _id: currentUser.id,
                 id: currentUser.id,
                 firstname: currentUser.firstname || "",
                 lastname: currentUser.lastname || "",

@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { User } from "@/types/User";
 import { Eye, EyeOff } from "lucide-react"; // Import des icônes
 
+
 export default function SignupForm() {
   const { controleur, currentUser, setCurrentUser } = useAppContext();
   const router = useRouter();
@@ -65,6 +66,7 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [signupError, setSignupError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
