@@ -1,0 +1,17 @@
+# Spécifications – VisioConf
+
+Ce document décrit l'ensemble des spécifications des interfaces front et back de l'application VisioConf, en précisant pour chacun :
+
+-   **Nom de la variable/fonction**
+-   **Type/Variable attendue(s)**
+-   **Description**
+
+---
+
+## 1. Partie Admin
+
+### Home Admin
+
+| **Variable/Fonction**         | **Type/Variable attendue(s)**                                                                                      | **Description**                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **[selectedTab, setSelectedTab]**   | Chaîne de caractère                                                                                | Section sélectionnée                                                                                              |
