@@ -10,7 +10,6 @@ class FileService {
         this.listeDesMessagesEmis = [
             "files_list_response",
             "folders_list_response",
-            "file_upload_response",
             "file_delete_response",
             "file_rename_response",
             "file_move_response",
@@ -65,7 +64,6 @@ class FileService {
                     await SocketIdentificationService.getUserInfoBySocketId(
                         socketId
                     )
-                console.log("ici socket id", socketId)
 
                 if (!userInfo)
                     throw new Error("User not found based on socket id")
@@ -102,7 +100,6 @@ class FileService {
                     parentId: file.parentId,
                     ownerId: file.ownerId,
                     shared: file.shared,
-                    thumbnail: file.thumbnail,
                 }))
 
                 const message = {
@@ -222,6 +219,7 @@ class FileService {
                 const { name, size, mimeType, extension, parentId } =
                     mesg.file_upload_request
 
+                const safeFileName = name.replace(/[^a-zA-Z0-9_.-]/g, "_")
                 // Generate a unique file ID
                 const fileId = uuidv4()
 
@@ -231,7 +229,7 @@ class FileService {
                 // Create a new file record
                 const newFile = new File({
                     id: fileId,
-                    name,
+                    name: safeFileName,
                     type: "file",
                     size,
                     mimeType,
@@ -243,30 +241,8 @@ class FileService {
 
                 // Save the file record
                 await newFile.save()
-
-                // Forward the request to the AwsS3Service to get a signed URL
-                const uploadRequest = {
-                    file_upload_request: {
-                        fileId,
-                        fileName: name,
-                        mimeType,
-                        parentId,
-                        ownerId: userInfo.uuid,
-                    },
-                    id: mesg.id,
-                }
-
-                // The AwsS3Service will handle the response directly
-                this.controleur.envoie(this, uploadRequest)
             } catch (error) {
-                const message = {
-                    file_upload_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
+                console.log("Error during file upload:", error)
             }
         }
 

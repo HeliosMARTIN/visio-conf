@@ -99,14 +99,14 @@ Ce document décrit l'ensemble des messages utilisés dans l'application VisioCo
 
 ### Table des messages liés aux fichiers et dossiers
 
-| **Message**              | **Format**                                                     | **Exemple de contenu**                                                  | **Émetteur**          | **Récepteur**         |
-| ------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------- | --------------------- |
-| **files_list_request**   | { folderId?: string }                                          | { folderId: "folder123" } ou Aucun contenu                              | FilesPage (frontend)  | FileService (backend) |
-| **files_list_response**  | { etat: boolean, files?: File[], error?: string }              | { etat: true, files: [ { id:"f1", name:"doc.pdf" } ] }                  | FileService (backend) | FilesPage (frontend)  |
-| **file_upload_request**  | { name: string, size: number, type: string, fileData: Buffer } | { name: "image.png", size: 2048, type: "image/png", fileData: <Buffer>} | FilePage (frontend)   | FileService (backend) |
-| **file_upload_response** | { etat: boolean, fileId?: string, error?: string }             | { etat: true, fileId: "f123" }                                          | FileService (backend) | FilePage (frontend)   |
-| **file_delete_request**  | { fileId: string }                                             | { fileId: "f123" }                                                      | FilesPage (frontend)  | FileService (backend) |
-| **file_delete_response** | { etat: boolean, error?: string }                              | { etat: true }                                                          | FileService (backend) | FilesPage (frontend)  |
+| **Message**              | **Format**                                                                                             | **Exemple de contenu**                                                                     | **Émetteur**          | **Récepteur**         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | --------------------- | --------------------- |
+| **files_list_request**   | { folderId?: string }                                                                                  | { folderId: "folder123" } ou Aucun contenu                                                 | FilesPage (frontend)  | FileService (backend) |
+| **files_list_response**  | { etat: boolean, files?: File[], error?: string }                                                      | { etat: true, files: [ { id:"f1", name:"doc.pdf" } ] }                                     | FileService (backend) | FilesPage (frontend)  |
+| **file_upload_request**  | { userId: string, name: string, size: number, mimeType: string, extension: string, parentId?: number } | { name: "image.png", size: 2048, mimeType: "image/png", extension: ".png"}                 | FilePage (frontend)   | FileService (backend) |
+| **file_upload_response** | { etat: boolean, error?: string, signedUrl? }                                                          | { etat: true, signedUrl: "https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/..." } | FileService (backend) | FilePage (frontend)   |
+| **file_delete_request**  | { fileId: string }                                                                                     | { fileId: "f123" }                                                                         | FilesPage (frontend)  | FileService (backend) |
+| **file_delete_response** | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | FileService (backend) | FilesPage (frontend)  |
 
 > **Note :** Ces messages gèrent l'accès aux fichiers et dossiers des utilisateurs. Les fichiers sont identifiés par des ID uniques.
 

@@ -19,7 +19,7 @@ export default function CreateFolderModal({
         e.preventDefault()
 
         if (!folderName.trim()) {
-            setError("Folder name cannot be empty")
+            setError("Le nom du dossier ne peut pas être vide")
             return
         }
 
@@ -37,7 +37,7 @@ export default function CreateFolderModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.modalHeader}>
-                    <h3>Create New Folder</h3>
+                    <h3>Créer un Nouveau Dossier</h3>
                     <button
                         className={styles.closeButton}
                         onClick={onCloseModal}
@@ -49,7 +49,7 @@ export default function CreateFolderModal({
                 <form onSubmit={handleSubmit}>
                     <div className={styles.modalBody}>
                         <div className={styles.formGroup}>
-                            <label htmlFor="folderName">Folder Name</label>
+                            <label htmlFor="folderName">Nom du Dossier</label>
                             <input
                                 type="text"
                                 id="folderName"
@@ -73,10 +73,10 @@ export default function CreateFolderModal({
                             className={styles.cancelButton}
                             onClick={onCloseModal}
                         >
-                            Cancel
+                            Annuler
                         </button>
                         <button type="submit" className={styles.confirmButton}>
-                            Create
+                            Créer
                         </button>
                     </div>
                 </form>

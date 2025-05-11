@@ -10,7 +10,7 @@ import {
 import styles from "../page.module.css"
 
 export default function FileExplorerContainer() {
-    const { controleur, canal } = useAppContext()
+    const { controleur, canal, currentUser } = useAppContext()
 
     const nomDInstance = "FilesPage"
     const verbose = false
@@ -61,7 +61,7 @@ export default function FileExplorerContainer() {
                 setIsLoading(false)
                 if (!msg.files_list_response.etat) {
                     setError(
-                        `Fetching files failed: ${msg.files_list_response.error}`
+                        `Échec de la récupération des fichiers: ${msg.files_list_response.error}`
                     )
                 } else {
                     setFiles(msg.files_list_response.files || [])
@@ -93,15 +93,21 @@ export default function FileExplorerContainer() {
                                 pendingFileRef.current = null
                             } else {
                                 setError(
-                                    "Upload failed: " + response.statusText
+                                    "Échec du téléversement: " +
+                                        response.statusText
                                 )
                             }
                         })
                         .catch((error) => {
-                            setError("Upload error: " + error.message)
+                            setError(
+                                "Erreur de téléversement: " + error.message
+                            )
                         })
                 } else if (!msg.file_upload_response.etat) {
-                    setError("Upload failed: " + msg.file_upload_response.error)
+                    setError(
+                        "Échec du téléversement: " +
+                            msg.file_upload_response.error
+                    )
                 }
             }
 
@@ -111,7 +117,10 @@ export default function FileExplorerContainer() {
                     // Refresh the file list
                     fetchFilesList(currentPath[currentPath.length - 1])
                 } else {
-                    setError("Delete failed: " + msg.file_delete_response.error)
+                    setError(
+                        "Échec de la suppression: " +
+                            msg.file_delete_response.error
+                    )
                 }
             }
 
@@ -121,7 +130,9 @@ export default function FileExplorerContainer() {
                     // Refresh the file list
                     fetchFilesList(currentPath[currentPath.length - 1])
                 } else {
-                    setError("Rename failed: " + msg.file_rename_response.error)
+                    setError(
+                        "Échec du renommage: " + msg.file_rename_response.error
+                    )
                 }
             }
 
@@ -131,7 +142,9 @@ export default function FileExplorerContainer() {
                     // Refresh the file list
                     fetchFilesList(currentPath[currentPath.length - 1])
                 } else {
-                    setError("Move failed: " + msg.file_move_response.error)
+                    setError(
+                        "Échec du déplacement: " + msg.file_move_response.error
+                    )
                 }
             }
 
@@ -141,7 +154,9 @@ export default function FileExplorerContainer() {
                     // Refresh the file list
                     fetchFilesList(currentPath[currentPath.length - 1])
                 } else {
-                    setError("Share failed: " + msg.file_share_response.error)
+                    setError(
+                        "Échec du partage: " + msg.file_share_response.error
+                    )
                 }
             }
 
@@ -152,7 +167,7 @@ export default function FileExplorerContainer() {
                     fetchFilesList(currentPath[currentPath.length - 1])
                 } else {
                     setError(
-                        "Folder creation failed: " +
+                        "Échec de la création du dossier: " +
                             msg.folder_create_response.error
                     )
                 }
@@ -172,9 +187,9 @@ export default function FileExplorerContainer() {
                     )
                 } else {
                     setError(
-                        "Download failed: " +
+                        "Échec du téléchargement: " +
                             (msg.file_download_response.error ||
-                                "Unknown error")
+                                "Erreur inconnue")
                     )
                 }
             }
@@ -215,7 +230,9 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to fetch files list. Please try again.")
+            setError(
+                "Échec de la récupération des fichiers. Veuillez réessayer."
+            )
             setIsLoading(false)
         }
     }
@@ -233,7 +250,7 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to create folder. Please try again.")
+            setError("Échec de la création du dossier. Veuillez réessayer.")
         }
     }
 
@@ -247,6 +264,7 @@ export default function FileExplorerContainer() {
 
             const T = {
                 file_upload_request: {
+                    userId: currentUser?.id,
                     name: file.name,
                     size: file.size,
                     mimeType,
@@ -259,7 +277,7 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to upload file. Please try again.")
+            setError("Échec du téléversement du fichier. Veuillez réessayer.")
         }
     }
 
@@ -272,7 +290,7 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to delete file. Please try again.")
+            setError("Échec de la suppression du fichier. Veuillez réessayer.")
         }
     }
 
@@ -286,7 +304,7 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to rename file. Please try again.")
+            setError("Échec du renommage du fichier. Veuillez réessayer.")
         }
     }
 
@@ -300,7 +318,7 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to move file. Please try again.")
+            setError("Échec du déplacement du fichier. Veuillez réessayer.")
         }
     }
 
@@ -314,28 +332,8 @@ export default function FileExplorerContainer() {
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to share file. Please try again.")
+            setError("Échec du partage du fichier. Veuillez réessayer.")
         }
-    }
-
-    const handleDownloadFile = (fileId: string) => {
-        console.log("download file is not implemented yet")
-        // TODO : fix bug (repetitive download request)
-        // // Prevent redundant download requests
-        // if (isLoading) return
-
-        // setIsLoading(true)
-        // try {
-        //     const T = {
-        //         file_download_request: {
-        //             fileId,
-        //         },
-        //     }
-        //     controleur?.envoie(handler, T)
-        // } catch (err) {
-        //     setError("Failed to download file. Please try again.")
-        //     setIsLoading(false)
-        // }
     }
 
     const handleNavigate = (folderId?: string) => {
@@ -369,7 +367,7 @@ export default function FileExplorerContainer() {
                         className={styles.dismissButton}
                         onClick={() => setError("")}
                     >
-                        Dismiss
+                        Fermer
                     </button>
                 </div>
             )}
@@ -386,7 +384,6 @@ export default function FileExplorerContainer() {
                 onMoveFile={handleMoveFile}
                 onShareFile={handleShareFile}
                 onNavigate={handleNavigate}
-                onDownloadFile={handleDownloadFile}
             />
         </>
     )
