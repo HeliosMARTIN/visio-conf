@@ -78,45 +78,37 @@ export default function ProfilPage() {
             headers: {
               "Content-Type": pendingFileRef.current.type,
             },
-          })
-            .then((response) => {
-              // Considérer les réponses "Slow Down" comme non critiques
-              if (
-                response.ok ||
-                response.status === 503 ||
-                response.statusText === "Slow Down"
-              ) {
-                const updateProfilePictureMessage = {
-                  update_user_request: {
-                    picture: msg.upload_response?.fileName,
-                  },
-                };
+          }).then((response) => {
+            // Considérer les réponses "Slow Down" comme non critiques
+            if (
+              response.ok ||
+              response.status === 503 ||
+              response.statusText === "Slow Down"
+            ) {
+              const updateProfilePictureMessage = {
+                update_user_request: {
+                  id: currentUser?.id, // Utilisez l'opérateur de chaînage optionnel
+                  picture: msg.upload_response?.fileName,
+                },
+              };
+              // Vérifiez que currentUser existe avant d'envoyer
+              if (currentUser?.id) {
                 controleur.envoie(handler, updateProfilePictureMessage);
                 pendingFileRef.current = null;
                 setUploadError(null);
               } else {
                 setUploadError(
-                  "Échec de l'upload sur S3: " + response.statusText
+                  "Utilisateur non connecté. Veuillez vous reconnecter."
                 );
+                setIsUploading(false);
               }
-              setIsUploading(false);
-            })
-            .catch((error) => {
-              // Ignorer les erreurs spécifiques liées au throttling
-              if (error.message.includes("Slow Down")) {
-                const updateProfilePictureMessage = {
-                  update_user_request: {
-                    picture: msg.upload_response?.fileName,
-                  },
-                };
-                controleur.envoie(handler, updateProfilePictureMessage);
-                pendingFileRef.current = null;
-                setUploadError(null);
-              } else {
-                setUploadError("Erreur d'upload sur S3: " + error.message);
-              }
-              setIsUploading(false);
-            });
+            } else {
+              setUploadError(
+                "Échec de l'upload sur S3: " + response.statusText
+              );
+            }
+            setIsUploading(false);
+          });
         } else {
           setUploadError("Échec de l'upload: " + msg.upload_response.error);
           setIsUploading(false);
@@ -137,15 +129,53 @@ export default function ProfilPage() {
   };
 
   useEffect(() => {
-    if (controleur && canal) {
+    if (controleur && canal && currentUser?.id) {
+      // Log pour debug
+      if (verbose)
+        console.log(
+          "Inscription aux messages avec l'utilisateur:",
+          currentUser.id
+        );
+
       controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+    } else {
+      // Log pour debug
+      if (verbose)
+        console.log("Impossible de s'inscrire aux messages:", {
+          controleur: !!controleur,
+          canal: !!canal,
+          userId: currentUser?.id,
+        });
     }
+
     return () => {
       if (controleur) {
         controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
       }
     };
-  }, [pathname, controleur, canal]);
+  }, [pathname, controleur, canal, currentUser]);
+
+  useEffect(() => {
+    // Réinitialisation complète lorsque l'utilisateur change
+    setSelectedFile(null);
+    pendingFileRef.current = null;
+    setIsUploading(false);
+    setUploadError(null);
+
+    // Désinscription et réinscription
+    if (controleur) {
+      controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
+
+      if (canal && currentUser?.id) {
+        controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+        if (verbose)
+          console.log(
+            "Réinscription pour le nouvel utilisateur:",
+            currentUser.id
+          );
+      }
+    }
+  }, [currentUser?.id]); // Dépendance spécifique à l'ID utilisateur
 
   // Déclencher le clic sur l'input file quand le bouton est cliqué
   const handleEditPhotoClick = () => {
