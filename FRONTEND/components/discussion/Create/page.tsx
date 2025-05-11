@@ -106,84 +106,85 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
 
     return (
         <div className="create-discussion">
-            <div className="search-users">
-                <div className="selected-users">
-                    {selectedUsers.map((user) => (
-                        <div key={user.id} className="selected-user-chip">
-                            <span>{`${user.firstname} ${user.lastname}`}</span>
-                            <X
-                                size={16}
-                                onClick={() =>
-                                    removeSelectedUser(user.id || "")
-                                }
-                                className="remove-user"
-                            />
-                        </div>
-                    ))}
+            <div>
+                <div className="search-users">
+                    <div className="selected-users">
+                        {selectedUsers.map((user) => (
+                            <div key={user.id} className="selected-user-chip">
+                                <span>{`${user.firstname} ${user.lastname}`}</span>
+                                <X
+                                    size={16}
+                                    onClick={() =>
+                                        removeSelectedUser(user.id || "")
+                                    }
+                                    className="remove-user"
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Rechercher des utilisateurs..."
+                        className="search-input"
+                    />
                 </div>
 
+                {filteredSearchResults.length > 0 && searchQuery && (
+                    <div className="search-results">
+                        <h4>Résultats pertinents :</h4>
+                        {filteredSearchResults.map((user) => (
+                            <div
+                                key={user.id}
+                                onClick={() => handleUserSelect(user)}
+                                className="search-result-item"
+                            >
+                                <div className="user-info">
+                                    <img
+                                        src={
+                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
+                                        }
+                                        alt=""
+                                        className="user-avatar"
+                                    />
+                                    <span>{`${user.firstname} ${user.lastname}`}</span>
+                                </div>
+                                <CirclePlus size={16} className="add-user" />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            
+            <div className="message-input">
                 <input
                     type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher des utilisateurs..."
-                    className="search-input"
-                />
-            </div>
-
-            {filteredSearchResults.length > 0 && searchQuery && (
-                <div className="search-results">
-                    <h4>Résultats pertinents :</h4>
-                    {filteredSearchResults.map((user) => (
-                        <div
-                            key={user.id}
-                            onClick={() => handleUserSelect(user)}
-                            className="search-result-item"
-                        >
-                            <div className="user-info">
-                                <img
-                                    src={
-                                        user.picture ||
-                                        "/images/default_profile_picture.png"
-                                    }
-                                    alt=""
-                                    className="user-avatar"
-                                />
-                                <span>{`${user.firstname} ${user.lastname}`}</span>
-                            </div>
-                            <CirclePlus size={16} className="add-user" />
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            <div className="message-input-container">
-                <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Écrivez votre message..."
-                    className="message-input"
                 />
+
+                {error && <div className="error-message">{error}</div>}
+
+                <button
+                    onClick={handleCreateDiscussion}
+                    disabled={
+                        isCreating || selectedUsers.length === 0 || !message.trim()
+                    }
+                    className="create-button"
+                >
+                    {isCreating ? (
+                        "Création..."
+                    ) : (
+                        <>
+                            <span>Créer et envoyer</span>
+                            <Send size={16} />
+                        </>
+                    )}
+                </button>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
-
-            <button
-                onClick={handleCreateDiscussion}
-                disabled={
-                    isCreating || selectedUsers.length === 0 || !message.trim()
-                }
-                className="create-button"
-            >
-                {isCreating ? (
-                    "Création..."
-                ) : (
-                    <>
-                        <span>Créer et envoyer</span>
-                        <Send size={16} />
-                    </>
-                )}
-            </button>
         </div>
     )
 }
