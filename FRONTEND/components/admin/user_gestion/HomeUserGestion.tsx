@@ -96,6 +96,9 @@ export default function HomeUserGestion ({userPerms} : {userPerms : string[]}) {
                     firstname : user.firstname,
                     lastname : user.lastname,
                     email: user.email,
+                    phone : user.phone,
+                    job : user.job,
+                    desc : user.desc,
                     status: user.status === "active" ? "Actif" :
                     (user.status === "waiting" ? "En attente" : "Désactivé"),
                     roles : user.roles

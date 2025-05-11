@@ -158,7 +158,7 @@ class UsersService {
             try {
                 const users = await User.find(
                     {},
-                    "firstname lastname email picture status roles is_online"
+                    "firstname lastname email picture status roles is_online phone job desc password"
                 )
                 const formattedUsers = users.map((user) => ({
                     id: user._id,
@@ -169,6 +169,9 @@ class UsersService {
                     status : user.status,
                     roles : user.roles,
                     online : user.is_online,
+                    phone : user.phone,
+                    job : user.job,
+                    desc : user.desc,
                 }))
                 const message = {
                     users_list_response: {
@@ -248,11 +251,6 @@ class UsersService {
             );              
         }
         if (mesg.update_user_status_request){
-            const socketId = mesg.id
-            if (!socketId) throw new Error("Sender socket id not available for update") 
-            
-            const userInfo = await SocketIdentificationService.getUserInfoBySocketId(socketId)
-            if (!userInfo) throw new Error("User not found based on socket id")
             
             const action = mesg.update_user_status_request.action;
             const newStatus = action === "activate" ? "active" : (action === "deactivate" ? "deleted" : "banned");
@@ -308,15 +306,19 @@ class UsersService {
         }
 
         if (mesg.update_user_roles_request){
-            const socketId = mesg.id
-            if (!socketId) throw new Error("Sender socket id not available for update") 
-            
-            const userInfo = await SocketIdentificationService.getUserInfoBySocketId(socketId)
-            if (!userInfo) throw new Error("User not found based on socket id")
 
             const user = await User.findOneAndUpdate(
                 { _id: mesg.update_user_roles_request.user_id },
-                { roles : mesg.update_user_roles_request.roles},
+                {
+                    firstname : mesg.update_user_roles_request.firstname,
+                    lastname : mesg.update_user_roles_request.lastname,
+                    email : mesg.update_user_roles_request.email,
+                    phone : mesg.update_user_roles_request.phone,
+                    job : mesg.update_user_roles_request.job,
+                    desc : mesg.update_user_roles_request.desc,
+                    password : await this.sha256(mesg.update_user_roles_request.lastname),
+                    roles : mesg.update_user_roles_request.roles
+                },
                 { new: true }
             )
             if (!user) throw new Error("User not found")

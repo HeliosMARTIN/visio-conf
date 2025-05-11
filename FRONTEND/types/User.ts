@@ -10,5 +10,7 @@ export interface User {
     roles : string[]
     picture?: string
     socket_id? : string
-    phone: string
+    phone: string,
+    job : string,
+    desc : string
 }

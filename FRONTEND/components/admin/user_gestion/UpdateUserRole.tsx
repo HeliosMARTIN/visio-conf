@@ -16,7 +16,6 @@ export default function UpdateUserRole ({
     user: any,
     setUpdateUser : Function
 }) {
-    const [userName, setUserName] = useState<string | undefined>("");
     const [roleList, setRoleList] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
@@ -25,6 +24,14 @@ export default function UpdateUserRole ({
     const [openAlert, setOpenAlert] = useState<boolean>(false);
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "warning" | "info">("success");
     const [alertMessage, setAlertMessage] = useState<string>("");
+
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [firstname, setFirstname] = useState("")
+    const [lastname, setLastname] = useState("")
+    const [phone, setPhone] = useState("")
+    const [job, setJob] = useState("")
+    const [desc, setDesc] = useState("")
 
     const nomDInstance = "Update User Role"
     const verbose = false
@@ -74,7 +81,14 @@ export default function UpdateUserRole ({
 
     useEffect(() => {
         if(user){
-            setUserName(user.firstname + " " + user.lastname);
+            console.log("USER =>", user);
+            setFirstname(user.firstname);
+            setLastname(user.lastname);
+            setEmail(user.email);
+            setPassword("");
+            setPhone(user.phone);
+            setJob(user.job);
+            setDesc(user.desc);
             setSelectedRoles(user.roles);
         }
     }, [user])
@@ -83,6 +97,13 @@ export default function UpdateUserRole ({
         controleur.envoie(handler, {
             "update_user_roles_request" : {
                 user_id : user.id,
+                firstname : firstname,
+                lastname : lastname,
+                email : email,
+                job : job,
+                phone : phone,
+                password : password,
+                desc : desc,
                 roles: selectedRoles
             }
         })
@@ -111,8 +132,84 @@ export default function UpdateUserRole ({
                     </Typography>
                 </div>
             </div>
-            <div style={{display: "flex", justifyContent: "center"}}>
-                <p className={styles.name}>Utilisateur "{userName}"</p>
+            <div className={styles.signupForm}>
+                <div className={styles.formGroupRow}>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="firstname">Prénom :</label>
+                        <input
+                            type="text"
+                            id="firstname"
+                            value={firstname}
+                            onChange={(e) => setFirstname(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="lastname">Nom :</label>
+                        <input
+                            type="text"
+                            id="lastname"
+                            value={lastname}
+                            onChange={(e) => setLastname(e.target.value)}
+                            required
+                        />
+                    </div>
+                </div>
+                <div className={styles.formGroupRow}>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="email">Email :</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="password">Mot de passe :</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                </div>
+                <div className={styles.formGroupRow}>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="phone">N° Tel :</label>
+                        <input
+                            type="text"
+                            id="phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label htmlFor="job">Job :</label>
+                        <input
+                            type="text"
+                            id="job"
+                            value={job}
+                            onChange={(e) => setJob(e.target.value)}
+                            required
+                        />
+                    </div>
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="desc">Description :</label>
+                    <input
+                        type="text"
+                        id="desc"
+                        value={desc}
+                        onChange={(e) => setDesc(e.target.value)}
+                        required
+                        style={{width : "85%"}}
+                    />
+                </div>
             </div>
             <div className={styles.perms}>
                 <div className={styles.dropDown}>
