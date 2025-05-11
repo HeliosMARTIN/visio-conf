@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type React from "react"
 
 import { motion } from "framer-motion"
@@ -46,8 +46,30 @@ export default function FileItem({
 }: FileItemProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     const { currentUser } = useAppContext()
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node)
+            ) {
+                setShowMenu(false)
+            }
+        }
+
+        if (showMenu) {
+            document.addEventListener("mousedown", handleClickOutside)
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [showMenu])
 
     const downloadFile = async (file: FileItemType) => {
         if (!currentUser) {
@@ -146,7 +168,10 @@ export default function FileItem({
     }
 
     const handleClick = () => {
-        // Only trigger onOpen if it's a folder or an image with a thumbnail
+        // Prevent file item click if the menu is open
+        if (showMenu) return
+
+        // Ne déclenche onOpen que si c'est un dossier ou une image avec une miniature
         if (
             file.type === "folder" ||
             (file.type === "file" && file.mimeType?.startsWith("image/"))
@@ -158,12 +183,12 @@ export default function FileItem({
     }
 
     const handleMenuClick = (e: React.MouseEvent) => {
-        e.stopPropagation()
+        e.stopPropagation() // Prevent triggering the file item's onClick
         setShowMenu(!showMenu)
     }
 
     const handleActionClick = (e: React.MouseEvent, action: string) => {
-        e.stopPropagation()
+        e.stopPropagation() // Prevent triggering the file item's onClick
         setShowMenu(false)
 
         switch (action) {
@@ -193,14 +218,14 @@ export default function FileItem({
             className={`${styles.fileItem} ${styles[viewMode]}`}
             variants={cardVariants}
             initial="initial"
-            animate={isHovered ? "hover" : "initial"}
-            onClick={handleClick}
-            onHoverStart={() => setIsHovered(true)}
+            animate={isHovered && !showMenu ? "hover" : "initial"} // Disable hover animation if menu is open
+            onClick={!showMenu ? handleClick : undefined} // Disable click if menu is open
+            onHoverStart={() => !showMenu && setIsHovered(true)} // Disable hover start if menu is open
             onHoverEnd={() => {
                 setIsHovered(false)
                 if (!showMenu) setShowMenu(false)
             }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={!showMenu ? { scale: 0.98 } : undefined} // Disable tap animation if menu is open
         >
             <motion.div
                 className={styles.iconContainer}
@@ -254,14 +279,16 @@ export default function FileItem({
                 <button
                     className={styles.menuButton}
                     onClick={handleMenuClick}
-                    aria-label="More options"
+                    aria-label="Plus d'options"
                 >
                     <MoreVertical size={18} />
                 </button>
 
                 {showMenu && (
                     <motion.div
+                        ref={menuRef}
                         className={styles.menuDropdown}
+                        style={{ zIndex: 1000 }} // Ensure higher z-index
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
@@ -271,7 +298,7 @@ export default function FileItem({
                             onClick={(e) => handleActionClick(e, "rename")}
                         >
                             <Edit size={16} />
-                            <span>Rename</span>
+                            <span>Renommer</span>
                         </button>
 
                         {file.type === "file" && (
@@ -282,7 +309,7 @@ export default function FileItem({
                                 }
                             >
                                 <Download size={16} />
-                                <span>Download</span>
+                                <span>Télécharger</span>
                             </button>
                         )}
 
@@ -291,7 +318,7 @@ export default function FileItem({
                             onClick={(e) => handleActionClick(e, "move")}
                         >
                             <Move size={16} />
-                            <span>Move</span>
+                            <span>Déplacer</span>
                         </button>
 
                         <button
@@ -299,7 +326,7 @@ export default function FileItem({
                             onClick={(e) => handleActionClick(e, "share")}
                         >
                             <Share2 size={16} />
-                            <span>Share</span>
+                            <span>Partager</span>
                         </button>
 
                         <button
@@ -307,7 +334,7 @@ export default function FileItem({
                             onClick={(e) => handleActionClick(e, "delete")}
                         >
                             <Trash2 size={16} />
-                            <span>Delete</span>
+                            <span>Supprimer</span>
                         </button>
                     </motion.div>
                 )}
