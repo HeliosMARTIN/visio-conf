@@ -1,16 +1,17 @@
 "use client"
 import { useState } from "react"
 import styles from "./PostResponseItem.module.css"
-import { MoreVertical } from "lucide-react"
 
 interface PostResponseItemProps {
     response: any
     currentUserId: string
+    id?: string
 }
 
 export default function PostResponseItem({
     response,
     currentUserId,
+    id,
 }: PostResponseItemProps) {
     const [showOptions, setShowOptions] = useState(false)
 
@@ -41,10 +42,12 @@ export default function PostResponseItem({
         }
     }
 
-    const isAuthor = response.author._id === currentUserId
+    const isAuthor = response.authorId === currentUserId
+    const responseId = response.id
 
     return (
         <div
+            id={id}
             className={`${styles.responseItem} ${
                 isAuthor ? styles.authorResponse : ""
             }`}
@@ -52,13 +55,23 @@ export default function PostResponseItem({
             <div className={styles.responseHeader}>
                 <div className={styles.userInfo}>
                     <div className={styles.avatar}>
-                        {response.author.firstname.charAt(0)}
-                        {response.author.lastname.charAt(0)}
+                        {response.authorAvatar ? (
+                            <img
+                                src={
+                                    response.authorAvatar || "/placeholder.svg"
+                                }
+                                alt={response.authorName}
+                            />
+                        ) : (
+                            response.authorName
+                                ?.split(" ")
+                                .map((n: string) => n.charAt(0))
+                                .join("")
+                        )}
                     </div>
                     <div>
                         <span className={styles.userName}>
-                            {response.author.firstname}{" "}
-                            {response.author.lastname}
+                            {response.authorName}
                             {isAuthor && (
                                 <span className={styles.authorBadge}>Vous</span>
                             )}
@@ -67,30 +80,6 @@ export default function PostResponseItem({
                             {formatDate(response.createdAt)}
                         </span>
                     </div>
-                </div>
-                <div className={styles.responseActions}>
-                    <button
-                        className={styles.optionsButton}
-                        onClick={() => setShowOptions(!showOptions)}
-                        aria-label="Options de la réponse"
-                    >
-                        <MoreVertical size={14} />
-                    </button>
-                    {showOptions && (
-                        <div className={styles.optionsMenu}>
-                            <button className={styles.optionItem}>
-                                Copier le texte
-                            </button>
-                            {isAuthor && (
-                                <button className={styles.optionItem}>
-                                    Supprimer
-                                </button>
-                            )}
-                            <button className={styles.optionItem}>
-                                Signaler
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
             <p className={styles.responseText}>{response.content}</p>

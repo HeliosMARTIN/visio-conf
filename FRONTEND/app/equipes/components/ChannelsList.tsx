@@ -1,111 +1,142 @@
 "use client"
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect } from "react"
 import styles from "./ChannelsList.module.css"
-import { Search, Hash, Lock, Settings, MessageSquare } from "lucide-react"
-import type { Channel } from "@/types/Channel"
+import { HashIcon, Lock, Search } from "lucide-react"
 import ChannelSkeleton from "./ChannelSkeleton"
+import type { Channel } from "@/types/Channel"
+import { useAppContext } from "@/context/AppContext"
 
 interface ChannelsListProps {
     channels: Channel[]
-    isLoading: boolean
     selectedChannel: Channel | null
     onSelectChannel: (channel: Channel) => void
-    onEditChannel: (channel: Channel) => void
+    isLoading: boolean
 }
 
 export default function ChannelsList({
     channels,
-    isLoading,
     selectedChannel,
     onSelectChannel,
-    onEditChannel,
+    isLoading,
 }: ChannelsListProps) {
     const [searchTerm, setSearchTerm] = useState("")
+    const { currentUser } = useAppContext()
+    const [userChannelMemberships, setUserChannelMemberships] = useState<
+        Record<string, boolean>
+    >({})
 
-    const filteredChannels = channels.filter((channel) =>
-        channel.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Déterminer les canaux dont l'utilisateur est membre
+    useEffect(() => {
+        const memberships: Record<string, boolean> = {}
+
+        channels.forEach((channel) => {
+            const isMember =
+                channel.members?.some(
+                    (member) => member.userId === currentUser?._id
+                ) ||
+                channel.isMember ||
+                false
+
+            memberships[channel._id] = isMember
+        })
+
+        setUserChannelMemberships(memberships)
+    }, [channels, currentUser])
+
+    // Filtrer les canaux à afficher (publics ou privés dont l'utilisateur est membre)
+    const filteredChannels = channels.filter((channel) => {
+        const nameMatch = channel.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+
+        if (channel.isPublic) {
+            return nameMatch // Tous les canaux publics sont affichés
+        } else {
+            // Les canaux privés sont affichés uniquement si l'utilisateur en est membre
+            return (
+                nameMatch &&
+                (channel.isMember || userChannelMemberships[channel._id])
+            )
+        }
+    })
 
     return (
         <div className={styles.container}>
             <div className={styles.searchContainer}>
-                <Search className={styles.searchIcon} size={16} />
+                <Search size={16} className={styles.searchIcon} />
                 <input
                     type="text"
-                    placeholder="Rechercher un canal..."
                     className={styles.searchInput}
+                    placeholder="Rechercher un canal..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            <div className={styles.channelsContainer}>
+            <div className={styles.channelsList}>
                 {isLoading ? (
-                    <ChannelSkeleton count={5} />
+                    <>
+                        <ChannelSkeleton />
+                        <ChannelSkeleton />
+                        <ChannelSkeleton />
+                    </>
+                ) : filteredChannels.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <p>Aucun canal trouvé</p>
+                    </div>
                 ) : (
-                    <AnimatePresence>
-                        {filteredChannels.length > 0 ? (
-                            <ul className={styles.channelsList}>
-                                {filteredChannels.map((channel) => (
-                                    <motion.li
-                                        key={channel.id}
-                                        initial={{ opacity: 0, y: 5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -5 }}
-                                        transition={{ duration: 0.2 }}
-                                        className={`${styles.channelItem} ${
-                                            selectedChannel?.id === channel.id
-                                                ? styles.selected
-                                                : ""
-                                        }`}
-                                        onClick={() => onSelectChannel(channel)}
-                                    >
-                                        <div className={styles.channelInfo}>
-                                            {channel.isPublic ? (
-                                                <Hash
-                                                    size={18}
-                                                    className={
-                                                        styles.channelIcon
-                                                    }
-                                                />
-                                            ) : (
-                                                <Lock
-                                                    size={18}
-                                                    className={
-                                                        styles.channelIcon
-                                                    }
-                                                />
-                                            )}
-                                            <span
-                                                className={styles.channelName}
-                                            >
-                                                {channel.name}
+                    <>
+                        {filteredChannels.map((channel) => {
+                            const channelId = channel._id
+                            const isMember =
+                                channel.isMember ||
+                                userChannelMemberships[channelId]
+
+                            return (
+                                <div
+                                    key={channelId}
+                                    className={`${styles.channelItem} ${
+                                        selectedChannel?.id === channelId
+                                            ? styles.selected
+                                            : ""
+                                    } ${
+                                        isMember
+                                            ? styles.joinedChannel
+                                            : styles.availableChannel
+                                    }`}
+                                    onClick={() => onSelectChannel(channel)}
+                                >
+                                    <div className={styles.channelIcon}>
+                                        {channel.isPublic ? (
+                                            <HashIcon size={18} />
+                                        ) : (
+                                            <Lock size={18} />
+                                        )}
+                                    </div>
+                                    <div className={styles.channelInfo}>
+                                        <span className={styles.channelName}>
+                                            {channel.name}
+                                        </span>
+                                        {!isMember && channel.isPublic && (
+                                            <span className={styles.joinStatus}>
+                                                Disponible
                                             </span>
-                                        </div>
-                                        <button
-                                            className={styles.settingsButton}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                onEditChannel(channel)
-                                            }}
-                                        >
-                                            <Settings size={16} />
-                                        </button>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <div className={styles.emptyState}>
-                                <MessageSquare size={32} />
-                                <p>Aucun canal disponible</p>
-                                <p className={styles.emptyStateSubtext}>
-                                    Créez un nouveau canal pour commencer à
-                                    discuter
-                                </p>
-                            </div>
-                        )}
-                    </AnimatePresence>
+                                        )}
+                                    </div>
+                                    {/* Optionnel: ajouter un badge avec le nombre de membres */}
+                                    {channel.members &&
+                                        channel.members.length > 0 && (
+                                            <div
+                                                className={styles.channelBadge}
+                                                title={`${channel.members.length} membres`}
+                                            >
+                                                {channel.members.length}
+                                            </div>
+                                        )}
+                                </div>
+                            )
+                        })}
+                    </>
                 )}
             </div>
         </div>

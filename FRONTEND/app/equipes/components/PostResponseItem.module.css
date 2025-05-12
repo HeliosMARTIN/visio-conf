@@ -1,8 +1,20 @@
 .responseItem {
-  background-color: #f7f7f7;
+  background-color: #f9fafb;
   border-radius: 8px;
   padding: 12px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .responseItem:hover {
@@ -10,13 +22,16 @@
 }
 
 .authorResponse {
-  border-left: 3px solid #4f46e5;
+  background-color: #eff6ff;
+}
+
+.authorResponse:hover {
+  background-color: #dbeafe;
 }
 
 .responseHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 8px;
 }
 
@@ -31,37 +46,43 @@
   height: 32px;
   border-radius: 50%;
   background-color: #4f46e5;
-  color: white;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .userName {
   font-weight: 500;
-  font-size: 13px;
   color: #111827;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .authorBadge {
-  background-color: #4f46e5;
-  color: white;
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 10px;
   padding: 1px 5px;
-  border-radius: 8px;
+  background-color: #4f46e5;
+  color: #ffffff;
+  border-radius: 10px;
 }
 
 .timestamp {
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
   display: block;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .responseActions {
@@ -69,33 +90,29 @@
 }
 
 .optionsButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: transparent;
+  background: none;
   border: none;
   color: #6b7280;
   cursor: pointer;
-  transition: background-color 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .optionsButton:hover {
   background-color: #e5e7eb;
-  color: #374151;
+  color: #4f46e5;
 }
 
 .optionsMenu {
   position: absolute;
-  top: 100%;
   right: 0;
-  background-color: white;
+  top: 100%;
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   z-index: 10;
-  min-width: 140px;
+  min-width: 150px;
   overflow: hidden;
 }
 
@@ -103,22 +120,24 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 6px 10px;
+  padding: 8px 16px;
   border: none;
-  background-color: transparent;
-  font-size: 12px;
-  color: #374151;
+  background: none;
   cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s ease;
 }
 
 .optionItem:hover {
   background-color: #f3f4f6;
+  color: #4f46e5;
 }
 
 .responseText {
-  font-size: 13px;
-  line-height: 1.4;
-  color: #374151;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;

@@ -72,14 +72,14 @@ export default function ChannelMembers({
                                 >
                                     <img
                                         src={
-                                            member.avatar || "/placeholder.svg"
+                                            member.picture || "/placeholder.svg"
                                         }
-                                        alt={member.name}
+                                        alt={member.firstname}
                                         className={styles.memberAvatar}
                                     />
                                     <div className={styles.memberInfo}>
                                         <span className={styles.memberName}>
-                                            {member.name}
+                                            {member.firstname} {member.lastname}
                                             {member.userId ===
                                                 currentUserId && (
                                                 <span
@@ -115,15 +115,16 @@ export default function ChannelMembers({
                                     >
                                         <img
                                             src={
-                                                member.avatar ||
+                                                member.picture ||
                                                 "/placeholder.svg"
                                             }
-                                            alt={member.name}
+                                            alt={member.firstname}
                                             className={styles.memberAvatar}
                                         />
                                         <div className={styles.memberInfo}>
                                             <span className={styles.memberName}>
-                                                {member.name}
+                                                {member.firstname}{" "}
+                                                {member.lastname}
                                                 {member.userId ===
                                                     currentUserId && (
                                                     <span

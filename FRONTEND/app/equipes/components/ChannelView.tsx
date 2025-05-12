@@ -1,21 +1,23 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import styles from "./ChannelView.module.css"
-import { Users, Send, MessageSquare } from "lucide-react"
+import { Users, Send, HashIcon, Lock, MessageSquare } from "lucide-react"
 import PostItem from "./PostItem"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
 
 interface ChannelViewProps {
     channel: Channel
+    userId: string
     onEditChannel?: () => void
 }
 
 export default function ChannelView({
     channel,
+    userId,
     onEditChannel,
 }: ChannelViewProps) {
-    const { controleur, canal, currentUser } = useAppContext()
+    const { controleur, canal } = useAppContext()
     const [posts, setPosts] = useState<any[]>([])
     const [members, setMembers] = useState<any[]>([])
     const [newPostContent, setNewPostContent] = useState("")
@@ -25,6 +27,7 @@ export default function ChannelView({
         {}
     )
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     const nomDInstance = "ChannelView"
     const verbose = false
@@ -33,16 +36,19 @@ export default function ChannelView({
         "channel_posts_request",
         "channel_members_request",
         "channel_post_create_request",
-        "channel_post_responses_request",
-        "channel_post_response_create_request",
+        "post_response_create_request",
     ]
     const listeMessageRecus = [
         "channel_posts_response",
         "channel_members_response",
         "channel_post_create_response",
-        "channel_post_responses_response",
-        "channel_post_response_create_response",
+        "post_response_create_response",
+        "new_channel_post",
+        "new_post_response",
     ]
+
+    // Assurons-nous que nous utilisons l'ID correct
+    const channelId = channel.id
 
     const handler = {
         nomDInstance,
@@ -67,8 +73,7 @@ export default function ChannelView({
 
             if (msg.channel_members_response) {
                 if (msg.channel_members_response.etat) {
-                    // Récupérer les informations complètes des membres
-                    fetchMembersInfo(msg.channel_members_response.members || [])
+                    setMembers(msg.channel_members_response.members || [])
                 } else {
                     console.error(
                         "Erreur lors de la récupération des membres:",
@@ -79,53 +84,46 @@ export default function ChannelView({
 
             if (msg.channel_post_create_response) {
                 if (msg.channel_post_create_response.etat) {
-                    // Ajouter le nouveau post à la liste
-                    setPosts((prevPosts) => [
-                        ...prevPosts,
-                        msg.channel_post_create_response.post,
-                    ])
                     setNewPostContent("")
+                    // Le nouveau post sera ajouté via new_channel_post
+                }
+            }
 
-                    // Faire défiler vers le bas
+            if (msg.new_channel_post) {
+                if (
+                    msg.new_channel_post.etat &&
+                    msg.new_channel_post.channelId === channelId
+                ) {
+                    const newPost = {
+                        ...msg.new_channel_post.post,
+                        responses: [],
+                    }
+                    setPosts((prevPosts) => [newPost, ...prevPosts])
                     setTimeout(() => {
                         messagesEndRef.current?.scrollIntoView({
                             behavior: "smooth",
                         })
                     }, 100)
-                } else {
-                    console.error(
-                        "Erreur lors de la création du post:",
-                        msg.channel_post_create_response.error
-                    )
                 }
             }
 
-            if (msg.channel_post_responses_response) {
-                if (msg.channel_post_responses_response.etat) {
-                    const postId = msg.channel_post_responses_response.postId
-                    const responses =
-                        msg.channel_post_responses_response.responses || []
-
-                    // Mettre à jour les réponses du post
-                    setPosts((prevPosts) =>
-                        prevPosts.map((post) =>
-                            post._id === postId ? { ...post, responses } : post
-                        )
-                    )
+            if (msg.post_response_create_response) {
+                if (msg.post_response_create_response.etat) {
+                    // La nouvelle réponse sera ajoutée via new_post_response
                 }
             }
 
-            if (msg.channel_post_response_create_response) {
-                if (msg.channel_post_response_create_response.etat) {
-                    const postId =
-                        msg.channel_post_response_create_response.postId
-                    const newResponse =
-                        msg.channel_post_response_create_response.response
+            if (msg.new_post_response) {
+                if (
+                    msg.new_post_response.etat &&
+                    msg.new_post_response.channelId === channelId
+                ) {
+                    const postId = msg.new_post_response.postId
+                    const newResponse = msg.new_post_response.response
 
-                    // Ajouter la nouvelle réponse au post
                     setPosts((prevPosts) =>
                         prevPosts.map((post) =>
-                            post._id === postId
+                            post.id === postId
                                 ? {
                                       ...post,
                                       responses: [
@@ -138,80 +136,38 @@ export default function ChannelView({
                                 : post
                         )
                     )
+
+                    // Si les réponses sont déjà affichées, faire défiler vers le bas
+                    if (expandedPosts[postId]) {
+                        setTimeout(() => {
+                            const responseElement = document.getElementById(
+                                `response-${newResponse.id}`
+                            )
+                            responseElement?.scrollIntoView({
+                                behavior: "smooth",
+                            })
+                        }, 100)
+                    }
                 }
             }
         },
     }
 
-    // Fonction pour récupérer les informations complètes des membres
-    const fetchMembersInfo = async (membersList: any[]) => {
-        const membersWithInfo = await Promise.all(
-            membersList.map(async (member) => {
-                // Récupérer les informations de l'utilisateur
-                const userInfoRequest = {
-                    user_info_request: { userId: member.userId },
-                }
-
-                return new Promise((resolve) => {
-                    const userInfoHandler = {
-                        nomDInstance: "MemberInfoHandler",
-                        traitementMessage: (msg: any) => {
-                            if (msg.user_info_response) {
-                                controleur?.desincription(
-                                    userInfoHandler,
-                                    [],
-                                    ["user_info_response"]
-                                )
-
-                                if (msg.user_info_response.etat) {
-                                    const userInfo =
-                                        msg.user_info_response.userInfo
-                                    resolve({
-                                        ...member,
-                                        firstname: userInfo.firstname,
-                                        lastname: userInfo.lastname,
-                                        picture: userInfo.picture,
-                                    })
-                                } else {
-                                    resolve({
-                                        ...member,
-                                        firstname: "Utilisateur",
-                                        lastname: "Inconnu",
-                                        picture: null,
-                                    })
-                                }
-                            }
-                        },
-                    }
-
-                    controleur?.inscription(
-                        userInfoHandler,
-                        [],
-                        ["user_info_response"]
-                    )
-                    controleur?.envoie(userInfoHandler, userInfoRequest)
-                })
-            })
-        )
-
-        setMembers(membersWithInfo as any[])
-    }
-
     useEffect(() => {
-        if (controleur && canal && channel.id) {
+        console.log("hereee use effect", channelId)
+
+        if (controleur && canal && channelId) {
+            console.log("hereeee channel view")
+
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
 
-            // Récupérer les posts du canal
-            const postsRequest = {
-                channel_posts_request: { channelId: channel.id },
-            }
-            controleur.envoie(handler, postsRequest)
-
             // Récupérer les membres du canal
-            const membersRequest = {
-                channel_members_request: { channelId: channel.id },
-            }
+            const membersRequest = { channel_members_request: { channelId } }
             controleur.envoie(handler, membersRequest)
+
+            // Récupérer les posts du canal
+            const postsRequest = { channel_posts_request: { channelId } }
+            controleur.envoie(handler, postsRequest)
         }
 
         return () => {
@@ -223,14 +179,21 @@ export default function ChannelView({
                 )
             }
         }
-    }, [channel.id, controleur, canal])
+    }, [channelId, controleur, canal])
+
+    // Focus sur l'input quand le composant est monté
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus()
+        }
+    }, [])
 
     const handleSubmitPost = () => {
-        if (!newPostContent.trim()) return
+        if (!newPostContent.trim() || !userId) return
 
         const postRequest = {
             channel_post_create_request: {
-                channelId: channel.id,
+                channelId,
                 content: newPostContent,
             },
         }
@@ -238,10 +201,10 @@ export default function ChannelView({
     }
 
     const handleAddResponse = (postId: string, content: string) => {
-        if (!content.trim()) return
+        if (!content.trim() || !userId) return
 
         const responseRequest = {
-            channel_post_response_create_request: {
+            post_response_create_request: {
                 postId,
                 content,
             },
@@ -250,36 +213,38 @@ export default function ChannelView({
     }
 
     const handleToggleResponses = (postId: string) => {
-        // Si les réponses ne sont pas encore chargées, les récupérer
-        const post = posts.find((p) => p._id === postId)
-        if (!post.responses && post.responseCount > 0) {
-            const responsesRequest = {
-                channel_post_responses_request: {
-                    postId,
-                },
-            }
-            controleur?.envoie(handler, responsesRequest)
-        }
-
         setExpandedPosts((prev) => ({
             ...prev,
             [postId]: !prev[postId],
         }))
     }
 
-    const isAdmin = members.some(
-        (member) =>
-            member.userId === currentUser?._id && member.role === "admin"
-    )
+    const isChannelCreator = channel.createdBy === userId
+    const canPostMessage = isChannelCreator // Seul le créateur peut créer des posts
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.channelInfo}>
                     <div className={styles.channelIcon}>
-                        <MessageSquare size={20} />
+                        {channel.isPublic ? (
+                            <HashIcon size={20} />
+                        ) : (
+                            <Lock size={20} />
+                        )}
                     </div>
                     <h2 className={styles.channelName}>{channel.name}</h2>
+                    <div className={styles.channelStatus}>
+                        <span
+                            className={
+                                channel.isPublic
+                                    ? styles.publicBadge
+                                    : styles.privateBadge
+                            }
+                        >
+                            {channel.isPublic ? "Public" : "Privé"}
+                        </span>
+                    </div>
                     <button
                         className={styles.membersButton}
                         onClick={() => setShowMembers(!showMembers)}
@@ -292,7 +257,7 @@ export default function ChannelView({
                     </button>
                 </div>
 
-                {isAdmin && onEditChannel && (
+                {isChannelCreator && onEditChannel && (
                     <button
                         className={styles.settingsButton}
                         onClick={onEditChannel}
@@ -307,14 +272,11 @@ export default function ChannelView({
                     <h3 className={styles.membersPanelTitle}>
                         Membres du canal
                     </h3>
+
                     <div className={styles.membersList}>
                         {members.map((member) => (
                             <div
-                                key={
-                                    member.userId ||
-                                    member._id ||
-                                    `member-${member.firstname}-${member.lastname}`
-                                }
+                                key={member.id || `member-${member.userId}`}
                                 className={styles.memberItem}
                             >
                                 <div className={styles.memberAvatar}>
@@ -336,7 +298,7 @@ export default function ChannelView({
                                 <div className={styles.memberInfo}>
                                     <span className={styles.memberName}>
                                         {member.firstname} {member.lastname}
-                                        {member.userId === currentUser?._id && (
+                                        {member.userId === userId && (
                                             <span className={styles.youBadge}>
                                                 Vous
                                             </span>
@@ -350,6 +312,12 @@ export default function ChannelView({
                                 </div>
                             </div>
                         ))}
+
+                        {members.length === 0 && (
+                            <div className={styles.noResults}>
+                                Aucun membre trouvé
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -357,13 +325,16 @@ export default function ChannelView({
             <div className={styles.postsContainer}>
                 {isLoading ? (
                     <div className={styles.loading}>
-                        Chargement des messages...
+                        <div className={styles.spinner}></div>
+                        <p>Chargement des messages...</p>
                     </div>
                 ) : posts.length === 0 ? (
                     <div className={styles.emptyState}>
                         <MessageSquare size={48} />
                         <p>Aucun message dans ce canal</p>
-                        <p>Soyez le premier à écrire quelque chose !</p>
+                        {canPostMessage && (
+                            <p>Soyez le premier à écrire quelque chose !</p>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -371,7 +342,7 @@ export default function ChannelView({
                             <div key={post.id} className={styles.postWrapper}>
                                 <PostItem
                                     post={post}
-                                    currentUserId={currentUser?._id || ""}
+                                    currentUserId={userId || ""}
                                     onToggleResponses={() =>
                                         handleToggleResponses(post.id)
                                     }
@@ -379,6 +350,7 @@ export default function ChannelView({
                                     onAddResponse={(content) =>
                                         handleAddResponse(post.id, content)
                                     }
+                                    isAdmin={isChannelCreator}
                                 />
                             </div>
                         ))}
@@ -387,28 +359,32 @@ export default function ChannelView({
                 )}
             </div>
 
-            <div className={styles.inputContainer}>
-                <input
-                    type="text"
-                    className={styles.messageInput}
-                    placeholder="Écrivez un message..."
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                    onKeyPress={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault()
-                            handleSubmitPost()
-                        }
-                    }}
-                />
-                <button
-                    className={styles.sendButton}
-                    onClick={handleSubmitPost}
-                    disabled={!newPostContent.trim()}
-                >
-                    <Send size={18} />
-                </button>
-            </div>
+            {canPostMessage && (
+                <div className={styles.inputContainer}>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className={styles.messageInput}
+                        placeholder="Écrivez un message..."
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                        onKeyPress={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault()
+                                handleSubmitPost()
+                            }
+                        }}
+                    />
+                    <button
+                        className={styles.sendButton}
+                        onClick={handleSubmitPost}
+                        disabled={!newPostContent.trim()}
+                        aria-label="Envoyer le message"
+                    >
+                        <Send size={18} />
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

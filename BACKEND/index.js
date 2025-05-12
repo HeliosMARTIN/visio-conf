@@ -17,6 +17,7 @@ import PermsService from "./services/Perms.js"
 import SocketIdentificationService from "./services/SocketIdentification.js"
 import FileService from "./services/FileService.js"
 import ChannelsService from "./services/ChannelsService.js"
+import TeamsService from "./services/TeamsService.js"
 
 dotenv.config()
 
@@ -59,14 +60,15 @@ var controleur = new Controleur()
 controleur.verboseall = verbose
 
 // Instanciation des services pour les initialiser et déclencher leur enregistrement auprès du contrôleur
-const usersService = new UsersService(controleur, "UsersService")
-const messagesService = new MessagesService(controleur, "MessagesService")
-const rolesService = new RolesService(controleur, "RolesService")
-const permsService = new PermsService(controleur, "PermsService")
-const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
-const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
-const fileService = new FileService(controleur, "FileService")
-const channelService = new ChannelsService(controleur, "ChannelService")
+new UsersService(controleur, "UsersService")
+new MessagesService(controleur, "MessagesService")
+new RolesService(controleur, "RolesService")
+new PermsService(controleur, "PermsService")
+new CanalSocketio(io, controleur, "canalsocketio")
+new AwsS3Service(controleur, "AwsS3Service")
+new FileService(controleur, "FileService")
+new ChannelsService(controleur, "ChannelService")
+new TeamsService(controleur, "TeamsService")
 
 main().catch((err) => console.error("Error during startup:", err))
 

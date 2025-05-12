@@ -48,6 +48,17 @@ export const ListeMessagesEmis = [
     "channel_post_create_request", // { channelId: string, content: string }
     "channel_post_responses_request", // { postId: string }
     "channel_post_response_create_request", // { postId: string, content: string }
+    //---- TEAMS ----
+    "teams_list_request", // No data
+    "team_create_request", // { name: string, description?: string }
+    "team_update_request", // { teamId: string, name?: string, description?: string }
+    "team_delete_request", // { teamId: string }
+    "team_join_request", // { teamId: string }
+    "team_leave_request", // { teamId: string }
+    "team_members_request", // { teamId: string }
+    "team_add_member_request", // { teamId: string, userId: string }
+    "team_remove_member_request", // { teamId: string, userId: string }
+    "team_channels_request", // { teamId: string }
 ]
 
 /**
@@ -101,4 +112,15 @@ export const ListeMessagesRecus = [
     "channel_post_create_response", // { etat: boolean, post?: ChannelPost, error?: string }
     "channel_post_responses_response", // { etat: boolean, postId?: string, responses?: ChannelPostResponse[], error?: string }
     "channel_post_response_create_response", // { etat: boolean, postId?: string, response?: ChannelPostResponse, error?: string }
+    //---- TEAMS ----
+    "teams_list_response", // { etat: boolean, teams?: Team[], error?: string }
+    "team_create_response", // { etat: boolean, team?: Team, error?: string }
+    "team_update_response", // { etat: boolean, team?: Team, error?: string }
+    "team_delete_response", // { etat: boolean, teamId?: string, error?: string }
+    "team_join_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
+    "team_leave_response", // { etat: boolean, teamId?: string, error?: string }
+    "team_members_response", // { etat: boolean, teamId?: string, members?: TeamMember[], error?: string }
+    "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
+    "team_remove_member_response", // { etat: boolean, teamId?: string, userId?: string, error?: string }
+    "team_channels_response", // { etat: boolean, teamId?: string, channels?: Channel[], error?: string }
 ]

@@ -22,6 +22,9 @@ class ChannelsService {
         "channel_post_create_response",
         "channel_post_responses_response",
         "channel_post_response_create_response",
+        // Nouveaux messages pour les diffusions en temps réel
+        "new_channel_post",
+        "new_post_response",
     ]
     listeDesMessagesRecus = [
         "channels_list_request",
@@ -102,7 +105,7 @@ class ChannelsService {
             await this.handleChannelRemoveMember(mesg)
         }
 
-        // Nouveaux gestionnaires pour les posts et les réponses
+        // Gestionnaires pour les posts et les réponses
         if (mesg.channel_posts_request) {
             await this.handleChannelPosts(mesg)
         }
@@ -163,15 +166,22 @@ class ChannelsService {
             const message = {
                 channels_list_response: {
                     etat: true,
-                    channels: channels.map((channel) => ({
-                        id: channel._id,
-                        name: channel.name,
-                        teamId: channel.teamId,
-                        isPublic: channel.isPublic,
-                        createdAt: channel.createdAt,
-                        updatedAt: channel.updatedAt,
-                        createdBy: channel.createdBy,
-                    })),
+                    channels: channels.map((channel) => {
+                        const isMember = memberChannelIds.includes(
+                            channel._id.toString()
+                        )
+                        return {
+                            id: channel._id,
+                            _id: channel._id,
+                            name: channel.name,
+                            teamId: channel.teamId,
+                            isPublic: channel.isPublic,
+                            createdAt: channel.createdAt,
+                            updatedAt: channel.updatedAt,
+                            createdBy: channel.createdBy,
+                            isMember: isMember,
+                        }
+                    }),
                 },
                 id: [mesg.id],
             }
@@ -250,6 +260,7 @@ class ChannelsService {
                     etat: true,
                     channel: {
                         id: channel._id,
+                        _id: channel._id,
                         name: channel.name,
                         teamId: channel.teamId,
                         isPublic: channel.isPublic,
@@ -321,6 +332,7 @@ class ChannelsService {
                     etat: true,
                     channel: {
                         id: channel._id,
+                        _id: channel._id,
                         name: channel.name,
                         teamId: channel.teamId,
                         isPublic: channel.isPublic,
@@ -461,6 +473,7 @@ class ChannelsService {
                     channelId,
                     member: {
                         id: member._id,
+                        _id: member._id,
                         channelId: member.channelId,
                         userId: member.userId,
                         role: member.role,
@@ -580,20 +593,29 @@ class ChannelsService {
                 }
             }
 
-            // Get all members
-            const members = await ChannelMember.find({ channelId })
+            // Get all members with user information
+            const members = await ChannelMember.find({ channelId }).populate(
+                "userId",
+                "firstname lastname picture"
+            )
+
+            const formattedMembers = members.map((member) => ({
+                _id: member._id,
+                id: member._id,
+                channelId: member.channelId,
+                userId: member.userId._id,
+                firstname: member.userId.firstname,
+                lastname: member.userId.lastname,
+                picture: member.userId.picture,
+                role: member.role,
+                joinedAt: member.joinedAt,
+            }))
 
             const message = {
                 channel_members_response: {
                     etat: true,
                     channelId,
-                    members: members.map((member) => ({
-                        id: member._id,
-                        channelId: member.channelId,
-                        userId: member.userId,
-                        role: member.role,
-                        joinedAt: member.joinedAt,
-                    })),
+                    members: formattedMembers,
                 },
                 id: [mesg.id],
             }
@@ -672,6 +694,7 @@ class ChannelsService {
                     channelId,
                     member: {
                         id: member._id,
+                        _id: member._id,
                         channelId: member.channelId,
                         userId: member.userId,
                         role: member.role,
@@ -800,29 +823,48 @@ class ChannelsService {
             }
 
             // Get all posts for the channel
-            const posts = await ChannelPost.find({ channelId }).sort({
-                createdAt: -1,
-            })
+            const posts = await ChannelPost.find({ channelId })
+                .sort({
+                    createdAt: -1,
+                })
+                .populate("authorId", "firstname lastname picture")
 
-            // Get author information for each post
-            const postsWithAuthorInfo = await Promise.all(
+            // Get responses for each post
+            const postsWithResponses = await Promise.all(
                 posts.map(async (post) => {
-                    const author = await User.findById(
-                        post.authorId,
-                        "firstname lastname picture"
-                    )
+                    const responses = await ChannelPostResponse.find({
+                        postId: post._id,
+                    })
+                        .sort({ createdAt: 1 })
+                        .populate("authorId", "firstname lastname picture")
+                        .limit(5) // Limiter à 5 réponses par défaut
+
+                    const formattedResponses = responses.map((response) => ({
+                        _id: response._id,
+                        id: response._id,
+                        postId: response.postId,
+                        content: response.content,
+                        authorId: response.authorId._id,
+                        authorName: `${response.authorId.firstname} ${response.authorId.lastname}`,
+                        authorAvatar: response.authorId.picture,
+                        createdAt: response.createdAt,
+                        updatedAt: response.updatedAt,
+                    }))
+
                     return {
+                        _id: post._id,
                         id: post._id,
                         channelId: post.channelId,
                         content: post.content,
-                        authorId: post.authorId,
-                        authorName: author
-                            ? `${author.firstname} ${author.lastname}`
-                            : "Utilisateur inconnu",
-                        authorAvatar: author ? author.picture : null,
+                        authorId: post.authorId._id,
+                        authorName: `${post.authorId.firstname} ${post.authorId.lastname}`,
+                        authorAvatar: post.authorId.picture,
                         createdAt: post.createdAt,
                         updatedAt: post.updatedAt,
-                        responseCount: post.responseCount || 0,
+                        responseCount: await ChannelPostResponse.countDocuments(
+                            { postId: post._id }
+                        ),
+                        responses: formattedResponses,
                     }
                 })
             )
@@ -831,7 +873,7 @@ class ChannelsService {
                 channel_posts_response: {
                     etat: true,
                     channelId,
-                    posts: postsWithAuthorInfo,
+                    posts: postsWithResponses,
                 },
                 id: [mesg.id],
             }
@@ -842,6 +884,7 @@ class ChannelsService {
                 channel_posts_response: {
                     etat: false,
                     error: error.message,
+                    channelId: mesg.channel_posts_request?.channelId,
                 },
                 id: [mesg.id],
             }
@@ -899,30 +942,45 @@ class ChannelsService {
                 "firstname lastname picture"
             )
 
-            const message = {
+            const newPost = {
+                _id: post._id,
+                id: post._id,
+                channelId: post.channelId,
+                content: post.content,
+                authorId: post.authorId,
+                authorName: `${author.firstname} ${author.lastname}`,
+                authorAvatar: author.picture,
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+                responseCount: 0,
+                responses: [],
+            }
+
+            // Réponse à l'émetteur
+            const responseMessage = {
                 channel_post_create_response: {
                     etat: true,
-                    post: {
-                        id: post._id,
-                        channelId: post.channelId,
-                        content: post.content,
-                        authorId: post.authorId,
-                        authorName: `${author.firstname} ${author.lastname}`,
-                        authorAvatar: author.picture,
-                        createdAt: post.createdAt,
-                        updatedAt: post.updatedAt,
-                        responseCount: 0,
-                    },
+                    post: newPost,
                 },
                 id: [mesg.id],
             }
+            this.controleur.envoie(this, responseMessage)
 
-            this.controleur.envoie(this, message)
+            // Diffusion à tous les clients
+            const broadcastMessage = {
+                new_channel_post: {
+                    etat: true,
+                    channelId,
+                    post: newPost,
+                },
+            }
+            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_create_response: {
                     etat: false,
                     error: error.message,
+                    channelId: mesg.channel_post_create_request?.channelId,
                 },
                 id: [mesg.id],
             }
@@ -946,8 +1004,6 @@ class ChannelsService {
             }
 
             // Check if post exists
-            console.log("on cherche le post id : ", postId)
-
             const post = await ChannelPost.findById(postId)
 
             if (!post) {
@@ -974,37 +1030,27 @@ class ChannelsService {
             }
 
             // Get all responses for the post
-            const responses = await ChannelPostResponse.find({ postId }).sort({
-                createdAt: 1,
-            })
+            const responses = await ChannelPostResponse.find({ postId })
+                .sort({ createdAt: 1 })
+                .populate("authorId", "firstname lastname picture")
 
-            // Get author information for each response
-            const responsesWithAuthorInfo = await Promise.all(
-                responses.map(async (response) => {
-                    const author = await User.findById(
-                        response.authorId,
-                        "firstname lastname picture"
-                    )
-                    return {
-                        id: response._id,
-                        postId: response.postId,
-                        content: response.content,
-                        authorId: response.authorId,
-                        authorName: author
-                            ? `${author.firstname} ${author.lastname}`
-                            : "Utilisateur inconnu",
-                        authorAvatar: author ? author.picture : null,
-                        createdAt: response.createdAt,
-                        updatedAt: response.updatedAt,
-                    }
-                })
-            )
+            const formattedResponses = responses.map((response) => ({
+                _id: response._id,
+                id: response._id,
+                postId: response.postId,
+                content: response.content,
+                authorId: response.authorId._id,
+                authorName: `${response.authorId.firstname} ${response.authorId.lastname}`,
+                authorAvatar: response.authorId.picture,
+                createdAt: response.createdAt,
+                updatedAt: response.updatedAt,
+            }))
 
             const message = {
                 channel_post_responses_response: {
                     etat: true,
                     postId,
-                    responses: responsesWithAuthorInfo,
+                    responses: formattedResponses,
                 },
                 id: [mesg.id],
             }
@@ -1085,25 +1131,39 @@ class ChannelsService {
                 "firstname lastname picture"
             )
 
-            const message = {
+            const newResponse = {
+                _id: response._id,
+                id: response._id,
+                postId: response.postId,
+                content: response.content,
+                authorId: response.authorId,
+                authorName: `${author.firstname} ${author.lastname}`,
+                authorAvatar: author.picture,
+                createdAt: response.createdAt,
+                updatedAt: response.updatedAt,
+            }
+
+            // Réponse à l'émetteur
+            const responseMessage = {
                 channel_post_response_create_response: {
                     etat: true,
                     postId,
-                    response: {
-                        id: response._id,
-                        postId: response.postId,
-                        content: response.content,
-                        authorId: response.authorId,
-                        authorName: `${author.firstname} ${author.lastname}`,
-                        authorAvatar: author.picture,
-                        createdAt: response.createdAt,
-                        updatedAt: response.updatedAt,
-                    },
+                    response: newResponse,
                 },
                 id: [mesg.id],
             }
+            this.controleur.envoie(this, responseMessage)
 
-            this.controleur.envoie(this, message)
+            // Diffusion à tous les clients
+            const broadcastMessage = {
+                new_post_response: {
+                    etat: true,
+                    channelId: post.channelId,
+                    postId,
+                    response: newResponse,
+                },
+            }
+            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_response_create_response: {

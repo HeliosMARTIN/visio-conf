@@ -237,8 +237,8 @@ class UsersService {
             const { userId } = mesg.user_info_request
             const user = await User.findById(
                 userId,
-                "firstname lastname email picture phone"
-            )
+                "firstname lastname email picture phone roles"
+            ).populate("roles", "name") // Populate the roles to get their names
 
             if (user) {
                 const userInfo = {
@@ -248,6 +248,7 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
+                    roles: user.roles.map((role) => role.name), // Extract role names
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },

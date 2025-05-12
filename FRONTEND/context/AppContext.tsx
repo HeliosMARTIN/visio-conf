@@ -90,8 +90,6 @@ export const AppContextProvider = ({
             pathname !== "/login" &&
             pathname !== "/signup"
         ) {
-            console.log("in if condition")
-
             setCurrentUser(null)
             router.push("/login")
         }

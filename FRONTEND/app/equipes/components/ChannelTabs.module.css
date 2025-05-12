@@ -1,0 +1,101 @@
+.container {
+  width: 100%;
+  overflow-x: auto;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.tabsContainer {
+  display: flex;
+  padding: 0 16px;
+  height: 48px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 48px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab:hover {
+  background-color: #f9fafb;
+}
+
+.selected {
+  border-bottom-color: #4f46e5;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.selected .tabIcon {
+  color: #4f46e5;
+}
+
+.notJoined {
+  opacity: 0.85; /* Augmenté l'opacité comme demandé */
+}
+
+.notJoined:hover {
+  opacity: 1;
+}
+
+.tabIcon {
+  margin-right: 8px;
+  color: #6b7280;
+}
+
+.tabName {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.editButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: transparent;
+  color: #6b7280;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.tab:hover .editButton {
+  display: flex;
+}
+
+.editButton:hover {
+  background-color: #f3f4f6;
+  color: #4f46e5;
+}
+
+.addTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+  align-self: center;
+  transition: all 0.2s ease;
+}
+
+.addTab:hover {
+  background-color: #e5e7eb;
+  color: #4f46e5;
+}

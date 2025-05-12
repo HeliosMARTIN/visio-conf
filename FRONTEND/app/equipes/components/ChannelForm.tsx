@@ -1,33 +1,54 @@
 "use client"
 import { useState, useEffect } from "react"
 import type React from "react"
+
 import styles from "./ChannelForm.module.css"
 import { useAppContext } from "@/context/AppContext"
-import { Info, X, Plus, Users, Lock, Globe } from "lucide-react"
-import type { Channel, ChannelMember, User } from "@/types/Channel"
+import {
+    HashIcon,
+    Lock,
+    Users,
+    X,
+    Check,
+    MessageSquare,
+    Search,
+    Plus,
+    Trash2,
+} from "lucide-react"
+import type { Team } from "@/types/Team"
+
+interface User {
+    _id: string
+    firstname: string
+    lastname: string
+    picture?: string
+}
 
 interface ChannelFormProps {
-    mode: "create" | "edit"
-    channel: Channel | null
-    onClose: () => void
+    onChannelCreated: (channel: any) => void
+    onCancel: () => void
+    channelToEdit?: any
+    team: Team
 }
 
 export default function ChannelForm({
-    mode,
-    channel,
-    onClose,
+    onChannelCreated,
+    onCancel,
+    channelToEdit,
+    team,
 }: ChannelFormProps) {
     const { controleur, canal, currentUser } = useAppContext()
     const [name, setName] = useState("")
     const [isPublic, setIsPublic] = useState(true)
-    const [members, setMembers] = useState<string[]>([])
-    const [allUsers, setAllUsers] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [success, setSuccess] = useState("")
+    const [teamMembers, setTeamMembers] = useState<User[]>([])
+    const [filteredMembers, setFilteredMembers] = useState<User[]>([])
+    const [selectedMembers, setSelectedMembers] = useState<User[]>([])
     const [searchTerm, setSearchTerm] = useState("")
-    const [channelMembers, setChannelMembers] = useState<ChannelMember[]>([])
-    const [showMembersList, setShowMembersList] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+    const [channelMembers, setChannelMembers] = useState<any[]>([])
 
     const nomDInstance = "ChannelForm"
     const verbose = false
@@ -35,17 +56,45 @@ export default function ChannelForm({
     const listeMessageEmis = [
         "channel_create_request",
         "channel_update_request",
-        "channel_delete_request",
-        "users_list_request",
+        "team_members_request",
         "channel_members_request",
     ]
     const listeMessageRecus = [
         "channel_create_response",
         "channel_update_response",
-        "channel_delete_response",
-        "users_list_response",
+        "team_members_response",
         "channel_members_response",
     ]
+
+    useEffect(() => {
+        if (channelToEdit) {
+            setName(channelToEdit.name)
+            setIsPublic(channelToEdit.isPublic)
+            setIsEditing(true)
+
+            // Récupérer les membres du canal existant
+            if (!channelToEdit.isPublic) {
+                loadChannelMembers(channelToEdit.id)
+            }
+        }
+
+        // Charger tous les membres de l'équipe
+        loadTeamMembers()
+    }, [channelToEdit, team.id])
+
+    useEffect(() => {
+        // Filtrer les membres en fonction du terme de recherche
+        if (teamMembers.length > 0) {
+            const filtered = teamMembers.filter(
+                (user) =>
+                    `${user.firstname} ${user.lastname}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase()) &&
+                    user._id !== currentUser?._id
+            )
+            setFilteredMembers(filtered)
+        }
+    }, [searchTerm, teamMembers, currentUser])
 
     const handler = {
         nomDInstance,
@@ -58,11 +107,9 @@ export default function ChannelForm({
 
             if (msg.channel_create_response) {
                 setIsLoading(false)
+
                 if (msg.channel_create_response.etat) {
-                    setSuccess("Canal créé avec succès")
-                    setTimeout(() => {
-                        onClose()
-                    }, 1500)
+                    onChannelCreated(msg.channel_create_response.channel)
                 } else {
                     setError(
                         msg.channel_create_response.error ||
@@ -73,11 +120,9 @@ export default function ChannelForm({
 
             if (msg.channel_update_response) {
                 setIsLoading(false)
+
                 if (msg.channel_update_response.etat) {
-                    setSuccess("Canal mis à jour avec succès")
-                    setTimeout(() => {
-                        onClose()
-                    }, 1500)
+                    onChannelCreated(msg.channel_update_response.channel)
                 } else {
                     setError(
                         msg.channel_update_response.error ||
@@ -86,515 +131,442 @@ export default function ChannelForm({
                 }
             }
 
-            if (msg.channel_delete_response) {
-                setIsLoading(false)
-                if (msg.channel_delete_response.etat) {
-                    setSuccess("Canal supprimé avec succès")
-                    setTimeout(() => {
-                        onClose()
-                    }, 1500)
-                } else {
-                    setError(
-                        msg.channel_delete_response.error ||
-                            "Erreur lors de la suppression du canal"
-                    )
-                }
-            }
+            if (msg.team_members_response) {
+                setIsLoadingMembers(false)
 
-            if (msg.users_list_response) {
-                if (msg.users_list_response.etat) {
-                    setAllUsers(msg.users_list_response.users || [])
+                if (msg.team_members_response.etat) {
+                    const members = msg.team_members_response.members || []
+                    // Filtrer pour exclure l'utilisateur courant de la liste
+                    const otherUsers = members
+                        .filter(
+                            (member: any) => member.userId !== currentUser?._id
+                        )
+                        .map((member: any) => ({
+                            _id: member.userId,
+                            firstname: member.firstname,
+                            lastname: member.lastname,
+                            picture: member.picture,
+                        }))
+
+                    setTeamMembers(otherUsers)
+                    setFilteredMembers(otherUsers)
                 }
             }
 
             if (msg.channel_members_response) {
                 if (msg.channel_members_response.etat) {
-                    setChannelMembers(
-                        msg.channel_members_response.members || []
-                    )
-                    // Extract user IDs from members
-                    const memberIds = msg.channel_members_response.members.map(
-                        (m: ChannelMember) => m.userId
-                    )
-                    setMembers(memberIds)
+                    const members = msg.channel_members_response.members || []
+                    setChannelMembers(members)
+
+                    // Récupérer les utilisateurs qui sont membres
+                    const memberUsers = members
+                        .filter(
+                            (member: any) => member.userId !== currentUser?._id
+                        )
+                        .map((member: any) => {
+                            return {
+                                _id: member.userId,
+                                firstname: member.firstname,
+                                lastname: member.lastname,
+                                picture: member.picture,
+                            }
+                        })
+
+                    setSelectedMembers(memberUsers)
                 }
             }
         },
     }
 
-    useEffect(() => {
+    const loadTeamMembers = () => {
+        if (controleur && canal) {
+            setIsLoadingMembers(true)
+            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+
+            const request = {
+                team_members_request: { teamId: team.id },
+            }
+            controleur.envoie(handler, request)
+        }
+    }
+
+    const loadChannelMembers = (channelId: string) => {
         if (controleur && canal) {
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
 
-            // Fetch users list
-            const T = { users_list_request: {} }
-            controleur.envoie(handler, T)
-
-            // If editing, fetch channel members
-            if (mode === "edit" && channel) {
-                const T2 = {
-                    channel_members_request: { channelId: channel.id },
-                }
-                controleur.envoie(handler, T2)
+            const request = {
+                channel_members_request: { channelId },
             }
+            controleur.envoie(handler, request)
         }
-
-        return () => {
-            if (controleur) {
-                controleur.desincription(
-                    handler,
-                    listeMessageEmis,
-                    listeMessageRecus
-                )
-            }
-        }
-    }, [])
-
-    useEffect(() => {
-        if (mode === "edit" && channel) {
-            setName(channel.name)
-            setIsPublic(channel.isPublic)
-            setShowMembersList(true)
-        }
-    }, [mode, channel])
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        setError("")
-        setSuccess("")
 
         if (!name.trim()) {
             setError("Le nom du canal est requis")
             return
         }
 
-        setIsLoading(true)
-
-        if (mode === "create") {
-            const T = {
-                channel_create_request: {
-                    name: name.trim(),
-                    teamId: "default", // In a real app, you'd get this from context or props
-                    isPublic,
-                    members: !isPublic ? members : undefined,
-                },
-            }
-            controleur?.envoie(handler, T)
-        } else if (mode === "edit" && channel) {
-            const T = {
-                channel_update_request: {
-                    id: channel.id,
-                    name: name.trim(),
-                    isPublic,
-                },
-            }
-            controleur?.envoie(handler, T)
-        }
-    }
-
-    const handleDelete = () => {
-        if (!channel) return
-
-        if (
-            window.confirm(
-                "Êtes-vous sûr de vouloir supprimer ce canal ? Cette action est irréversible."
+        if (!isPublic && selectedMembers.length === 0) {
+            setError(
+                "Vous devez sélectionner au moins un membre pour un canal privé"
             )
-        ) {
-            setIsLoading(true)
-            const T = {
-                channel_delete_request: {
-                    channelId: channel.id,
+            return
+        }
+
+        setIsLoading(true)
+        setError("")
+
+        controleur?.inscription(handler, listeMessageEmis, listeMessageRecus)
+
+        if (isEditing) {
+            // Mise à jour d'un canal existant
+            const updateRequest = {
+                channel_update_request: {
+                    id: channelToEdit.id,
+                    name,
+                    isPublic,
+                    teamId: team.id,
+                    members: !isPublic
+                        ? selectedMembers.map((member) => member._id)
+                        : [],
                 },
             }
-            controleur?.envoie(handler, T)
-        }
-    }
-
-    const toggleMember = (userId: string) => {
-        if (members.includes(userId)) {
-            setMembers(members.filter((id) => id !== userId))
+            controleur?.envoie(handler, updateRequest)
         } else {
-            setMembers([...members, userId])
+            // Création d'un nouveau canal
+            const createRequest = {
+                channel_create_request: {
+                    name,
+                    isPublic,
+                    teamId: team.id,
+                    members: !isPublic
+                        ? selectedMembers.map((member) => member._id)
+                        : [],
+                },
+            }
+            controleur?.envoie(handler, createRequest)
         }
     }
 
-    const filteredUsers = allUsers.filter(
-        (user) =>
-            user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.lastname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
-    // Find user details for channel members
-    const getMemberDetails = (userId: string) => {
-        return allUsers.find((user) => user.id === userId) || null
+    const handleCancel = () => {
+        controleur?.desincription(handler, listeMessageEmis, listeMessageRecus)
+        onCancel()
     }
 
-    // Get member role
-    const getMemberRole = (userId: string) => {
-        const member = channelMembers.find((m) => m.userId === userId)
-        return member ? member.role : "member"
+    const toggleMember = (user: User) => {
+        const isMemberSelected = selectedMembers.some(
+            (member) => member._id === user._id
+        )
+
+        if (isMemberSelected) {
+            // Retirer le membre
+            setSelectedMembers(
+                selectedMembers.filter((member) => member._id !== user._id)
+            )
+        } else {
+            // Ajouter le membre
+            setSelectedMembers([...selectedMembers, user])
+        }
     }
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2 className={styles.title}>
-                    {mode === "create"
-                        ? "Ajouter un canal"
-                        : "Modifier un canal"}
-                </h2>
-                <button className={styles.closeButton} onClick={onClose}>
-                    <X size={18} />
+                <div className={styles.titleContainer}>
+                    <MessageSquare size={24} className={styles.icon} />
+                    <h2 className={styles.title}>
+                        {isEditing
+                            ? "Modifier le canal"
+                            : "Créer un nouveau canal"}
+                        <span className={styles.teamName}>
+                            Équipe: {team.name}
+                        </span>
+                    </h2>
+                </div>
+                <button
+                    className={styles.closeButton}
+                    onClick={handleCancel}
+                    aria-label="Fermer"
+                >
+                    <X size={20} />
                 </button>
             </div>
 
-            {error && (
-                <div className={styles.errorMessage}>
-                    <Info size={16} />
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {success && (
-                <div className={styles.successMessage}>
-                    <Info size={16} />
-                    <span>{success}</span>
-                </div>
-            )}
-
-            <div className={styles.formContainer}>
-                <form className={styles.form} onSubmit={handleSubmit}>
-                    <div className={styles.formGroup}>
-                        <label htmlFor="channelName">Nom du canal</label>
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.formGroup}>
+                    <label htmlFor="channel-name" className={styles.label}>
+                        Nom du canal
+                    </label>
+                    <div className={styles.inputWrapper}>
+                        <MessageSquare size={18} className={styles.inputIcon} />
                         <input
+                            id="channel-name"
                             type="text"
-                            id="channelName"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Entrez le nom du canal"
+                            placeholder="Ex: Marketing, Support, Général..."
                             className={styles.input}
-                            disabled={isLoading}
+                            autoFocus
                         />
                     </div>
+                </div>
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.sectionTitle}>
-                            Paramètres du canal
-                        </label>
-                        <div className={styles.visibilitySection}>
-                            <p className={styles.visibilityLabel}>
-                                Visibilité du canal
-                            </p>
-
-                            <div className={styles.radioGroup}>
-                                <label
-                                    className={`${styles.radioCard} ${
-                                        isPublic ? styles.selected : ""
-                                    }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="visibility"
-                                        checked={isPublic}
-                                        onChange={() => setIsPublic(true)}
-                                        disabled={isLoading}
-                                        className={styles.radioInput}
-                                    />
-                                    <div className={styles.radioContent}>
-                                        <div className={styles.radioIcon}>
-                                            <Globe size={20} />
-                                        </div>
-                                        <div className={styles.radioText}>
-                                            <span className={styles.radioTitle}>
-                                                Canal public
-                                            </span>
-                                            <span
-                                                className={
-                                                    styles.radioDescription
-                                                }
-                                            >
-                                                Tous les membres peuvent
-                                                rejoindre et voir les messages
-                                            </span>
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label
-                                    className={`${styles.radioCard} ${
-                                        !isPublic ? styles.selected : ""
-                                    }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="visibility"
-                                        checked={!isPublic}
-                                        onChange={() => setIsPublic(false)}
-                                        disabled={isLoading}
-                                        className={styles.radioInput}
-                                    />
-                                    <div className={styles.radioContent}>
-                                        <div className={styles.radioIcon}>
-                                            <Lock size={20} />
-                                        </div>
-                                        <div className={styles.radioText}>
-                                            <span className={styles.radioTitle}>
-                                                Canal privé
-                                            </span>
-                                            <span
-                                                className={
-                                                    styles.radioDescription
-                                                }
-                                            >
-                                                Seuls les membres invités
-                                                peuvent voir les messages
-                                            </span>
-                                        </div>
-                                    </div>
-                                </label>
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Visibilité</label>
+                    <div className={styles.visibilityOptions}>
+                        <button
+                            type="button"
+                            className={`${styles.visibilityOption} ${
+                                isPublic ? styles.selected : ""
+                            }`}
+                            onClick={() => setIsPublic(true)}
+                        >
+                            <HashIcon
+                                size={18}
+                                className={styles.visibilityIcon}
+                            />
+                            <div className={styles.optionContent}>
+                                <span className={styles.optionTitle}>
+                                    Public
+                                </span>
+                                <span className={styles.optionDescription}>
+                                    Tous les membres de l'équipe peuvent voir et
+                                    rejoindre ce canal
+                                </span>
                             </div>
-                        </div>
-                    </div>
-
-                    {mode === "edit" && (
-                        <div className={styles.formGroup}>
-                            <div className={styles.membersHeader}>
-                                <label className={styles.sectionTitle}>
-                                    <Users
-                                        size={18}
-                                        className={styles.sectionIcon}
-                                    />
-                                    Membres du canal
-                                </label>
-                                <button
-                                    type="button"
-                                    className={styles.toggleButton}
-                                    onClick={() =>
-                                        setShowMembersList(!showMembersList)
-                                    }
-                                >
-                                    {showMembersList ? "Masquer" : "Afficher"}
-                                </button>
-                            </div>
-
-                            {showMembersList && (
-                                <div className={styles.currentMembersList}>
-                                    {channelMembers.length > 0 ? (
-                                        channelMembers.map((member) => {
-                                            const user = getMemberDetails(
-                                                member.userId
-                                            )
-                                            const role = getMemberRole(
-                                                member.userId
-                                            )
-
-                                            if (!user) return null
-
-                                            return (
-                                                <div
-                                                    key={member.userId}
-                                                    className={
-                                                        styles.memberListItem
-                                                    }
-                                                >
-                                                    <div
-                                                        className={
-                                                            styles.memberInfo
-                                                        }
-                                                    >
-                                                        {user.picture ? (
-                                                            <img
-                                                                src={
-                                                                    user.picture ||
-                                                                    "/placeholder.svg"
-                                                                }
-                                                                alt={`${user.firstname} ${user.lastname}`}
-                                                                className={
-                                                                    styles.memberAvatar
-                                                                }
-                                                            />
-                                                        ) : (
-                                                            <div
-                                                                className={
-                                                                    styles.memberInitials
-                                                                }
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        role ===
-                                                                        "admin"
-                                                                            ? "#4f46e5"
-                                                                            : "#6b7280",
-                                                                }}
-                                                            >
-                                                                {
-                                                                    user
-                                                                        .firstname[0]
-                                                                }
-                                                                {
-                                                                    user
-                                                                        .lastname[0]
-                                                                }
-                                                            </div>
-                                                        )}
-                                                        <div
-                                                            className={
-                                                                styles.memberDetails
-                                                            }
-                                                        >
-                                                            <span
-                                                                className={
-                                                                    styles.memberName
-                                                                }
-                                                            >
-                                                                {user.firstname}{" "}
-                                                                {user.lastname}
-                                                            </span>
-                                                            <span
-                                                                className={
-                                                                    styles.memberEmail
-                                                                }
-                                                            >
-                                                                {user.email}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        className={
-                                                            styles.memberRole
-                                                        }
-                                                    >
-                                                        <span
-                                                            className={`${
-                                                                styles.roleBadge
-                                                            } ${
-                                                                role === "admin"
-                                                                    ? styles.adminBadge
-                                                                    : styles.memberBadge
-                                                            }`}
-                                                        >
-                                                            {role === "admin"
-                                                                ? "Admin"
-                                                                : "Membre"}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })
-                                    ) : (
-                                        <div className={styles.emptyMembers}>
-                                            <p>Aucun membre dans ce canal</p>
-                                        </div>
-                                    )}
-                                </div>
+                            {isPublic && (
+                                <Check size={18} className={styles.checkIcon} />
                             )}
-                        </div>
-                    )}
+                        </button>
 
-                    {!isPublic && (
-                        <div className={styles.formGroup}>
-                            <label className={styles.sectionTitle}>
-                                {mode === "create"
-                                    ? "Ajouter des membres"
-                                    : "Inviter des membres"}
-                            </label>
-                            <div className={styles.searchBox}>
+                        <button
+                            type="button"
+                            className={`${styles.visibilityOption} ${
+                                !isPublic ? styles.selected : ""
+                            }`}
+                            onClick={() => setIsPublic(false)}
+                        >
+                            <Lock size={18} className={styles.visibilityIcon} />
+                            <div className={styles.optionContent}>
+                                <span className={styles.optionTitle}>
+                                    Privé
+                                </span>
+                                <span className={styles.optionDescription}>
+                                    Seuls les membres invités peuvent accéder à
+                                    ce canal
+                                </span>
+                            </div>
+                            {!isPublic && (
+                                <Check size={18} className={styles.checkIcon} />
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {!isPublic && (
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Membres</label>
+                        <div className={styles.membersSelection}>
+                            <div className={styles.searchContainer}>
+                                <Search
+                                    size={16}
+                                    className={styles.searchIcon}
+                                />
                                 <input
                                     type="text"
-                                    placeholder="Rechercher des utilisateurs..."
+                                    className={styles.searchInput}
+                                    placeholder="Rechercher des membres..."
                                     value={searchTerm}
                                     onChange={(e) =>
                                         setSearchTerm(e.target.value)
                                     }
-                                    className={styles.searchInput}
-                                    disabled={isLoading}
                                 />
                             </div>
-                            <div className={styles.membersList}>
-                                {filteredUsers.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        className={`${styles.memberItem} ${
-                                            members.includes(user.id)
-                                                ? styles.selected
-                                                : ""
-                                        }`}
-                                        onClick={() => toggleMember(user.id)}
-                                    >
-                                        <div className={styles.memberInfo}>
-                                            {user.picture ? (
-                                                <img
-                                                    src={
-                                                        user.picture ||
-                                                        "/placeholder.svg"
-                                                    }
-                                                    alt={user.firstname}
+
+                            {selectedMembers.length > 0 && (
+                                <div className={styles.selectedMembers}>
+                                    <h4 className={styles.selectedMembersTitle}>
+                                        Membres sélectionnés (
+                                        {selectedMembers.length})
+                                    </h4>
+                                    <div className={styles.membersList}>
+                                        {selectedMembers.map((member) => (
+                                            <div
+                                                key={member._id}
+                                                className={styles.memberItem}
+                                            >
+                                                <div
                                                     className={
                                                         styles.memberAvatar
                                                     }
-                                                />
-                                            ) : (
+                                                >
+                                                    {member.picture ? (
+                                                        <img
+                                                            src={
+                                                                member.picture ||
+                                                                "/placeholder.svg"
+                                                            }
+                                                            alt={`${member.firstname} ${member.lastname}`}
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            {member.firstname?.charAt(
+                                                                0
+                                                            ) || "?"}
+                                                            {member.lastname?.charAt(
+                                                                0
+                                                            ) || "?"}
+                                                        </>
+                                                    )}
+                                                </div>
                                                 <div
                                                     className={
-                                                        styles.memberInitials
+                                                        styles.memberInfo
                                                     }
                                                 >
-                                                    {user.firstname[0]}
-                                                    {user.lastname[0]}
+                                                    <span
+                                                        className={
+                                                            styles.memberName
+                                                        }
+                                                    >
+                                                        {member.firstname}{" "}
+                                                        {member.lastname}
+                                                    </span>
                                                 </div>
-                                            )}
-                                            <span className={styles.memberName}>
-                                                {user.firstname} {user.lastname}
-                                            </span>
-                                        </div>
-                                        <div className={styles.memberAction}>
-                                            {members.includes(user.id) ? (
-                                                <X size={16} />
-                                            ) : (
-                                                <Plus size={16} />
-                                            )}
-                                        </div>
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        styles.removeButton
+                                                    }
+                                                    onClick={() =>
+                                                        toggleMember(member)
+                                                    }
+                                                    aria-label={`Retirer ${member.firstname} ${member.lastname}`}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                </div>
+                            )}
+
+                            <div className={styles.usersList}>
+                                <h4 className={styles.usersListTitle}>
+                                    Ajouter des membres
+                                </h4>
+                                {isLoadingMembers ? (
+                                    <div className={styles.loadingUsers}>
+                                        Chargement des membres...
+                                    </div>
+                                ) : filteredMembers.length === 0 ? (
+                                    <div className={styles.noResults}>
+                                        Aucun membre trouvé
+                                    </div>
+                                ) : (
+                                    filteredMembers
+                                        .filter(
+                                            (user) =>
+                                                !selectedMembers.some(
+                                                    (member) =>
+                                                        member._id === user._id
+                                                )
+                                        )
+                                        .map((user) => (
+                                            <div
+                                                key={user._id}
+                                                className={styles.userItem}
+                                            >
+                                                <div
+                                                    className={
+                                                        styles.memberAvatar
+                                                    }
+                                                >
+                                                    {user.picture ? (
+                                                        <img
+                                                            src={
+                                                                user.picture ||
+                                                                "/placeholder.svg"
+                                                            }
+                                                            alt={`${user.firstname} ${user.lastname}`}
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            {user.firstname?.charAt(
+                                                                0
+                                                            ) || "?"}
+                                                            {user.lastname?.charAt(
+                                                                0
+                                                            ) || "?"}
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles.memberInfo
+                                                    }
+                                                >
+                                                    <span
+                                                        className={
+                                                            styles.memberName
+                                                        }
+                                                    >
+                                                        {user.firstname}{" "}
+                                                        {user.lastname}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className={styles.addButton}
+                                                    onClick={() =>
+                                                        toggleMember(user)
+                                                    }
+                                                    aria-label={`Ajouter ${user.firstname} ${user.lastname}`}
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
+                                            </div>
+                                        ))
+                                )}
                             </div>
                         </div>
-                    )}
-
-                    <div className={styles.formActions}>
-                        {mode === "edit" && (
-                            <button
-                                type="button"
-                                className={styles.deleteButton}
-                                onClick={handleDelete}
-                                disabled={isLoading}
-                            >
-                                Supprimer
-                            </button>
-                        )}
-                        <div className={styles.rightActions}>
-                            <button
-                                type="button"
-                                className={styles.cancelButton}
-                                onClick={onClose}
-                                disabled={isLoading}
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                type="submit"
-                                className={styles.submitButton}
-                                disabled={isLoading}
-                            >
-                                {isLoading
-                                    ? "Chargement..."
-                                    : mode === "create"
-                                    ? "Créer"
-                                    : "Mettre à jour"}
-                            </button>
-                        </div>
                     </div>
-                </form>
-            </div>
+                )}
+
+                {error && <div className={styles.error}>{error}</div>}
+
+                <div className={styles.formActions}>
+                    <button
+                        type="button"
+                        className={styles.cancelButton}
+                        onClick={handleCancel}
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="submit"
+                        className={styles.submitButton}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className={styles.buttonSpinner}></div>
+                                {isEditing ? "Mise à jour..." : "Création..."}
+                            </>
+                        ) : (
+                            <>
+                                <Users size={18} />
+                                {isEditing
+                                    ? "Mettre à jour le canal"
+                                    : "Créer le canal"}
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
         </div>
     )
 }

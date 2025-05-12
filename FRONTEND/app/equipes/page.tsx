@@ -1,28 +1,47 @@
 "use client"
-import { useEffect, useState } from "react"
+
+import { useState, useEffect } from "react"
 import styles from "./page.module.css"
-import { useAppContext } from "@/context/AppContext"
-import { motion } from "framer-motion"
-import { Users, Plus, ArrowLeft, MessageSquare } from "lucide-react"
-import ChannelsList from "./components/ChannelsList"
+import TeamsList from "./components/TeamsList"
 import ChannelView from "./components/ChannelView"
 import ChannelForm from "./components/ChannelForm"
+import TeamForm from "./components/TeamForm"
+import ChannelTabs from "./components/ChannelTabs"
 import type { Channel } from "@/types/Channel"
+import type { Team } from "@/types/Team"
+import { useAppContext } from "@/context/AppContext"
 
 export default function EquipesPage() {
     const { controleur, canal, currentUser } = useAppContext()
+    const [teams, setTeams] = useState<Team[]>([])
+    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+    const [channels, setChannels] = useState<Channel[]>([])
+    const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
+    const [showChannelForm, setShowChannelForm] = useState(false)
+    const [showTeamForm, setShowTeamForm] = useState(false)
+    const [isLoadingTeams, setIsLoadingTeams] = useState(true)
+    const [isLoadingChannels, setIsLoadingChannels] = useState(false)
+    const [isAdmin, setIsAdmin] = useState(false)
+    const [channelToEdit, setChannelToEdit] = useState<Channel | null>(null)
+    const [teamToEdit, setTeamToEdit] = useState<Team | null>(null)
 
     const nomDInstance = "EquipesPage"
     const verbose = false
 
-    const listeMessageEmis = ["channels_list_request"]
-    const listeMessageRecus = ["channels_list_response"]
-
-    const [channels, setChannels] = useState<Channel[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
-    const [showChannelForm, setShowChannelForm] = useState(false)
-    const [formMode, setFormMode] = useState<"create" | "edit">("create")
+    const listeMessageEmis = [
+        "teams_list_request",
+        "team_channels_request",
+        "user_info_request",
+        "channel_members_request",
+    ]
+    const listeMessageRecus = [
+        "teams_list_response",
+        "team_channels_response",
+        "user_info_response",
+        "channel_members_response",
+        "new_channel_post",
+        "new_post_response",
+    ]
 
     const handler = {
         nomDInstance,
@@ -33,14 +52,63 @@ export default function EquipesPage() {
                     msg
                 )
 
-            if (msg.channels_list_response) {
-                setIsLoading(false)
-                if (!msg.channels_list_response.etat) {
-                    console.log(
-                        `Récupération des canaux échouée: ${msg.channels_list_response.error}`
-                    )
+            if (msg.teams_list_response) {
+                if (msg.teams_list_response.etat) {
+                    setTeams(msg.teams_list_response.teams || [])
+                    setIsLoadingTeams(false)
+
+                    // Si aucune équipe n'est sélectionnée et qu'il y a des équipes, sélectionner la première équipe où l'utilisateur est membre
+                    if (
+                        !selectedTeam &&
+                        msg.teams_list_response.teams &&
+                        msg.teams_list_response.teams.length > 0
+                    ) {
+                        const memberTeams =
+                            msg.teams_list_response.teams.filter(
+                                (team: any) => team.role
+                            )
+
+                        if (memberTeams.length > 0) {
+                            const firstTeam = memberTeams[0]
+                            setSelectedTeam(firstTeam)
+                            loadTeamChannels(firstTeam.id)
+                        }
+                    }
                 } else {
-                    setChannels(msg.channels_list_response.channels || [])
+                    console.error(
+                        "Erreur lors de la récupération des équipes:",
+                        msg.teams_list_response.error
+                    )
+                }
+            }
+
+            if (msg.team_channels_response) {
+                if (msg.team_channels_response.etat) {
+                    setChannels(msg.team_channels_response.channels || [])
+                    setIsLoadingChannels(false)
+
+                    // Si aucun canal n'est sélectionné et qu'il y a des canaux, sélectionner le premier
+                    if (
+                        !selectedChannel &&
+                        msg.team_channels_response.channels &&
+                        msg.team_channels_response.channels.length > 0
+                    ) {
+                        setSelectedChannel(
+                            msg.team_channels_response.channels[0]
+                        )
+                    }
+                } else {
+                    console.error(
+                        "Erreur lors de la récupération des canaux:",
+                        msg.team_channels_response.error
+                    )
+                }
+            }
+
+            if (msg.user_info_response) {
+                if (msg.user_info_response.etat) {
+                    // Vérifier si l'utilisateur est administrateur
+                    setIsAdmin(msg.user_info_response.user.role === "admin")
                 }
             }
         },
@@ -49,8 +117,14 @@ export default function EquipesPage() {
     useEffect(() => {
         if (controleur && canal && currentUser) {
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
-            fetchChannelsList()
+
+            // Récupérer la liste des équipes
+            const teamsRequest = { teams_list_request: {} }
+            controleur.envoie(handler, teamsRequest)
+
+            setIsAdmin(currentUser.roles.includes("admin"))
         }
+
         return () => {
             if (controleur) {
                 controleur.desincription(
@@ -60,122 +134,197 @@ export default function EquipesPage() {
                 )
             }
         }
-    }, [currentUser])
+    }, [controleur, canal, currentUser])
 
-    const fetchChannelsList = () => {
-        setIsLoading(true)
-        const T = { channels_list_request: {} }
-        controleur?.envoie(handler, T)
+    const loadTeamChannels = (teamId: string) => {
+        if (controleur && canal) {
+            setIsLoadingChannels(true)
+            const channelsRequest = { team_channels_request: { teamId } }
+            controleur.envoie(handler, channelsRequest)
+        }
+    }
+
+    const handleTeamSelect = (team: Team) => {
+        // Vérifier si l'utilisateur est membre de l'équipe
+        if (!team.role) {
+            // Si l'utilisateur n'est pas membre, lui montrer un message
+            alert(
+                "Vous n'êtes pas membre de cette équipe. Contactez un administrateur pour y être ajouté."
+            )
+            return
+        }
+
+        setSelectedTeam(team)
+        setSelectedChannel(null)
+        setShowChannelForm(false)
+        setShowTeamForm(false)
+        loadTeamChannels(team.id)
     }
 
     const handleChannelSelect = (channel: Channel) => {
         setSelectedChannel(channel)
         setShowChannelForm(false)
+        setShowTeamForm(false)
+    }
+
+    const handleCreateTeam = () => {
+        setTeamToEdit(null)
+        setShowTeamForm(true)
+        setShowChannelForm(false)
+    }
+
+    const handleEditTeam = (team: Team) => {
+        setTeamToEdit(team)
+        setShowTeamForm(true)
+        setShowChannelForm(false)
+    }
+
+    const handleManageTeamMembers = (team: Team) => {
+        setTeamToEdit(team)
+        setShowTeamForm(true)
+        setShowChannelForm(false)
     }
 
     const handleCreateChannel = () => {
-        setSelectedChannel(null)
-        setFormMode("create")
+        setChannelToEdit(null)
         setShowChannelForm(true)
+        setShowTeamForm(false)
     }
 
     const handleEditChannel = (channel: Channel) => {
-        setSelectedChannel(channel)
-        setFormMode("edit")
+        setChannelToEdit(channel)
         setShowChannelForm(true)
+        setShowTeamForm(false)
     }
 
-    const handleFormClose = () => {
-        setShowChannelForm(false)
-        fetchChannelsList()
+    const handleTeamCreated = (newTeam: Team) => {
+        // Si l'équipe a été supprimée
+        if (newTeam.deleted) {
+            // Recharger la liste des équipes
+            const teamsRequest = { teams_list_request: {} }
+            controleur?.envoie(handler, teamsRequest)
+
+            // Réinitialiser la sélection
+            setSelectedTeam(null)
+            setSelectedChannel(null)
+            setShowTeamForm(false)
+            return
+        }
+
+        // Recharger la liste des équipes
+        const teamsRequest = { teams_list_request: {} }
+        controleur?.envoie(handler, teamsRequest)
+
+        setSelectedTeam(newTeam)
+        setShowTeamForm(false)
+        loadTeamChannels(newTeam.id)
     }
 
-    const handleBackToChannels = () => {
-        setSelectedChannel(null)
+    const handleChannelCreated = (newChannel: Channel) => {
+        if (channelToEdit) {
+            // Mise à jour d'un canal existant
+            setChannels((prevChannels) =>
+                prevChannels.map((c) =>
+                    c.id === newChannel.id ? newChannel : c
+                )
+            )
+            setChannelToEdit(null)
+        } else {
+            // Nouveau canal créé
+            setChannels((prevChannels) => [...prevChannels, newChannel])
+        }
+        setSelectedChannel(newChannel)
         setShowChannelForm(false)
     }
+
+    const handleCancelTeamForm = () => {
+        setShowTeamForm(false)
+        setTeamToEdit(null)
+    }
+
+    const handleCancelChannelForm = () => {
+        setShowChannelForm(false)
+        setChannelToEdit(null)
+    }
+
+    const isTeamAdmin = selectedTeam?.role === "admin" || isAdmin
 
     return (
-        <div className={styles.page}>
-            <motion.div
-                className={styles.header}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-            >
-                <div className={styles.titleContainer}>
-                    <Users className={styles.icon} />
-                    <h1 className={styles.title}>Équipes</h1>
-                </div>
-                <p className={styles.subtitle}>
-                    Gérez et rejoignez des canaux de communication
-                </p>
-            </motion.div>
+        <div className={styles.container}>
+            <div className={styles.sidebar}>
+                <TeamsList
+                    teams={teams}
+                    selectedTeam={selectedTeam}
+                    onSelectTeam={handleTeamSelect}
+                    onCreateTeam={handleCreateTeam}
+                    onEditTeam={handleEditTeam}
+                    onManageMembers={handleManageTeamMembers}
+                    isLoading={isLoadingTeams}
+                />
+            </div>
 
-            <motion.main
-                className={styles.main}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-            >
-                <div className={styles.sidebar}>
-                    <div className={styles.sidebarHeader}>
-                        <h2 className={styles.sidebarTitle}>Canaux</h2>
+            <div className={styles.content}>
+                {showTeamForm ? (
+                    <TeamForm
+                        onTeamCreated={handleTeamCreated}
+                        onCancel={handleCancelTeamForm}
+                        teamToEdit={teamToEdit}
+                    />
+                ) : showChannelForm && selectedTeam ? (
+                    <ChannelForm
+                        onChannelCreated={handleChannelCreated}
+                        onCancel={handleCancelChannelForm}
+                        channelToEdit={channelToEdit}
+                        team={selectedTeam}
+                    />
+                ) : selectedTeam ? (
+                    <div className={styles.teamContent}>
+                        <ChannelTabs
+                            channels={channels}
+                            selectedChannel={selectedChannel}
+                            onSelectChannel={handleChannelSelect}
+                            onCreateChannel={handleCreateChannel}
+                            onEditChannel={handleEditChannel}
+                            isAdmin={isTeamAdmin}
+                        />
+
+                        {selectedChannel ? (
+                            <ChannelView
+                                channel={selectedChannel}
+                                userId={currentUser?.id || ""}
+                                onEditChannel={
+                                    isTeamAdmin
+                                        ? () =>
+                                              handleEditChannel(selectedChannel)
+                                        : undefined
+                                }
+                            />
+                        ) : (
+                            <div className={styles.emptyChannelState}>
+                                <h3>Sélectionnez un canal</h3>
+                                <p>
+                                    Choisissez un canal dans la liste ci-dessus
+                                    ou créez-en un nouveau
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        <h2>Bienvenue dans les équipes</h2>
+                        <p>
+                            Sélectionnez une équipe ou créez-en une nouvelle
+                            pour commencer
+                        </p>
                         <button
-                            className={styles.addButton}
-                            onClick={handleCreateChannel}
+                            className={styles.createTeamButton}
+                            onClick={handleCreateTeam}
                         >
-                            <Plus size={18} />
+                            Créer une équipe
                         </button>
                     </div>
-                    <ChannelsList
-                        channels={channels}
-                        isLoading={isLoading}
-                        selectedChannel={selectedChannel}
-                        onSelectChannel={handleChannelSelect}
-                        onEditChannel={handleEditChannel}
-                    />
-                </div>
-
-                <div className={styles.content}>
-                    {showChannelForm ? (
-                        <>
-                            <div
-                                className={styles.backButton}
-                                onClick={handleBackToChannels}
-                            >
-                                <ArrowLeft size={16} />
-                                <span>Retourner aux canaux</span>
-                            </div>
-                            <ChannelForm
-                                mode={formMode}
-                                channel={
-                                    formMode === "edit" ? selectedChannel : null
-                                }
-                                onClose={handleFormClose}
-                            />
-                        </>
-                    ) : selectedChannel ? (
-                        <ChannelView
-                            channel={selectedChannel}
-                            onEditChannel={() =>
-                                handleEditChannel(selectedChannel)
-                            }
-                        />
-                    ) : (
-                        <div className={styles.emptyState}>
-                            <MessageSquare size={48} />
-                            <h3 className={styles.emptyStateTitle}>
-                                Aucun canal sélectionné
-                            </h3>
-                            <p className={styles.emptyStateDescription}>
-                                Sélectionnez un canal existant ou créez-en un
-                                nouveau pour commencer à discuter
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </motion.main>
+                )}
+            </div>
         </div>
     )
 }
