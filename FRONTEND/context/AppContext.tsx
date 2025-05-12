@@ -97,8 +97,14 @@ export const AppContextProvider = ({
         }
     }, [currentUser, pathname])
 
+    const hasAuthenticatedRef = useRef(false)
+
     useEffect(() => {
-        if (!currentUser && Cookies.get("token")) {
+        if (
+            !currentUser &&
+            Cookies.get("token") &&
+            !hasAuthenticatedRef.current
+        ) {
             const token = Cookies.get("token")
             if (token) {
                 const { userId } = jwt.decode(token) as any
@@ -119,10 +125,11 @@ export const AppContextProvider = ({
                         user_info_request: { userId },
                     })
                     canalRef.current?.socket.emit("authenticate", token)
+                    hasAuthenticatedRef.current = true
                 })
             }
         }
-    }, [currentUser, pathname])
+    }, [currentUser])
 
     return (
         <AppContext.Provider
