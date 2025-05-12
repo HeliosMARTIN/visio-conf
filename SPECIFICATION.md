@@ -151,3 +151,39 @@ Reprends les variables de "Home Role Gestion" pour l'affichage
 
 Reprends les variables de "Home Perm Gestion" pour l'affichage
 
+
+## BACKEND
+
+### Users Service
+
+| Variable/Fonction                 | Type/Variables            | Description                           |
+| --------------------------------- |:-------------------------:| ------------------------------------  | 
+| controleur                        |                           | Pointe vers l'instance du controleur  |
+| verbose                           | boolean                   | Afficher les logs ou non du composant |
+| listeMessageEmis                  | string[ ]                 | Contient les messages suivants : "login_response", "signup_response", "users_list_response", "update_user_response", "update_user_status_response", "update_user_roles_response", "user_perms_response", "user_info_response" |
+| listeMessageRecus                 | string[ ]                 | Contient les messages suivants : "login_request", "signup_request", "users_list_request", "update_user_request", "update_user_status_request", "update_user_roles_request", "delete_role_request", "user_perms_request", "user_info_request" |
+| constructor(c, nom)               | c est le controleur et nom le nom de l'instance                  | Inscrit auprès du controlleur les listes des messages émis et reçus. |
+| traitementMessage(mesg)           | mesg est le message à traiter  | Traite les message qui viennent du controleur |
+
+### Roles Service
+
+| Variable/Fonction                 | Type/Variables            | Description                           |
+| --------------------------------- |:-------------------------:| ------------------------------------  | 
+| controleur                        |                           | Pointe vers l'instance du controleur  |
+| verbose                           | boolean                   | Afficher les logs ou non du composant |
+| listeMessageEmis                  | string[ ]                 | Contient les messages suivants : "roles_list_response", "one_role_response", "created_role", "role_already_exists", "updated_role", "deleted_role" |
+| listeMessageRecus                 | string[ ]                 | Contient les messages suivants : "roles_list_request", "one_role_request", "create_role_request", "update_role_request", "delete_role_request" |
+| constructor(c, nom)               | c est le controleur et nom le nom de l'instance                  | Inscrit auprès du controlleur les listes des messages émis et reçus. |
+| traitementMessage(mesg)           | mesg est le message à traiter  | Traite les message qui viennent du controleur |
+
+### Perms Service
+
+| Variable/Fonction                 | Type/Variables            | Description                           |
+| --------------------------------- |:-------------------------:| ------------------------------------  | 
+| controleur                        |                           | Pointe vers l'instance du controleur  |
+| verbose                           | boolean                   | Afficher les logs ou non du composant |
+| listeMessageEmis                  | string[ ]                 | Contient les messages suivants : "perms_list_response", "update_perm_response", "add_perm_response" |
+| listeMessageRecus                 | string[ ]                 | Contient les messages suivants : "perms_list_request", "update_perm_request", "add_perm_request" |
+| constructor(c, nom)               | c est le controleur et nom le nom de l'instance                  | Inscrit auprès du controlleur les listes des messages émis et reçus. |
+| traitementMessage(mesg)           | mesg est le message à traiter  | Traite les message qui viennent du controleur |
+
