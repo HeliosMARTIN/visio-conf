@@ -25,13 +25,13 @@ export default function UpdateUserRole ({
     const [alertSeverity, setAlertSeverity] = useState<"success" | "error" | "warning" | "info">("success");
     const [alertMessage, setAlertMessage] = useState<string>("");
 
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [firstname, setFirstname] = useState("")
-    const [lastname, setLastname] = useState("")
-    const [phone, setPhone] = useState("")
-    const [job, setJob] = useState("")
-    const [desc, setDesc] = useState("")
+    const [email, setEmail] = useState<string>("")
+    const [password, setPassword] = useState<string>("")
+    const [firstname, setFirstname] = useState<string>("")
+    const [lastname, setLastname] = useState<string>("")
+    const [phone, setPhone] = useState<string>("")
+    const [job, setJob] = useState<string>("")
+    const [desc, setDesc] = useState<string>("")
 
     const nomDInstance = "Update User Role"
     const verbose = false
