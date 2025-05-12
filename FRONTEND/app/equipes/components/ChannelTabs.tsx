@@ -49,17 +49,6 @@ export default function ChannelTabs({
                             )}
                         </div>
                         <span className={styles.tabName}>{channel.name}</span>
-                        {isAdmin && (
-                            <button
-                                className={styles.editButton}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onEditChannel(channel)
-                                }}
-                            >
-                                <Settings size={14} />
-                            </button>
-                        )}
                     </div>
                 ))}
                 <button className={styles.addTab} onClick={onCreateChannel}>

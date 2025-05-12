@@ -1,7 +1,14 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import styles from "./ChannelView.module.css"
-import { Users, Send, HashIcon, Lock, MessageSquare } from "lucide-react"
+import {
+    Users,
+    Send,
+    HashIcon,
+    Lock,
+    MessageSquare,
+    Settings,
+} from "lucide-react"
 import PostItem from "./PostItem"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
@@ -262,7 +269,7 @@ export default function ChannelView({
                         className={styles.settingsButton}
                         onClick={onEditChannel}
                     >
-                        <span className={styles.settingsIcon}>⚙️</span>
+                        <Settings size={14} />
                     </button>
                 )}
             </div>
