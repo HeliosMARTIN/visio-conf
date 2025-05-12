@@ -24,7 +24,7 @@ interface DiscussionsListProps {
 const DiscussionsList: React.FC<DiscussionsListProps> = ({
     discussions = [],
     currentUserId,
-    currentUserEmail, // Ajout du prop
+    currentUserEmail,
     onSelectDiscussion,
     selectedDiscussionId,
     onNewDiscussClick,

@@ -198,32 +198,56 @@ export default function DiscussionPage() {
         }
     }
 
-// Fonction à modifier dans FRONTEND/app/discussion/page.tsx
+// Fonction améliorée dans FRONTEND/app/discussion/page.tsx
 
 const handleRemoveDiscussion = (discussionId: string) => {
     if (!currentUser) return;
     
-    setDiscussions((prev) =>
-        prev.filter((d) => d.discussion_uuid !== discussionId)
-    );
+    // Vérifions d'abord si la discussion existe
+    const discussionToRemove = discussions.find(d => d.discussion_uuid === discussionId);
+    if (!discussionToRemove) return;
     
-    // Si la discussion qu'on supprime est celle qui est actuellement sélectionnée,
-    // on désélectionne
-    if (selectedDiscussion === discussionId) {
-        setSelectedDiscussion(null);
-        setMessages([]);
-    }
-    
-    setShowCreateDiscussion(false);
-    
+    // Préparer le message pour le backend
     if (controleur && currentUser) {
+        // Envoi de la demande au serveur avant de modifier l'interface
         const message = {
             discuss_remove_member_request: [
                 currentUser.id, // userId
-                discussionId  // discussionId
-            ],
+                discussionId    // discussionId
+            ]
         };
+        
         controleur.envoie(handler, message);
+        
+        // Mettre à jour l'interface utilisateur après l'envoi
+        setDiscussions((prev) =>
+            prev.filter((d) => d.discussion_uuid !== discussionId)
+        );
+        
+        // Si la discussion supprimée est celle actuellement sélectionnée
+        if (selectedDiscussion === discussionId) {
+            setSelectedDiscussion(null);
+            setMessages([]);
+        }
+        
+        // Fermer la fenêtre de création si elle est ouverte
+        setShowCreateDiscussion(false);
+        
+        // Afficher une notification de succès (optionnel)
+        setError(""); // Effacer les erreurs précédentes
+        
+        // Vous pourriez ajouter ici une notification temporaire
+        const successElement = document.createElement('div');
+        successElement.className = 'success-notification';
+        successElement.textContent = 'Vous avez quitté la conversation';
+        document.body.appendChild(successElement);
+        
+        // Supprimer la notification après quelques secondes
+        setTimeout(() => {
+            if (document.body.contains(successElement)) {
+                document.body.removeChild(successElement);
+            }
+        }, 3000);
     }
 }
 
