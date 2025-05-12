@@ -346,10 +346,9 @@ export default function TeamForm({
     }
 
     const isUserAdmin = teamMembers.some(
-        (member) =>
-            member.userId === currentUser?._id && member.role === "admin"
+        (member) => member.userId === currentUser?.id && member.role === "admin"
     )
-    const isCreator = teamToEdit?.createdBy === currentUser?._id
+    const isCreator = teamToEdit?.createdBy === currentUser?.id
     const canManageMembers = isUserAdmin || isCreator
 
     return (
@@ -474,7 +473,7 @@ export default function TeamForm({
                                                     {member.firstname}{" "}
                                                     {member.lastname}
                                                     {member.userId ===
-                                                        currentUser?._id && (
+                                                        currentUser?.id && (
                                                         <span
                                                             className={
                                                                 styles.youBadge
@@ -496,7 +495,7 @@ export default function TeamForm({
                                             </div>
                                             {canManageMembers &&
                                                 member.userId !==
-                                                    currentUser?._id && (
+                                                    currentUser?.id && (
                                                     <button
                                                         type="button"
                                                         className={
