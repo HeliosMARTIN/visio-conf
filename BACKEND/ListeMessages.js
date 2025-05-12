@@ -20,7 +20,7 @@ export const ListeMessagesEmis = [
     "messages_get_request", // { convId: uuid }
     "message_send_request", // { userEmail: string, otherUserEmail?: string[], convId?:uuid , text: string }
     "discuss_list_request", // { userId : uuid }
-    "users_shearch_request", // { requestArgs : string }
+    "users_search_request", // { requestArgs : string }
     "discuss_remove_member_request", // { UserId : uuid, convId : uuid }
     "discuss_remove_message_request", // { messageId : uuid, convId : uuid }
     //---- ROLES ----
@@ -67,7 +67,7 @@ export const ListeMessagesRecus = [
     "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
     "message_send_response", // { etat: boolean, error?: string }
     "discuss_list_response", //{ etat: boolean, discussList? : Discussion[], error?: string }
-    "users_shearch_response", // {  etat: boolean, users?: User[], error?: string }
+    "users_search_response", // {  etat: boolean, users?: User[], error?: string }
     "discuss_remove_member_response", // { etat: boolean, error?: string }
     "discuss_remove_message_response", // { etat: boolean, error?: string }
     //---- ROLES ----
@@ -84,7 +84,7 @@ export const ListeMessagesRecus = [
     "add_perm_response", // {message : string }=
     //---- FILES ----
     "files_list_response", // { etat: boolean, files?: File[], error?: string }
-    "file_upload_response", // { etat: boolean, error?: string, fileId?: string, fileName?: string, signedUrl?: string }
+    "file_upload_response", // { etat: boolean, error?: string, signedUrl?: string }
     "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
     "file_rename_response", // { etat: boolean, fileId?: string, newName?: string, error?: string }
     "file_move_response", // { etat: boolean, fileId?: string, newParentId?: string, error?: string }

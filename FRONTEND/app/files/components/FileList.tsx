@@ -14,7 +14,6 @@ interface FileListProps {
     onRenameFile: (file: FileItemType) => void
     onMoveFile: (file: FileItemType) => void
     onShareFile: (file: FileItemType) => void
-    onDownloadFile?: (file: FileItemType) => void
 }
 
 export default function FileList({
@@ -26,7 +25,6 @@ export default function FileList({
     onRenameFile,
     onMoveFile,
     onShareFile,
-    onDownloadFile,
 }: FileListProps) {
     if (isLoading) {
         return <FileListSkeleton viewMode={viewMode} />
@@ -35,7 +33,7 @@ export default function FileList({
     if (files.length === 0) {
         return (
             <div className={styles.emptyState}>
-                <p>No files found</p>
+                <p>Aucun fichier.</p>
             </div>
         )
     }
@@ -59,7 +57,6 @@ export default function FileList({
                             onRename={onRenameFile}
                             onMove={onMoveFile}
                             onShare={onShareFile}
-                            onDownload={onDownloadFile}
                         />
                     </motion.div>
                 ))}

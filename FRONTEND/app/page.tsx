@@ -7,6 +7,7 @@ import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
 import { useAppContext } from "@/context/AppContext"
 import HomeAdmin from "../components/admin/HomeAdmin"
+import Cookies from "js-cookie"
 
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
@@ -151,7 +152,7 @@ export default function Home() {
     }
 
     const handleLogout = () => {
-        localStorage.removeItem("token")
+        Cookies.remove("token") // Remove token from cookies
         setCurrentUser(null)
         router.push("/login")
     }
@@ -193,7 +194,7 @@ export default function Home() {
             alert("Please select a file first")
         }
     }
-    
+
     const handleDiscussion = () => {
         router.push("/discussion")
     }
@@ -227,5 +228,3 @@ export default function Home() {
         )
     }
 }
-
-

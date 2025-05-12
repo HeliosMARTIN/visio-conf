@@ -11,6 +11,8 @@ import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
 import { User } from "@/types/User"
 import jwt from "jsonwebtoken"
+import Cookies from "js-cookie"
+
 interface AppContextType {
     controleur: Controleur
     canal: CanalSocketio
@@ -84,18 +86,20 @@ export const AppContextProvider = ({
 
     useEffect(() => {
         if (
-            !localStorage.getItem("token") &&
+            !Cookies.get("token") &&
             pathname !== "/login" &&
             pathname !== "/signup"
         ) {
+            console.log("in if condition")
+
             setCurrentUser(null)
             router.push("/login")
         }
     }, [currentUser, pathname])
 
     useEffect(() => {
-        if (!currentUser && localStorage.getItem("token")) {
-            const token = localStorage.getItem("token")
+        if (!currentUser && Cookies.get("token")) {
+            const token = Cookies.get("token")
             if (token) {
                 const { userId } = jwt.decode(token) as any
                 const waitForCanalInit = () =>

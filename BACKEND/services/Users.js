@@ -57,194 +57,76 @@ class UsersService {
         }
 
         if (mesg.login_request) {
-            try {
-                const { email, password } = mesg.login_request
-                console.log(email, password)
-
-                const hashedPassword = await this.sha256(password)
-                const user = await User.findOne({
-                    email,
-                    password: hashedPassword,
-                })
-                if (user) {
-                    const token = jwt.sign(
-                        {
-                            firstname: user.firstname,
-                            lastname: user.lastname,
-                            email,
-                            picture: user.picture,
-                            userId: user._id,
-                        },
-                        process.env.JWT_SECRET,
-                        { expiresIn: "1d" }
-                    )
-                    const message = {
-                        login_response: { etat: true, token },
-                        id: [mesg.id],
-                    }
-                    this.controleur.envoie(this, message)
-                } else {
-                    throw new Error("Invalid credentials")
-                }
-            } catch (error) {
-                const message = {
-                    login_response: { etat: false, error: error.message },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
+            await this.handleLogin(mesg)
         }
 
         if (mesg.signup_request) {
-            try {
-                const {
-                    email,
-                    password,
-                    firstname,
-                    lastname,
-                    phone,
-                    job,
-                    desc,
-                } = mesg.signup_request
-
-                const existingUser = await User.findOne({ email })
-                if (existingUser) {
-                    throw new Error("User already exists")
-                }
-
-                const hashedPassword = await this.sha256(password)
-
-                const user = new User({
-                    uuid: uuidv4(),
-                    email,
-                    password: hashedPassword,
-                    firstname,
-                    lastname,
-                    phone,
-                    job,
-                    desc,
-                    picture: "default_profile_picture.png",
-                })
-                await user.save()
-                const token = jwt.sign(
-                    {
-                        firstname,
-                        lastname,
-                        email,
-                        picture: user.picture,
-                        userId: user._id,
-                    },
-                    process.env.JWT_SECRET,
-                    { expiresIn: "1d" }
-                )
-                const message = {
-                    signup_response: { etat: true, token },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            } catch (error) {
-                const message = {
-                    signup_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
+            await this.handleSignup(mesg)
         }
 
         if (mesg.users_list_request) {
-            try {
-                const users = await User.find(
-                    {},
-                    "firstname lastname email picture status roles is_online phone job desc password"
-                )
-                const formattedUsers = users.map((user) => ({
-                    id: user._id,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    email: user.email,
-                    picture: user.picture,
-                    status : user.status,
-                    roles : user.roles,
-                    online : user.is_online,
-                    phone : user.phone,
-                    job : user.job,
-                    desc : user.desc,
-                }))
-                const message = {
-                    users_list_response: {
-                        etat: true,
-                        users: formattedUsers,
-                    },
-                    id: [mesg.id],
-                }
-                console.log("on renvoie la response")
-
-                this.controleur.envoie(this, message)
-            } catch (error) {
-                const message = {
-                    users_list_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
+            await this.getUsersList(mesg)
         }
 
         if (mesg.update_user_request) {
-            try {
-                const socketId = mesg.id
-                if (!socketId)
-                    throw new Error("Sender socket id not available for update")
-                // Use all received fields as update (partial update)
-                const fieldsToUpdate = mesg.update_user_request
-                // Retrieve user info based on socket id
-                const userInfo =
-                    await SocketIdentificationService.getUserInfoBySocketId(
-                        socketId
-                    )
-                if (!userInfo)
-                    throw new Error("User not found based on socket id")
-                // Update only the received fields
-                const user = await User.findOneAndUpdate(
-                    { _id: userInfo._id },
-                    fieldsToUpdate,
-                    { new: true }
-                )
-                if (!user) throw new Error("User not found")
-                const newUserInfo = {
-                    id: user._id,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
-                    email: user.email,
-                    picture: user.picture,
-                    phone: user.phone,
-                }
-                const message = {
-                    update_user_response: {
-                        etat: true,
-                        newUserInfo,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            } catch (error) {
-                const message = {
-                    update_user_response: {
-                        etat: false,
-                        error: error.message,
-                        newUserInfo: null,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
+            await this.updateUser(mesg)
         }
-        if(typeof mesg.delete_role_request != "undefined"){
+
+        if (mesg.user_info_request) {
+            await this.getUserInfo(mesg)
+        }
+        if (mesg.update_user_roles_request){
+
+            const user = await User.findOneAndUpdate(
+                { _id: mesg.update_user_roles_request.user_id },
+                {
+                    firstname : mesg.update_user_roles_request.firstname,
+                    lastname : mesg.update_user_roles_request.lastname,
+                    email : mesg.update_user_roles_request.email,
+                    phone : mesg.update_user_roles_request.phone,
+                    job : mesg.update_user_roles_request.job,
+                    desc : mesg.update_user_roles_request.desc,
+                    password : await this.sha256(mesg.update_user_roles_request.lastname),
+                    roles : mesg.update_user_roles_request.roles
+                },
+                { new: true }
+            )
+            if (!user) throw new Error("User not found")
+
+            const message = {
+                update_user_roles_response: {
+                    userId : mesg.update_user_roles_request.user_id,
+                },
+                id: [mesg.id, user.socket_id],
+            }
+            this.controleur.envoie(this, message)
+        }
+        if (mesg.user_perms_request){
+            const user = await User.findOne({ _id: mesg.user_perms_request.userId })
+            .populate({
+                path: "roles",
+                populate: { path: "role_permissions" }
+            });
+
+            let perms = [];
+
+            user.roles.map((role) => {
+                role.role_permissions.map((perm) => {
+                    if(!perms.includes(perm.permission_uuid)){
+                        perms.push(perm.permission_uuid);
+                    }
+                })
+            })
+            
+            const message = {
+                user_perms_response: {
+                    perms: perms,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+        if(mesg.delete_role_request){
             await User.updateMany(
                 {}, 
                 { $pull: { roles: mesg.delete_role_request.role_id } }
@@ -304,58 +186,210 @@ class UsersService {
                 this.controleur.envoie(this, message)
             }
         }
+    }
 
-        if (mesg.update_user_roles_request){
+    async handleLogin(mesg) {
+        try {
+            const { email, password } = mesg.login_request
 
-            const user = await User.findOneAndUpdate(
-                { _id: mesg.update_user_roles_request.user_id },
-                {
-                    firstname : mesg.update_user_roles_request.firstname,
-                    lastname : mesg.update_user_roles_request.lastname,
-                    email : mesg.update_user_roles_request.email,
-                    phone : mesg.update_user_roles_request.phone,
-                    job : mesg.update_user_roles_request.job,
-                    desc : mesg.update_user_roles_request.desc,
-                    password : await this.sha256(mesg.update_user_roles_request.lastname),
-                    roles : mesg.update_user_roles_request.roles
-                },
-                { new: true }
-            )
-            if (!user) throw new Error("User not found")
-
+            const hashedPassword = await this.sha256(password)
+            const user = await User.findOne({
+                email,
+                password: hashedPassword,
+            })
+            if (user) {
+                const token = jwt.sign(
+                    {
+                        firstname,
+                        lastname,
+                        email,
+                        picture: user.picture,
+                        userId: user._id,
+                    },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "7d" }
+                )
+                const message = {
+                    login_response: { etat: true, token },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } else {
+                throw new Error("Invalid credentials")
+            }
+        } catch (error) {
             const message = {
-                update_user_roles_response: {
-                    userId : mesg.update_user_roles_request.user_id,
-                },
-                id: [mesg.id, user.socket_id],
+                login_response: { etat: false, error: error.message },
+                id: [mesg.id],
             }
             this.controleur.envoie(this, message)
         }
-        if (mesg.user_perms_request){
-            const user = await User.findOne({ _id: mesg.user_perms_request.userId })
-            .populate({
-                path: "roles",
-                populate: { path: "role_permissions" }
-            });
+    }
 
-            let perms = [];
+    async handleSignup(mesg) {
+        try {
+            const { email, password, firstname, lastname, phone, job, desc } =
+                mesg.signup_request
 
-            user.roles.map((role) => {
-                role.role_permissions.map((perm) => {
-                    if(!perms.includes(perm.permission_uuid)){
-                        perms.push(perm.permission_uuid);
-                    }
-                })
+            const existingUser = await User.findOne({ email })
+            if (existingUser) {
+                throw new Error("User already exists")
+            }
+
+            const hashedPassword = await this.sha256(password)
+
+            const user = new User({
+                uuid: uuidv4(),
+                email,
+                password: hashedPassword,
+                firstname,
+                lastname,
+                phone,
+                job,
+                desc,
+                picture: "default_profile_picture.png",
             })
-            
+            await user.save()
+            const token = jwt.sign(
+                { userId: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: "7d" }
+            )
             const message = {
-                user_perms_response: {
-                    perms: perms,
+                signup_response: { etat: true, token },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        } catch (error) {
+            const message = {
+                signup_response: {
+                    etat: false,
+                    error: error.message,
                 },
                 id: [mesg.id],
             }
             this.controleur.envoie(this, message)
         }
+    }
+
+    async getUsersList(mesg) {
+        try {
+            const users = await User.find(
+                {},
+                "firstname lastname email picture status roles is_online phone job desc password"
+            )
+            const formattedUsers = users.map((user) => ({
+                id: user._id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                picture: user.picture,
+                status : user.status,
+                roles : user.roles,
+                online : user.is_online,
+                phone : user.phone,
+                job : user.job,
+                desc : user.desc,
+            }))
+            const message = {
+                users_list_response: {
+                    etat: true,
+                    users: formattedUsers,
+                },
+                id: [mesg.id],
+            }
+            console.log("on renvoie la response")
+        }
+        catch (error) {
+            const message = {
+                signup_response: {
+                    etat: false,
+                    error: error.message,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+    }
+
+    async updateUser(mesg) {
+        try {
+            const socketId = mesg.id
+            if (!socketId)
+                throw new Error("Sender socket id not available for update")
+            // Use all received fields as update (partial update)
+            const fieldsToUpdate = mesg.update_user_request
+            // Retrieve user info based on socket id
+            const userInfo =
+                await SocketIdentificationService.getUserInfoBySocketId(
+                    socketId
+                )
+            if (!userInfo) throw new Error("User not found based on socket id")
+            // Update only the received fields
+            const user = await User.findOneAndUpdate(
+                { _id: userInfo._id },
+                fieldsToUpdate,
+                { new: true }
+            )
+            if (!user) throw new Error("User not found")
+            const newUserInfo = {
+                id: user._id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                picture: user.picture,
+                phone: user.phone,
+            }
+            const message = {
+                update_user_response: {
+                    etat: true,
+                    newUserInfo,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        } catch (error) {
+            const message = {
+                update_user_response: {
+                    etat: false,
+                    error: error.message,
+                    newUserInfo: null,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+    }
+
+    async getUserInfo(mesg) {
+        try {
+            const { userId } = mesg.user_info_request
+            const user = await User.findById(
+                userId,
+                "firstname lastname email picture phone"
+            )
+
+            if (user) {
+                const userInfo = {
+                    id: user._id,
+                    firstname: user.firstname,
+                    lastname: user.lastname,
+                    email: user.email,
+                    picture: user.picture,
+                    phone: user.phone,
+                }
+                const message = {
+                    user_info_response: { etat: true, userInfo },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } else {
+                throw new Error("User not found")
+            }
+            this.controleur.envoie(this, message)
+        }
+
+        
     }
 
     sha256 = async (text) => {
