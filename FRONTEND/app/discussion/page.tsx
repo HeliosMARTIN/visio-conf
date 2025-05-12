@@ -31,12 +31,14 @@ export default function DiscussionPage() {
         "messages_get_request",
         "users_search_request",
         "message_send_request",
+        "discuss_remove_member_request",
     ]
     const listeMessageRecus = [
         "discuss_list_response",
         "messages_get_response",
         "users_search_response",
         "message_send_response",
+        "discuss_remove_member_response",
     ]
 
     const handler = {
@@ -196,9 +198,39 @@ export default function DiscussionPage() {
         }
     }
 
+// Fonction à modifier dans FRONTEND/app/discussion/page.tsx
+
+const handleRemoveDiscussion = (discussionId: string) => {
+    if (!currentUser) return;
+    
+    setDiscussions((prev) =>
+        prev.filter((d) => d.discussion_uuid !== discussionId)
+    );
+    
+    // Si la discussion qu'on supprime est celle qui est actuellement sélectionnée,
+    // on désélectionne
+    if (selectedDiscussion === discussionId) {
+        setSelectedDiscussion(null);
+        setMessages([]);
+    }
+    
+    setShowCreateDiscussion(false);
+    
+    if (controleur && currentUser) {
+        const message = {
+            discuss_remove_member_request: [
+                currentUser.id, // userId
+                discussionId  // discussionId
+            ],
+        };
+        controleur.envoie(handler, message);
+    }
+}
+
     const toggleCreateDiscussion = () => {
         setShowCreateDiscussion(!showCreateDiscussion)
     }
+
 
     if (!currentUser) {
         return <div>Chargement...</div>
@@ -215,6 +247,7 @@ export default function DiscussionPage() {
                     onSelectDiscussion={handleSelectDiscussion}
                     selectedDiscussionId={selectedDiscussion}
                     onNewDiscussClick={toggleCreateDiscussion}
+                    removeDiscussion={handleRemoveDiscussion}
                 />
             </div>
             <div
