@@ -5,13 +5,18 @@ import { useEffect, useState } from "react";
 import styles from "./AddRole.module.css"
 import router from "next/router";
 import { TextField, Typography } from "@mui/material";
-import CustomSnackBar from "../SnackBar";
-import { Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import CustomSnackBar from "../../SnackBar";
+import { Check, ChevronDown, ChevronUp, X} from "lucide-react";
 import { Permission } from "@/types/Permission";
 import { Role } from "@/types/Role";
-import { useParams } from "next/navigation";
 
-export default function AddUpdateRole ({roleId} : {roleId? : string | string[] | undefined}) {
+export default function AddUpdateRole ({
+    roleId,
+    setAddUpdateRole
+} : {
+    roleId? : string,
+    setAddUpdateRole : Function
+}) {
     const [roleName, setRoleName] = useState<string | undefined>("");
     const [permList, setPermList] = useState<Permission[]>([]);
     const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
@@ -62,14 +67,10 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
                 if (msg.created_role) {
                     setRoleName("");
                     setSelectedPerms([]);
-                    setAlertMessage("Le rôle a été créé avec succès !");
-                    setAlertSeverity("success");
-                    setOpenAlert(true);
+                    setAddUpdateRole(false);
                 }
                 if (msg.updated_role) {
-                    setAlertMessage("Le rôle a été mis à jour avec succès !");
-                    setAlertSeverity("success");
-                    setOpenAlert(true);
+                    setAddUpdateRole(false);
                 }
                 if (msg.one_role_response){
                     setRole(msg.one_role_response.role);
@@ -114,7 +115,8 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
                 controleur.envoie(handler, {
                     "create_role_request" : {
                         name : roleName,
-                        perms: selectedPerms
+                        perms: selectedPerms,
+                        action : "create"
                     }
                 })
             }
@@ -153,7 +155,7 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
             <div style={{display: "flex", justifyContent: "left"}}>
                 <div style={{display : "flex", alignItems : "center", columnGap: "20px"}}>
                     <img src="/icons/User_Friend.svg" alt="" className={styles.icon}/>
-                    <Typography variant="subtitle1" className={styles.title}>
+                    <Typography variant="subtitle1" className={styles.title} style={{fontSize: "32px", fontWeight: 700}}>
                         {roleId ? "Modifer" : "Créer"} un rôle
                     </Typography>
                 </div>
@@ -188,7 +190,7 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
                                         className={styles.option}
                                         key={perm._id}
                                     >
-                                        {perm.permission_label}
+                                        {(perm.permission_uuid.includes("admin") ? "(Admin) " : "") + perm.permission_label}
                                         <input 
                                             type="checkbox" 
                                             name="" 
@@ -214,10 +216,11 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
                                 if(selectedPerms.includes(perm._id)){
                                     return (
                                         <p 
+                                            key={perm._id}
                                             style={{backgroundColor: index%2 ? "#EAEAEA" : "white"}}
                                             className={styles.option}
                                         >
-                                            {perm.permission_label}
+                                            {(perm.permission_uuid.includes("admin") ? "(Admin) " : "") + perm.permission_label}
                                         </p>
                                     )
                                 }
@@ -226,10 +229,16 @@ export default function AddUpdateRole ({roleId} : {roleId? : string | string[] |
                     </div>
                 </div>
             </div>
-            <div style={{display: "flex", justifyContent: "right"}}>
+            <div style={{display: "flex", justifyContent: "space-between"}}>
+                <button 
+                    onClick={() => setAddUpdateRole(false)}
+                    className={styles.button}
+                    style={{background : "red"}}
+                ><X size={26} color="white"/> Annuler</button>
                 <button 
                     onClick={handleAddUpdateRole}
-                    className={styles.addButton}
+                    className={styles.button}
+                    style={{background : "#223A6A"}}
                 ><Check size={26} color="white"/> Valider</button>
             </div>
             <CustomSnackBar

@@ -1,23 +1,25 @@
 /*Author : Matthieu BIVILLE*/
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
-import styles from "./DeleteRole.module.css"
+import styles from "./ChangeUserStatus.module.css"
 
-export default function DeleteRole({
-    roleName,
-    openDeleteRole,
-    setOpenDeleteRole,
-    handleDeleteRole
+export default function ChangeUserStatus({
+    userName,
+    openChangeStatus,
+    setOpenChangeStatus,
+    handleChangeStatus,
+    action
 } : {
-    roleName? : string,
-    openDeleteRole : boolean,
-    setOpenDeleteRole : Function,
-    handleDeleteRole : any
+    userName? : string,
+    openChangeStatus : boolean,
+    setOpenChangeStatus : Function,
+    handleChangeStatus : any,
+    action : string
 }) {
     return(
         <Dialog 
-            open={openDeleteRole} 
-            onClose={() => {setOpenDeleteRole(false)}}
+            open={openChangeStatus} 
+            onClose={() => {setOpenChangeStatus(false)}}
             PaperProps={{
                 sx: {
                     width: "635px", 
@@ -32,19 +34,23 @@ export default function DeleteRole({
             }}
         >
             <DialogContent style={{textAlign: "center"}}>
-                <p className={styles.text}>Souhaitez-vous vraiment supprimer le rôle "{roleName}" ?</p>
+                <p className={styles.text}>
+                    Souhaitez-vous vraiment 
+                    {action === "activate" ? " activer " : (action === "deactivate" ? " désactiver " : " bannir ")} 
+                    l'utilisateur' "{userName}" ?
+                </p>
             </DialogContent>
             <DialogActions sx={{display: "flex", justifyContent: "space-between"}}>
-                <button 
-                    onClick={() => {setOpenDeleteRole(false)}}
+                <button
+                    onClick={() => {setOpenChangeStatus(false)}}
                     style={{backgroundColor: "#0698D6"}}
                     className={styles.button}
                 >Annuler</button>
                 <button
-                    onClick={handleDeleteRole}
+                    onClick={handleChangeStatus}
                     style={{backgroundColor: "#E02727"}}
                     className={styles.button}
-                >Supprimer le rôle</button>
+                >{action === "activate" ? " Activer " : (action === "deactivate" ? " Désactiver " : " Bannir ")}</button>
             </DialogActions>
         </Dialog>
     )

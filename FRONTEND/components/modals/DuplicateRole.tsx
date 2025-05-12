@@ -1,23 +1,23 @@
 /*Author : Matthieu BIVILLE*/
 
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
-import styles from "./DeleteRole.module.css"
+import styles from "./DuplicateRole.module.css"
 
-export default function DeleteRole({
+export default function DuplicateRole({
     roleName,
-    openDeleteRole,
-    setOpenDeleteRole,
-    handleDeleteRole
+    openDuplicateRole,
+    setOpenDuplicateRole,
+    handleDuplicateRole
 } : {
     roleName? : string,
-    openDeleteRole : boolean,
-    setOpenDeleteRole : Function,
-    handleDeleteRole : any
+    openDuplicateRole : boolean,
+    setOpenDuplicateRole : Function,
+    handleDuplicateRole : any
 }) {
     return(
         <Dialog 
-            open={openDeleteRole} 
-            onClose={() => {setOpenDeleteRole(false)}}
+            open={openDuplicateRole} 
+            onClose={() => {setOpenDuplicateRole(false)}}
             PaperProps={{
                 sx: {
                     width: "635px", 
@@ -32,19 +32,19 @@ export default function DeleteRole({
             }}
         >
             <DialogContent style={{textAlign: "center"}}>
-                <p className={styles.text}>Souhaitez-vous vraiment supprimer le rôle "{roleName}" ?</p>
+                <p className={styles.text}>Souhaitez-vous vraiment dupliquer le rôle "{roleName}" ?</p>
             </DialogContent>
             <DialogActions sx={{display: "flex", justifyContent: "space-between"}}>
                 <button 
-                    onClick={() => {setOpenDeleteRole(false)}}
+                    onClick={() => {setOpenDuplicateRole(false)}}
                     style={{backgroundColor: "#0698D6"}}
                     className={styles.button}
                 >Annuler</button>
                 <button
-                    onClick={handleDeleteRole}
+                    onClick={handleDuplicateRole}
                     style={{backgroundColor: "#E02727"}}
                     className={styles.button}
-                >Supprimer le rôle</button>
+                >Dupliquer le rôle</button>
             </DialogActions>
         </Dialog>
     )
