@@ -1,8 +1,8 @@
-import User from "../models/user.js";
-import crypto from "crypto";
-import { v4 as uuidv4 } from "uuid";
-import jwt from "jsonwebtoken";
-import SocketIdentificationService from "./SocketIdentification.js";
+import User from "../models/user.js"
+import crypto from "crypto"
+import { v4 as uuidv4 } from "uuid"
+import jwt from "jsonwebtoken"
+import SocketIdentificationService from "./SocketIdentification.js"
 
 class UsersService {
     controleur
@@ -29,72 +29,77 @@ class UsersService {
         "user_info_request"
     )
 
-  constructor(c, nom) {
-    this.controleur = c;
-    this.nomDInstance = nom;
-    if (this.controleur.verboseall || this.verbose)
-      console.log(
-        "INFO (" + this.nomDInstance + "):  s'enregistre aupres du controleur"
-      );
+    constructor(c, nom) {
+        this.controleur = c
+        this.nomDInstance = nom
+        if (this.controleur.verboseall || this.verbose)
+            console.log(
+                "INFO (" +
+                    this.nomDInstance +
+                    "):  s'enregistre aupres du controleur"
+            )
 
-    this.controleur.inscription(
-      this,
-      this.listeDesMessagesEmis,
-      this.listeDesMessagesRecus
-    );
-  }
-
-  createToken = (user) => {
-    return jwt.sign(
-      {
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email,
-        picture: user.picture,
-        userId: user._id,
-        desc: user.desc,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-  };
-
-  async traitementMessage(mesg) {
-    if (this.controleur.verboseall || this.verbose) {
-      console.log(
-        "INFO (" + this.nomDInstance + "): reçoit le message suivant à traiter"
-      );
-      console.log(mesg);
+        this.controleur.inscription(
+            this,
+            this.listeDesMessagesEmis,
+            this.listeDesMessagesRecus
+        )
     }
 
-    if (mesg.login_request) {
-      await this.handleLogin(mesg);
+    createToken = (user) => {
+        return jwt.sign(
+            {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                picture: user.picture,
+                userId: user._id,
+                desc: user.desc,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        )
     }
 
-    if (mesg.signup_request) {
-      await this.handleSignup(mesg);
-    }
+    async traitementMessage(mesg) {
+        if (this.controleur.verboseall || this.verbose) {
+            console.log(
+                "INFO (" +
+                    this.nomDInstance +
+                    "): reçoit le message suivant à traiter"
+            )
+            console.log(mesg)
+        }
 
-    if (mesg.users_list_request) {
-      await this.getUsersList(mesg);
-    }
+        if (mesg.login_request) {
+            await this.handleLogin(mesg)
+        }
+
+        if (mesg.signup_request) {
+            await this.handleSignup(mesg)
+        }
+
+        if (mesg.users_list_request) {
+            await this.getUsersList(mesg)
+        }
 
         if (mesg.user_info_request) {
             await this.getUserInfo(mesg)
         }
-        if (mesg.update_user_roles_request){
-
+        if (mesg.update_user_roles_request) {
             const user = await User.findOneAndUpdate(
                 { _id: mesg.update_user_roles_request.user_id },
                 {
-                    firstname : mesg.update_user_roles_request.firstname,
-                    lastname : mesg.update_user_roles_request.lastname,
-                    email : mesg.update_user_roles_request.email,
-                    phone : mesg.update_user_roles_request.phone,
-                    job : mesg.update_user_roles_request.job,
-                    desc : mesg.update_user_roles_request.desc,
-                    password : await this.sha256(mesg.update_user_roles_request.lastname),
-                    roles : mesg.update_user_roles_request.roles
+                    firstname: mesg.update_user_roles_request.firstname,
+                    lastname: mesg.update_user_roles_request.lastname,
+                    email: mesg.update_user_roles_request.email,
+                    phone: mesg.update_user_roles_request.phone,
+                    job: mesg.update_user_roles_request.job,
+                    desc: mesg.update_user_roles_request.desc,
+                    password: await this.sha256(
+                        mesg.update_user_roles_request.lastname
+                    ),
+                    roles: mesg.update_user_roles_request.roles,
                 },
                 { new: true }
             )
@@ -102,29 +107,30 @@ class UsersService {
 
             const message = {
                 update_user_roles_response: {
-                    userId : mesg.update_user_roles_request.user_id,
+                    userId: mesg.update_user_roles_request.user_id,
                 },
                 id: [mesg.id, user.socket_id],
             }
             this.controleur.envoie(this, message)
         }
-        if (mesg.user_perms_request){
-            const user = await User.findOne({ _id: mesg.user_perms_request.userId })
-            .populate({
+        if (mesg.user_perms_request) {
+            const user = await User.findOne({
+                _id: mesg.user_perms_request.userId,
+            }).populate({
                 path: "roles",
-                populate: { path: "role_permissions" }
-            });
+                populate: { path: "role_permissions" },
+            })
 
-            let perms = [];
+            let perms = []
 
             user.roles.map((role) => {
                 role.role_permissions.map((perm) => {
-                    if(!perms.includes(perm.permission_uuid)){
-                        perms.push(perm.permission_uuid);
+                    if (!perms.includes(perm.permission_uuid)) {
+                        perms.push(perm.permission_uuid)
                     }
                 })
             })
-            
+
             const message = {
                 user_perms_response: {
                     perms: perms,
@@ -133,19 +139,23 @@ class UsersService {
             }
             this.controleur.envoie(this, message)
         }
-        if(mesg.delete_role_request){
+        if (mesg.delete_role_request) {
             await User.updateMany(
-                {}, 
+                {},
                 { $pull: { roles: mesg.delete_role_request.role_id } }
-            );              
+            )
         }
-        if (mesg.update_user_status_request){
-            
-            const action = mesg.update_user_status_request.action;
-            const newStatus = action === "activate" ? "active" : (action === "deactivate" ? "deleted" : "banned");
+        if (mesg.update_user_status_request) {
+            const action = mesg.update_user_status_request.action
+            const newStatus =
+                action === "activate"
+                    ? "active"
+                    : action === "deactivate"
+                    ? "deleted"
+                    : "banned"
             const user = await User.findOneAndUpdate(
                 { _id: mesg.update_user_status_request.user_id },
-                { status : newStatus},
+                { status: newStatus },
                 { new: true }
             )
             if (!user) throw new Error("User not found")
@@ -153,7 +163,7 @@ class UsersService {
             const message = {
                 update_user_status_response: {
                     etat: true,
-                    action : action
+                    action: action,
                 },
                 id: [mesg.id],
             }
@@ -193,15 +203,14 @@ class UsersService {
                 this.controleur.envoie(this, message)
             }
         }
-    if (mesg.update_user_request) {
-      await this.updateUser(mesg);
-
+        if (mesg.update_user_request) {
+            await this.updateUser(mesg)
+        }
     }
-  }
 
-  async handleLogin(mesg) {
-    try {
-      const { email, password } = mesg.login_request;
+    async handleLogin(mesg) {
+        try {
+            const { email, password } = mesg.login_request
             const hashedPassword = await this.sha256(password)
             const user = await User.findOne({
                 email,
@@ -210,9 +219,9 @@ class UsersService {
             if (user) {
                 const token = jwt.sign(
                     {
-                        firstname,
-                        lastname,
-                        email,
+                        firstname: user.firstname,
+                        lastname: user.lastname,
+                        email: user.email,
                         picture: user.picture,
                         userId: user._id,
                     },
@@ -235,20 +244,19 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-  }
 
-  async handleSignup(mesg) {
-    try {
-      const { email, password, firstname, lastname, phone, job, desc } =
-        mesg.signup_request;
+    async handleSignup(mesg) {
+        try {
+            const { email, password, firstname, lastname, phone, job, desc } =
+                mesg.signup_request
 
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        throw new Error("User already exists");
-      }
+            const existingUser = await User.findOne({ email })
+            if (existingUser) {
+                throw new Error("User already exists")
+            }
 
-      const hashedPassword = await this.sha256(password);
-      
+            const hashedPassword = await this.sha256(password)
+
             const user = new User({
                 uuid: uuidv4(),
                 email,
@@ -282,7 +290,6 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-  }
 
     async getUsersList(mesg) {
         try {
@@ -296,12 +303,12 @@ class UsersService {
                 lastname: user.lastname,
                 email: user.email,
                 picture: user.picture,
-                status : user.status,
-                roles : user.roles,
-                online : user.is_online,
-                phone : user.phone,
-                job : user.job,
-                desc : user.desc,
+                status: user.status,
+                roles: user.roles,
+                online: user.is_online,
+                phone: user.phone,
+                job: user.job,
+                desc: user.desc,
             }))
             const message = {
                 users_list_response: {
@@ -310,9 +317,8 @@ class UsersService {
                 },
                 id: [mesg.id],
             }
-            console.log("on renvoie la response")
-        }
-        catch (error) {
+            this.controleur.envoie(this, message) // Fixed missing call to send the message
+        } catch (error) {
             const message = {
                 signup_response: {
                     etat: false,
@@ -323,55 +329,55 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-  }
 
-  async updateUser(mesg) {
-    try {
-      const socketId = mesg.id;
-      if (!socketId)
-        throw new Error("Sender socket id not available for update");
-      // Use all received fields as update (partial update)
-      const fieldsToUpdate = mesg.update_user_request;
-      // Retrieve user info based on socket id
-      const userInfo = await SocketIdentificationService.getUserInfoBySocketId(
-        socketId
-      );
-      if (!userInfo) throw new Error("User not found based on socket id");
-      // Update only the received fields
-      const user = await User.findOneAndUpdate(
-        { _id: userInfo._id },
-        fieldsToUpdate,
-        { new: true }
-      );
-      if (!user) throw new Error("User not found");
-      const newUserInfo = {
-        id: user._id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        picture: user.picture,
-        phone: user.phone,
-      };
-      const message = {
-        update_user_response: {
-          etat: true,
-          newUserInfo,
-        },
-        id: [mesg.id],
-      };
-      this.controleur.envoie(this, message);
-    } catch (error) {
-      const message = {
-        update_user_response: {
-          etat: false,
-          error: error.message,
-          newUserInfo: null,
-        },
-        id: [mesg.id],
-      };
-      this.controleur.envoie(this, message);
+    async updateUser(mesg) {
+        try {
+            const socketId = mesg.id
+            if (!socketId)
+                throw new Error("Sender socket id not available for update")
+            // Use all received fields as update (partial update)
+            const fieldsToUpdate = mesg.update_user_request
+            // Retrieve user info based on socket id
+            const userInfo =
+                await SocketIdentificationService.getUserInfoBySocketId(
+                    socketId
+                )
+            if (!userInfo) throw new Error("User not found based on socket id")
+            // Update only the received fields
+            const user = await User.findOneAndUpdate(
+                { _id: userInfo._id },
+                fieldsToUpdate,
+                { new: true }
+            )
+            if (!user) throw new Error("User not found")
+            const newUserInfo = {
+                id: user._id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                picture: user.picture,
+                phone: user.phone,
+            }
+            const message = {
+                update_user_response: {
+                    etat: true,
+                    newUserInfo,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        } catch (error) {
+            const message = {
+                update_user_response: {
+                    etat: false,
+                    error: error.message,
+                    newUserInfo: null,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
     }
-  }
 
     async getUserInfo(mesg) {
         try {
@@ -407,19 +413,18 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-  }
+}
 
-  sha256 = async (text) => {
+sha256 = async (text) => {
     // Encode le texte en un Uint8Array
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
+    const encoder = new TextEncoder()
+    const data = encoder.encode(text)
 
     // Utilise l'API SubtleCrypto pour générer le hash
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashBuffer = crypto.createHash("sha256").update(data).digest()
 
     // Convertit le buffer en une chaîne hexadécimale
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  };
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
 }
-export default UsersService;
+export default UsersService
