@@ -31,12 +31,14 @@ export default function DiscussionPage() {
         "messages_get_request",
         "users_search_request",
         "message_send_request",
+        "discuss_remove_member_request",
     ]
     const listeMessageRecus = [
         "discuss_list_response",
         "messages_get_response",
         "users_search_response",
         "message_send_response",
+        "discuss_remove_member_response",
     ]
 
     const handler = {
@@ -196,9 +198,63 @@ export default function DiscussionPage() {
         }
     }
 
+// Fonction améliorée dans FRONTEND/app/discussion/page.tsx
+
+const handleRemoveDiscussion = (discussionId: string) => {
+    if (!currentUser) return;
+    
+    // Vérifions d'abord si la discussion existe
+    const discussionToRemove = discussions.find(d => d.discussion_uuid === discussionId);
+    if (!discussionToRemove) return;
+    
+    // Préparer le message pour le backend
+    if (controleur && currentUser) {
+        // Envoi de la demande au serveur avant de modifier l'interface
+        const message = {
+            discuss_remove_member_request: [
+                currentUser.id, // userId
+                discussionId    // discussionId
+            ]
+        };
+        
+        controleur.envoie(handler, message);
+        
+        // Mettre à jour l'interface utilisateur après l'envoi
+        setDiscussions((prev) =>
+            prev.filter((d) => d.discussion_uuid !== discussionId)
+        );
+        
+        // Si la discussion supprimée est celle actuellement sélectionnée
+        if (selectedDiscussion === discussionId) {
+            setSelectedDiscussion(null);
+            setMessages([]);
+        }
+        
+        // Fermer la fenêtre de création si elle est ouverte
+        setShowCreateDiscussion(false);
+        
+        // Afficher une notification de succès (optionnel)
+        setError(""); // Effacer les erreurs précédentes
+        
+        // Vous pourriez ajouter ici une notification temporaire
+        const successElement = document.createElement('div');
+        successElement.className = 'success-notification';
+        successElement.textContent = 'Vous avez quitté la conversation';
+        document.body.appendChild(successElement);
+        
+        // Supprimer la notification après quelques secondes
+        setTimeout(() => {
+            if (document.body.contains(successElement)) {
+                document.body.removeChild(successElement);
+            }
+        }, 3000);
+    }
+}
+
     const toggleCreateDiscussion = () => {
         setShowCreateDiscussion(!showCreateDiscussion)
     }
+
 
     if (!currentUser) {
         return <div>Chargement...</div>
@@ -215,6 +271,7 @@ export default function DiscussionPage() {
                     onSelectDiscussion={handleSelectDiscussion}
                     selectedDiscussionId={selectedDiscussion}
                     onNewDiscussClick={toggleCreateDiscussion}
+                    removeDiscussion={handleRemoveDiscussion}
                 />
             </div>
             <div
