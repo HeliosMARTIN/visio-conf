@@ -43,7 +43,7 @@ export default function ChannelView({
         "channel_posts_request",
         "channel_members_request",
         "channel_post_create_request",
-        "post_response_create_request",
+        "channel_post_response_create_request",
     ]
     const listeMessageRecus = [
         "channel_posts_response",
@@ -68,7 +68,13 @@ export default function ChannelView({
 
             if (msg.channel_posts_response) {
                 if (msg.channel_posts_response.etat) {
-                    setPosts(msg.channel_posts_response.posts || [])
+                    setPosts(
+                        (msg.channel_posts_response.posts || []).sort(
+                            (a: any, b: any) =>
+                                new Date(a.createdAt).getTime() -
+                                new Date(b.createdAt).getTime()
+                        )
+                    )
                 } else {
                     console.error(
                         "Erreur lors de la récupération des posts:",
@@ -211,7 +217,7 @@ export default function ChannelView({
         if (!content.trim() || !userId) return
 
         const responseRequest = {
-            post_response_create_request: {
+            channel_post_response_create_request: {
                 postId,
                 content,
             },
