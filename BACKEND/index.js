@@ -16,7 +16,6 @@ import RolesService from "./services/Roles.js"
 import PermsService from "./services/Perms.js"
 import SocketIdentificationService from "./services/SocketIdentification.js"
 import FileService from "./services/FileService.js"
-import ThumbnailService from "./services/ThumbnailService.js"
 
 dotenv.config()
 
@@ -66,7 +65,6 @@ const permsService = new PermsService(controleur, "PermsService")
 const canalsocketio = new CanalSocketio(io, controleur, "canalsocketio")
 const awsS3Service = new AwsS3Service(controleur, "AwsS3Service")
 const fileService = new FileService(controleur, "FileService")
-const thumbnailService = new ThumbnailService(controleur, "FileService")
 
 main().catch((err) => console.error("Error during startup:", err))
 

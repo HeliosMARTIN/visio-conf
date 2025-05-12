@@ -64,11 +64,6 @@ const FileSchema = new Schema({
         },
         description: "Path to the file in storage",
     },
-    thumbnail: {
-        type: String,
-        required: false,
-        description: "Path to thumbnail for image files",
-    },
     deleted: {
         type: Boolean,
         required: true,
@@ -103,7 +98,6 @@ FileSchema.virtual("info").get(function () {
         shared: this.shared,
         sharedWith: this.sharedWith,
         path: this.path,
-        thumbnail: this.thumbnail,
     }
 })
 

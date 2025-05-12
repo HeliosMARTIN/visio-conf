@@ -84,30 +84,32 @@ class UsersService {
   async handleLogin(mesg) {
     try {
       const { email, password } = mesg.login_request;
-
-      const hashedPassword = await this.sha256(password);
-      const user = await User.findOne({
-        email,
-        password: hashedPassword,
-      });
-      if (user) {
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-          expiresIn: "1d",
-        });
-        const message = {
-          login_response: { etat: true, token },
-          id: [mesg.id],
-        };
-        this.controleur.envoie(this, message);
-      } else {
-        throw new Error("Invalid credentials");
-      }
-    } catch (error) {
-      const message = {
-        login_response: { etat: false, error: error.message },
-        id: [mesg.id],
-      };
-      this.controleur.envoie(this, message);
+            const hashedPassword = await this.sha256(password)
+            const user = await User.findOne({
+                email,
+                password: hashedPassword,
+            })
+            if (user) {
+                const token = jwt.sign(
+                    { userId: user._id },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "7d" }
+                )
+                const message = {
+                    login_response: { etat: true, token },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } else {
+                throw new Error("Invalid credentials")
+            }
+        } catch (error) {
+            const message = {
+                login_response: { etat: false, error: error.message },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
     }
   }
 
@@ -122,36 +124,39 @@ class UsersService {
       }
 
       const hashedPassword = await this.sha256(password);
-
-      const user = new User({
-        uuid: uuidv4(),
-        email,
-        password: hashedPassword,
-        firstname,
-        lastname,
-        phone,
-        job,
-        desc,
-        picture: "default_profile_picture.png",
-      });
-      await user.save();
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-      });
-      const message = {
-        signup_response: { etat: true, token },
-        id: [mesg.id],
-      };
-      this.controleur.envoie(this, message);
-    } catch (error) {
-      const message = {
-        signup_response: {
-          etat: false,
-          error: error.message,
-        },
-        id: [mesg.id],
-      };
-      this.controleur.envoie(this, message);
+      
+            const user = new User({
+                uuid: uuidv4(),
+                email,
+                password: hashedPassword,
+                firstname,
+                lastname,
+                phone,
+                job,
+                desc,
+                picture: "default_profile_picture.png",
+            })
+            await user.save()
+            const token = jwt.sign(
+                { userId: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: "7d" }
+            )
+            const message = {
+                signup_response: { etat: true, token },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        } catch (error) {
+            const message = {
+                signup_response: {
+                    etat: false,
+                    error: error.message,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
     }
   }
 

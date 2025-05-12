@@ -66,7 +66,7 @@ export const ListeMessagesRecus = [
     "perms_list_response", // { perms?: Permission[]}
     //---- FILES ----
     "files_list_response", // { etat: boolean, files?: File[], error?: string }
-    "file_upload_response", // { etat: boolean, error?: string, fileId?: string, fileName?: string, signedUrl?: string }
+    "file_upload_response", // { etat: boolean, error?: string, signedUrl?: string }
     "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
     "file_rename_response", // { etat: boolean, fileId?: string, newName?: string, error?: string }
     "file_move_response", // { etat: boolean, fileId?: string, newParentId?: string, error?: string }
