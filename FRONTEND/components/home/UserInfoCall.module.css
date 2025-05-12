@@ -102,3 +102,41 @@
     margin-top: 8px;
   }
 }
+
+.messagePreview {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+.messagePreview p {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.messageTime {
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+.pendingBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 50%;
+  min-width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 0 4px;
+  margin-left: auto;
+}

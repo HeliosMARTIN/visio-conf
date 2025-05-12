@@ -1,11 +1,11 @@
 .create-discussion {
-    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
   }
   
   .search-users {
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 10px;
