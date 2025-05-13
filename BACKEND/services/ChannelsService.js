@@ -22,9 +22,6 @@ class ChannelsService {
         "channel_post_create_response",
         "channel_post_responses_response",
         "channel_post_response_create_response",
-        // Nouveaux messages pour les diffusions en temps réel
-        "new_channel_post",
-        "new_post_response",
     ]
     listeDesMessagesRecus = [
         "channels_list_request",
@@ -965,16 +962,6 @@ class ChannelsService {
                 id: [mesg.id],
             }
             this.controleur.envoie(this, responseMessage)
-
-            // Diffusion à tous les clients
-            const broadcastMessage = {
-                new_channel_post: {
-                    etat: true,
-                    channelId,
-                    post: newPost,
-                },
-            }
-            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_create_response: {
@@ -1153,17 +1140,6 @@ class ChannelsService {
                 id: [mesg.id],
             }
             this.controleur.envoie(this, responseMessage)
-
-            // Diffusion à tous les clients
-            const broadcastMessage = {
-                new_post_response: {
-                    etat: true,
-                    channelId: post.channelId,
-                    postId,
-                    response: newResponse,
-                },
-            }
-            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_response_create_response: {
