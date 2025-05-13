@@ -24,7 +24,6 @@ export default function FileExplorerContainer() {
         "file_move_request",
         "file_share_request",
         "folder_create_request",
-        "file_download_request",
     ]
 
     const listeMessageRecus = [
@@ -36,7 +35,6 @@ export default function FileExplorerContainer() {
         "file_move_response",
         "file_share_response",
         "folder_create_response",
-        "file_download_response",
     ]
 
     const [files, setFiles] = useState<FileItem[]>([])
@@ -169,27 +167,6 @@ export default function FileExplorerContainer() {
                     setError(
                         "Échec de la création du dossier: " +
                             msg.folder_create_response.error
-                    )
-                }
-            }
-
-            // Handle file download response
-            if (msg.file_download_response) {
-                setIsLoading(false)
-                if (
-                    msg.file_download_response.etat &&
-                    msg.file_download_response.downloadUrl
-                ) {
-                    // Open the download URL in a new tab
-                    window.open(
-                        msg.file_download_response.downloadUrl,
-                        "_blank"
-                    )
-                } else {
-                    setError(
-                        "Échec du téléchargement: " +
-                            (msg.file_download_response.error ||
-                                "Erreur inconnue")
                     )
                 }
             }

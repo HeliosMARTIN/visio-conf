@@ -40,9 +40,33 @@ export const ListeMessagesEmis = [
     "file_delete_request", // { fileId: string }
     "file_rename_request", // { fileId: string, newName: string }
     "file_move_request", // { fileId: string, newParentId: string }
-    "file_share_request", // { fileId: string, isPublic: boolean, userIds?: string[] }
+    "file_share_request", // { fileId: string, teamId?: string }
     "folder_create_request", // { name: string, parentId?: string }
-    "file_download_request", // { fileId: string }=
+    //---- CHANNELS ----
+    "channels_list_request", // { teamId?: string }
+    "channel_create_request", // { name: string, teamId: string, isPublic: boolean, members?: string[] }
+    "channel_update_request", // { id: string, name?: string, isPublic?: boolean }
+    "channel_delete_request", // { channelId: string }
+    "channel_join_request", // { channelId: string }
+    "channel_leave_request", // { channelId: string }
+    "channel_members_request", // { channelId: string }
+    "channel_add_member_request", // { channelId: string, userId: string }
+    "channel_remove_member_request", // { channelId: string, userId: string }
+    "channel_posts_request", // { channelId: string }
+    "channel_post_create_request", // { channelId: string, content: string }
+    "channel_post_responses_request", // { postId: string }
+    "channel_post_response_create_request", // { postId: string, content: string }
+    //---- TEAMS ----
+    "teams_list_request", // No data
+    "team_create_request", // { name: string, description?: string }
+    "team_update_request", // { teamId: string, name?: string, description?: string }
+    "team_delete_request", // { teamId: string }
+    "team_join_request", // { teamId: string }
+    "team_leave_request", // { teamId: string }
+    "team_members_request", // { teamId: string }
+    "team_add_member_request", // { teamId: string, userId: string }
+    "team_remove_member_request", // { teamId: string, userId: string }
+    "team_channels_request", // { teamId: string }
 ]
 
 /**
@@ -78,7 +102,7 @@ export const ListeMessagesRecus = [
     "updated_role", //{ state : boolean}
     "deleted_role", // {state : boolean}
     //---- PERMISSIONS ----=
-    "perms_list_response", // { perms?: Permission[]} 
+    "perms_list_response", // { perms?: Permission[]}
     "user_perms_response", // { perms : Permission[]}
     "update_perm_response", // { state : boolean }
     "add_perm_response", // {message : string }=
@@ -86,9 +110,33 @@ export const ListeMessagesRecus = [
     "files_list_response", // { etat: boolean, files?: File[], error?: string }
     "file_upload_response", // { etat: boolean, error?: string, signedUrl?: string }
     "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
-    "file_rename_response", // { etat: boolean, fileId?: string, newName?: string, error?: string }
-    "file_move_response", // { etat: boolean, fileId?: string, newParentId?: string, error?: string }
+    "file_rename_response", // { etat: boolean, error?: string }
+    "file_move_response", // { etat: boolean,  error?: string }
     "file_share_response", // { etat: boolean, fileId?: string, error?: string }
-    "folder_create_response", // { etat: boolean, folderId?: string, folderName?: string, error?: string }
-    "file_download_response", // { etat: boolean, fileId?: string, downloadUrl?: string, error?: string }=
+    "folder_create_response", // { etat: boolean, error?: string }
+    //---- CHANNELS ----
+    "channels_list_response", // { etat: boolean, channels?: Channel[], error?: string }
+    "channel_create_response", // { etat: boolean, channel?: Channel, error?: string }
+    "channel_update_response", // { etat: boolean, channel?: Channel, error?: string }
+    "channel_delete_response", // { etat: boolean, channelId?: string, error?: string }
+    "channel_join_response", // { etat: boolean, channelId?: string, member?: ChannelMember, error?: string }
+    "channel_leave_response", // { etat: boolean, channelId?: string, error?: string }
+    "channel_members_response", // { etat: boolean, channelId?: string, members?: ChannelMember[], error?: string }
+    "channel_add_member_response", // { etat: boolean, channelId?: string, member?: ChannelMember, error?: string }
+    "channel_remove_member_response", // { etat: boolean, channelId?: string, userId?: string, error?: string }
+    "channel_posts_response", // { etat: boolean, channelId?: string, posts?: ChannelPost[], error?: string }
+    "channel_post_create_response", // { etat: boolean, post?: ChannelPost, error?: string }
+    "channel_post_responses_response", // { etat: boolean, postId?: string, responses?: ChannelPostResponse[], error?: string }
+    "channel_post_response_create_response", // { etat: boolean, postId?: string, response?: ChannelPostResponse, error?: string }
+    //---- TEAMS ----
+    "teams_list_response", // { etat: boolean, teams?: Team[], error?: string }
+    "team_create_response", // { etat: boolean, team?: Team, error?: string }
+    "team_update_response", // { etat: boolean, team?: Team, error?: string }
+    "team_delete_response", // { etat: boolean, teamId?: string, error?: string }
+    "team_join_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
+    "team_leave_response", // { etat: boolean, teamId?: string, error?: string }
+    "team_members_response", // { etat: boolean, teamId?: string, members?: TeamMember[], error?: string }
+    "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
+    "team_remove_member_response", // { etat: boolean, teamId?: string, userId?: string, error?: string }
+    "team_channels_response", // { etat: boolean, teamId?: string, channels?: Channel[], error?: string }
 ]
