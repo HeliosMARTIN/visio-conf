@@ -58,7 +58,8 @@ export default function PostResponseItem({
                         {response.authorAvatar ? (
                             <img
                                 src={
-                                    response.authorAvatar || "/placeholder.svg"
+                                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${response.authorAvatar}` ||
+                                    "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                 }
                                 alt={response.authorName}
                             />

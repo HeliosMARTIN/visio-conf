@@ -49,13 +49,22 @@ export default function ChannelView({
         "channel_posts_response",
         "channel_members_response",
         "channel_post_create_response",
-        "post_response_create_response",
-        "new_channel_post",
-        "new_post_response",
+        "channel_post_response_create_response",
     ]
 
     // Assurons-nous que nous utilisons l'ID correct
     const channelId = channel.id
+
+    // Ajout de la fonction utilitaire pour trier par createdAt (ordre décroissant)
+    function sortByCreatedAtAsc<T extends { createdAt: string | Date }>(
+        arr: T[]
+    ): T[] {
+        return [...arr].sort(
+            (a, b) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+        )
+    }
 
     const handler = {
         nomDInstance,
@@ -69,10 +78,8 @@ export default function ChannelView({
             if (msg.channel_posts_response) {
                 if (msg.channel_posts_response.etat) {
                     setPosts(
-                        (msg.channel_posts_response.posts || []).sort(
-                            (a: any, b: any) =>
-                                new Date(a.createdAt).getTime() -
-                                new Date(b.createdAt).getTime()
+                        sortByCreatedAtAsc(
+                            msg.channel_posts_response.posts || []
                         )
                     )
                 } else {
@@ -97,81 +104,44 @@ export default function ChannelView({
 
             if (msg.channel_post_create_response) {
                 if (msg.channel_post_create_response.etat) {
+                    const { post } = msg.channel_post_create_response
+                    setPosts((prevPosts) =>
+                        sortByCreatedAtAsc([post, ...prevPosts])
+                    )
                     setNewPostContent("")
-                    // Le nouveau post sera ajouté via new_channel_post
-                }
-            }
-
-            if (msg.new_channel_post) {
-                if (
-                    msg.new_channel_post.etat &&
-                    msg.new_channel_post.channelId === channelId
-                ) {
-                    const newPost = {
-                        ...msg.new_channel_post.post,
-                        responses: [],
-                    }
-                    setPosts((prevPosts) => [newPost, ...prevPosts])
-                    setTimeout(() => {
-                        messagesEndRef.current?.scrollIntoView({
+                    if (messagesEndRef.current) {
+                        messagesEndRef.current.scrollIntoView({
                             behavior: "smooth",
                         })
-                    }, 100)
-                }
-            }
-
-            if (msg.post_response_create_response) {
-                if (msg.post_response_create_response.etat) {
-                    // La nouvelle réponse sera ajoutée via new_post_response
-                }
-            }
-
-            if (msg.new_post_response) {
-                if (
-                    msg.new_post_response.etat &&
-                    msg.new_post_response.channelId === channelId
-                ) {
-                    const postId = msg.new_post_response.postId
-                    const newResponse = msg.new_post_response.response
-
-                    setPosts((prevPosts) =>
-                        prevPosts.map((post) =>
-                            post.id === postId
-                                ? {
-                                      ...post,
-                                      responses: [
-                                          ...(post.responses || []),
-                                          newResponse,
-                                      ],
-                                      responseCount:
-                                          (post.responseCount || 0) + 1,
-                                  }
-                                : post
-                        )
-                    )
-
-                    // Si les réponses sont déjà affichées, faire défiler vers le bas
-                    if (expandedPosts[postId]) {
-                        setTimeout(() => {
-                            const responseElement = document.getElementById(
-                                `response-${newResponse.id}`
-                            )
-                            responseElement?.scrollIntoView({
-                                behavior: "smooth",
-                            })
-                        }, 100)
                     }
+                }
+            }
+
+            if (msg.channel_post_response_create_response) {
+                if (msg.channel_post_response_create_response.etat) {
+                    const { postId, response } =
+                        msg.channel_post_response_create_response
+                    setPosts((prevPosts) =>
+                        prevPosts.map((post) => {
+                            if (post.id === postId) {
+                                return {
+                                    ...post,
+                                    responses: sortByCreatedAtAsc([
+                                        ...(post.responses || []),
+                                        response,
+                                    ]),
+                                }
+                            }
+                            return post
+                        })
+                    )
                 }
             }
         },
     }
 
     useEffect(() => {
-        console.log("hereee use effect", channelId)
-
         if (controleur && canal && channelId) {
-            console.log("hereeee channel view")
-
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
 
             // Récupérer les membres du canal
@@ -200,6 +170,13 @@ export default function ChannelView({
             inputRef.current.focus()
         }
     }, [])
+
+    // Scroll automatiquement vers le bas quand les posts changent
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+        }
+    }, [posts])
 
     const handleSubmitPost = () => {
         if (!newPostContent.trim() || !userId) return
@@ -296,8 +273,8 @@ export default function ChannelView({
                                     {member.picture ? (
                                         <img
                                             src={
-                                                member.picture ||
-                                                "/placeholder.svg"
+                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                             }
                                             alt={`${member.firstname} ${member.lastname}`}
                                         />

@@ -10,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react" // Import des icônes
 import Cookies from "js-cookie"
 
 export default function SignupForm() {
-    const { controleur, currentUser, setCurrentUser } = useAppContext()
+    const { controleur, currentUser } = useAppContext()
     const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
@@ -39,7 +39,7 @@ export default function SignupForm() {
                     const token = msg.signup_response.token
                     if (token) {
                         Cookies.set("token", token, {
-                            secure: true,
+                            secure: false,
                             sameSite: "strict",
                             expires: 7, // 7 days
                         }) // Use cookies

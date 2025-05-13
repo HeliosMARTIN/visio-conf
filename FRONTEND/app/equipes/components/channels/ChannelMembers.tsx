@@ -72,10 +72,10 @@ export default function ChannelMembers({
                                 >
                                     <img
                                         src={
-                                            member.picture || "/placeholder.svg"
+                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                         }
-                                        alt={member.firstname}
-                                        className={styles.memberAvatar}
+                                        alt={`${member.firstname} ${member.lastname}`}
                                     />
                                     <div className={styles.memberInfo}>
                                         <span className={styles.memberName}>

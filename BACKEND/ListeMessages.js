@@ -54,8 +54,7 @@ export const ListeMessagesEmis = [
     "channel_remove_member_request", // { channelId: string, userId: string }
     "channel_posts_request", // { channelId: string }
     "channel_post_create_request", // { channelId: string, content: string }
-    "channel_post_responses_request", // { postId: string }
-    "channel_post_response_create_request", // { postId: string, content: string }
+    "channel_post_response_create_request", // { etat: boolean, postId: string, content: string }
     //---- TEAMS ----
     "teams_list_request", // No data
     "team_create_request", // { name: string, description?: string }
@@ -126,7 +125,6 @@ export const ListeMessagesRecus = [
     "channel_remove_member_response", // { etat: boolean, channelId?: string, userId?: string, error?: string }
     "channel_posts_response", // { etat: boolean, channelId?: string, posts?: ChannelPost[], error?: string }
     "channel_post_create_response", // { etat: boolean, post?: ChannelPost, error?: string }
-    "channel_post_responses_response", // { etat: boolean, postId?: string, responses?: ChannelPostResponse[], error?: string }
     "channel_post_response_create_response", // { etat: boolean, postId?: string, response?: ChannelPostResponse, error?: string }
     //---- TEAMS ----
     "teams_list_response", // { etat: boolean, teams?: Team[], error?: string }
