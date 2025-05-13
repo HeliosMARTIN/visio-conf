@@ -170,39 +170,6 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
 
-        if (mesg.user_info_request) {
-            try {
-                const { userId } = mesg.user_info_request
-                const user = await User.findById(
-                    userId,
-                    "firstname lastname email picture phone"
-                )
-
-                if (user) {
-                    const userInfo = {
-                        id: user._id,
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email,
-                        picture: user.picture,
-                        phone: user.phone,
-                    }
-                    const message = {
-                        user_info_response: { etat: true, userInfo },
-                        id: [mesg.id],
-                    }
-                    this.controleur.envoie(this, message)
-                } else {
-                    throw new Error("User not found")
-                }
-            } catch (error) {
-                const message = {
-                    user_info_response: { etat: false, error: error.message },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
-        }
         if (mesg.update_user_request) {
             await this.updateUser(mesg)
         }
@@ -385,7 +352,7 @@ class UsersService {
             const user = await User.findById(
                 userId,
                 "firstname lastname email picture phone roles"
-            ).populate("roles", "name") // Populate the roles to get their names
+            ).populate("roles", "role_label") // Populate the roles to get their names
 
             if (user) {
                 const userInfo = {
@@ -395,7 +362,7 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
-                    roles: user.roles.map((role) => role.name), // Extract role names
+                    roles: user.roles.map((role) => role.role_label),
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },
