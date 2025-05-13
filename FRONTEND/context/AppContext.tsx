@@ -11,6 +11,8 @@ import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
 import { User } from "@/types/User"
 import jwt from "jsonwebtoken"
+import Cookies from "js-cookie"
+
 interface AppContextType {
     controleur: Controleur
     canal: CanalSocketio
@@ -84,7 +86,7 @@ export const AppContextProvider = ({
 
     useEffect(() => {
         if (
-            !localStorage.getItem("token") &&
+            !Cookies.get("token") &&
             pathname !== "/login" &&
             pathname !== "/signup"
         ) {
@@ -93,9 +95,15 @@ export const AppContextProvider = ({
         }
     }, [currentUser, pathname])
 
+    const hasAuthenticatedRef = useRef(false)
+
     useEffect(() => {
-        if (!currentUser && localStorage.getItem("token")) {
-            const token = localStorage.getItem("token")
+        if (
+            !currentUser &&
+            Cookies.get("token") &&
+            !hasAuthenticatedRef.current
+        ) {
+            const token = Cookies.get("token")
             if (token) {
                 const { userId } = jwt.decode(token) as any
                 const waitForCanalInit = () =>
@@ -115,10 +123,11 @@ export const AppContextProvider = ({
                         user_info_request: { userId },
                     })
                     canalRef.current?.socket.emit("authenticate", token)
+                    hasAuthenticatedRef.current = true
                 })
             }
         }
-    }, [currentUser, pathname])
+    }, [currentUser])
 
     return (
         <AppContext.Provider

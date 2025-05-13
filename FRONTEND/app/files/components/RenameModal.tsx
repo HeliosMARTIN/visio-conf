@@ -35,7 +35,7 @@ export default function RenameModal({
         e.preventDefault()
 
         if (!newName.trim()) {
-            setError("Name cannot be empty")
+            setError("Le nom ne peut pas être vide")
             return
         }
 
@@ -63,7 +63,10 @@ export default function RenameModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.modalHeader}>
-                    <h3>Rename {file.type === "folder" ? "Folder" : "File"}</h3>
+                    <h3>
+                        Renommer{" "}
+                        {file.type === "folder" ? "Dossier" : "Fichier"}
+                    </h3>
                     <button
                         className={styles.closeButton}
                         onClick={onCloseModal}
@@ -75,7 +78,7 @@ export default function RenameModal({
                 <form onSubmit={handleSubmit}>
                     <div className={styles.modalBody}>
                         <div className={styles.formGroup}>
-                            <label htmlFor="newName">New Name</label>
+                            <label htmlFor="newName">Nouveau Nom</label>
                             <div className={styles.inputGroup}>
                                 <input
                                     type="text"
@@ -106,10 +109,10 @@ export default function RenameModal({
                             className={styles.cancelButton}
                             onClick={onCloseModal}
                         >
-                            Cancel
+                            Annuler
                         </button>
                         <button type="submit" className={styles.confirmButton}>
-                            Rename
+                            Renommer
                         </button>
                     </div>
                 </form>
