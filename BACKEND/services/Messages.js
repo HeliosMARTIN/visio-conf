@@ -93,26 +93,61 @@ class MessagesService {
           message_date_create,
         } = mesg.message_send_request;
 
+        console.log("Message send request reçu:", {
+          userEmail,
+          otherUserEmail,
+          discussion_uuid,
+          message_content
+        });
+
         let members = [];
         let socketIds = [];
 
         // Cas d'une nouvelle discussion
         if (otherUserEmail) {
           const discussionEmails = [userEmail, ...otherUserEmail];
+          console.log("Recherche des utilisateurs avec les emails:", discussionEmails);
 
           // Récupère tous les utilisateurs en une seule requête
           const users = await User.find({ email: { $in: discussionEmails } });
-          members = users.map((user) => user._id);
-          socketIds = users.map((user) => user.socket_id);
+          console.log("Résultat de la recherche d'utilisateurs:", users);
 
+          // Vérifier que la requête retourne bien quelque chose
+          if (!users || users.length === 0) {
+            // Essayons de trouver les utilisateurs un par un pour voir lesquels posent problème
+            console.log("Aucun utilisateur trouvé, recherche individuelle...");
+            for (const email of discussionEmails) {
+              const user = await User.findOne({ email });
+              console.log(`Recherche pour email ${email}:`, user);
+            }
+            throw new Error("Aucun utilisateur trouvé avec les emails fournis");
+          }
+
+          console.log("Utilisateurs trouvés:", users);
+          console.log("Emails de discussion:", discussionEmails);
+                    
+          // Vérifier que tous les utilisateurs ont été trouvés
+          if (users.length !== discussionEmails.length) {
+            throw new Error("Certains utilisateurs n'ont pas été trouvés");
+          }
+
+          // Trouver l'expéditeur
+          const sender = users.find((u) => u.email === userEmail);
+          if (!sender) {
+            throw new Error("L'expéditeur n'a pas été trouvé");
+          }
+          members = users.map((user) => user._id);
+            socketIds = users.map((user) => user.socket_id).filter(id => id);
+
+          // Utiliser l'ID de l'expéditeur comme discussion_creator
           const newDiscussion = {
             discussion_uuid: discussion_uuid,
-            discussion_creator: discussion_creator,
+            discussion_creator: sender._id, // Utiliser l'ID au lieu de l'email
             discussion_members: members,
             discussion_messages: [
               {
                 message_uuid: message_uuid,
-                message_sender: users.find((u) => u.email === userEmail)._id,
+                message_sender: sender._id,
                 message_content: message_content,
                 message_date_create: message_date_create || new Date(),
               },
