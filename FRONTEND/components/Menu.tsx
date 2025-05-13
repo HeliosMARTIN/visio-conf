@@ -97,18 +97,22 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                 Annuaire
               </span>
             </Link>
-            <Link href="/admin" className={styles.menuItem}>
-              <div className={styles.menuIcon}>
-                <UserRoundCog />
-              </div>
-              <span
-                className={`${styles.menuItemText} ${
-                  collapsed ? styles.hidden : ""
-                }`}
-              >
-                Admin
-              </span>
-            </Link>
+            {currentUser?.roles &&
+              Array.isArray(currentUser.roles) &&
+              currentUser.roles.includes("Administrateur") && (
+                <Link href="/admin" className={styles.menuItem}>
+                  <div className={styles.menuIcon}>
+                    <UserRoundCog />
+                  </div>
+                  <span
+                    className={`${styles.menuItemText} ${
+                      collapsed ? styles.hidden : ""
+                    }`}
+                  >
+                    Admin
+                  </span>
+                </Link>
+              )}
           </nav>
 
           <div className={styles.profileContainer}>
