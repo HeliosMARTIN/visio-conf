@@ -20,7 +20,6 @@ class ChannelsService {
         "channel_remove_member_response",
         "channel_posts_response",
         "channel_post_create_response",
-        "channel_post_responses_response",
         "channel_post_response_create_response",
     ]
     listeDesMessagesRecus = [
@@ -35,7 +34,6 @@ class ChannelsService {
         "channel_remove_member_request",
         "channel_posts_request",
         "channel_post_create_request",
-        "channel_post_responses_request",
         "channel_post_response_create_request",
     ]
 
@@ -109,10 +107,6 @@ class ChannelsService {
 
         if (mesg.channel_post_create_request) {
             await this.handleChannelPostCreate(mesg)
-        }
-
-        if (mesg.channel_post_responses_request) {
-            await this.handleChannelPostResponses(mesg)
         }
 
         if (mesg.channel_post_response_create_request) {
@@ -968,87 +962,6 @@ class ChannelsService {
                     etat: false,
                     error: error.message,
                     channelId: mesg.channel_post_create_request?.channelId,
-                },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-    }
-
-    async handleChannelPostResponses(mesg) {
-        try {
-            const { postId } = mesg.channel_post_responses_request
-
-            // Get user info from socket ID
-            const socketId = mesg.id
-            const userInfo =
-                await SocketIdentificationService.getUserInfoBySocketId(
-                    socketId
-                )
-
-            if (!userInfo) {
-                throw new Error("Utilisateur non authentifié")
-            }
-
-            // Check if post exists
-            const post = await ChannelPost.findById(postId)
-
-            if (!post) {
-                throw new Error("Message non trouvé")
-            }
-
-            // Check if channel exists
-            const channel = await Channel.findById(post.channelId)
-
-            if (!channel) {
-                throw new Error("Canal non trouvé")
-            }
-
-            // If channel is private, check if user is a member
-            if (!channel.isPublic) {
-                const isMember = await ChannelMember.findOne({
-                    channelId: post.channelId,
-                    userId: userInfo._id,
-                })
-
-                if (!isMember) {
-                    throw new Error("Vous n'avez pas accès à ce canal")
-                }
-            }
-
-            // Get all responses for the post
-            const responses = await ChannelPostResponse.find({ postId })
-                .sort({ createdAt: 1 })
-                .populate("authorId", "firstname lastname picture")
-
-            const formattedResponses = responses.map((response) => ({
-                _id: response._id,
-                id: response._id,
-                postId: response.postId,
-                content: response.content,
-                authorId: response.authorId._id,
-                authorName: `${response.authorId.firstname} ${response.authorId.lastname}`,
-                authorAvatar: response.authorId.picture,
-                createdAt: response.createdAt,
-                updatedAt: response.updatedAt,
-            }))
-
-            const message = {
-                channel_post_responses_response: {
-                    etat: true,
-                    postId,
-                    responses: formattedResponses,
-                },
-                id: [mesg.id],
-            }
-
-            this.controleur.envoie(this, message)
-        } catch (error) {
-            const message = {
-                channel_post_responses_response: {
-                    etat: false,
-                    error: error.message,
-                    postId: mesg.channel_post_responses_request?.postId,
                 },
                 id: [mesg.id],
             }
