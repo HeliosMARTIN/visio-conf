@@ -12,16 +12,8 @@ class AwsS3Service {
         this.controleur = controleur
         this.nomDInstance = nom
         this.verbose = false
-        this.listeDesMessagesEmis = [
-            "upload_response",
-            "file_upload_response",
-            "file_download_response",
-        ]
-        this.listeDesMessagesRecus = [
-            "upload_request",
-            "file_upload_request",
-            "file_download_request",
-        ]
+        this.listeDesMessagesEmis = ["upload_response", "file_upload_response"]
+        this.listeDesMessagesRecus = ["upload_request", "file_upload_request"]
 
         if (this.controleur.verboseall || this.verbose)
             console.log(
@@ -127,40 +119,6 @@ class AwsS3Service {
                 )
                 const message = {
                     file_upload_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
-        }
-
-        // Handle file download request
-        if (mesg.file_download_request) {
-            try {
-                const { fileId, filePath } = mesg.file_download_request
-
-                // Generate a signed URL for downloading
-                const downloadUrl = await this.getSignedDownloadUrl(filePath)
-
-                const message = {
-                    file_download_response: {
-                        etat: true,
-                        fileId,
-                        downloadUrl,
-                    },
-                    id: [mesg.id],
-                }
-
-                this.controleur.envoie(this, message)
-            } catch (error) {
-                console.error(
-                    "AwsS3Service: Error handling file download request:",
-                    error
-                )
-                const message = {
-                    file_download_response: {
                         etat: false,
                         error: error.message,
                     },

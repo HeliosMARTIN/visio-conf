@@ -31,19 +31,17 @@ La classe `FileService` est responsable de la gestion des fichiers et dossiers d
 | `file_move_request`     | `{ fileId: string, newParentId: string }`                                                | FileExplorer (frontend) |
 | `file_share_request`    | `{ fileId: string, isPublic: boolean, userIds?: string[] }`                              | FileExplorer (frontend) |
 | `folder_create_request` | `{ name: string, parentId?: string }`                                                    | FileExplorer (frontend) |
-| `file_download_request` | `{ fileId: string }`                                                                     | FileExplorer (frontend) |
 
 ### Messages émis
 
-| Message                  | Format                                                                      | Récepteur    |
-| ------------------------ | --------------------------------------------------------------------------- | ------------ |
-| `files_list_response`    | `{ etat: boolean, files?: File[], error?: string }`                         | FileExplorer |
-| `folders_list_response`  | `{ etat: boolean, folders?: Folder[], error?: string }`                     | FileExplorer |
-| `file_delete_response`   | `{ etat: boolean, fileId?: string, error?: string }`                        | FileExplorer |
-| `file_rename_response`   | `{ etat: boolean, fileId?: string, newName?: string, error?: string }`      | FileExplorer |
-| `file_move_response`     | `{ etat: boolean, fileId?: string, newParentId?: string, error?: string }`  | FileExplorer |
-| `file_share_response`    | `{ etat: boolean, fileId?: string, error?: string }`                        | FileExplorer |
-| `file_download_response` | `{ etat: boolean, url?: string, error?: string }` (généré par AwsS3Service) | FileExplorer |
+| Message                 | Format                                                  | Récepteur    |
+| ----------------------- | ------------------------------------------------------- | ------------ |
+| `files_list_response`   | `{ etat: boolean, files?: File[], error?: string }`     | FileExplorer |
+| `folders_list_response` | `{ etat: boolean, folders?: Folder[], error?: string }` | FileExplorer |
+| `file_delete_response`  | `{ etat: boolean, fileId?: string, error?: string }`    | FileExplorer |
+| `file_rename_response`  | `{ etat: boolean, error?: string }`                     | FileExplorer |
+| `file_move_response`    | `{ etat: boolean, error?: string }`                     | FileExplorer |
+| `file_share_response`   | `{ etat: boolean, error?: string }`                     | FileExplorer |
 
 ## Méthodes
 
@@ -92,9 +90,3 @@ Méthode principale pour traiter les messages. Redirige vers la méthode appropr
 1. L’utilisateur envoie `file_delete_request`
 2. Le service vérifie l’accès et effectue un soft delete
 3. Répond avec `file_delete_response`
-
-### Téléchargement
-
-1. L’utilisateur envoie `file_download_request`
-2. Le service vérifie l’accès et transfère la requête à `AwsS3Service`
-3. Ce dernier répond avec une URL signée via `file_download_response`

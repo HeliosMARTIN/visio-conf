@@ -42,7 +42,6 @@ export const ListeMessagesEmis = [
     "file_move_request", // { fileId: string, newParentId: string }
     "file_share_request", // { fileId: string, teamId?: string }
     "folder_create_request", // { name: string, parentId?: string }
-    "file_download_request", // { fileId: string }
     //---- CHANNELS ----
     "channels_list_request", // { teamId?: string }
     "channel_create_request", // { name: string, teamId: string, isPublic: boolean, members?: string[] }
@@ -111,11 +110,10 @@ export const ListeMessagesRecus = [
     "files_list_response", // { etat: boolean, files?: File[], error?: string }
     "file_upload_response", // { etat: boolean, error?: string, signedUrl?: string }
     "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
-    "file_rename_response", // { etat: boolean, fileId?: string, newName?: string, error?: string }
-    "file_move_response", // { etat: boolean, fileId?: string, newParentId?: string, error?: string }
+    "file_rename_response", // { etat: boolean, error?: string }
+    "file_move_response", // { etat: boolean,  error?: string }
     "file_share_response", // { etat: boolean, fileId?: string, error?: string }
-    "folder_create_response", // { etat: boolean, folderId?: string, folderName?: string, error?: string }
-    "file_download_response", // { etat: boolean, fileId?: string, downloadUrl?: string, error?: string }
+    "folder_create_response", // { etat: boolean, error?: string }
     //---- CHANNELS ----
     "channels_list_response", // { etat: boolean, channels?: Channel[], error?: string }
     "channel_create_response", // { etat: boolean, channel?: Channel, error?: string }
