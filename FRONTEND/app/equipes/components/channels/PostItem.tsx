@@ -88,7 +88,10 @@ export default function PostItem({
                     <div className={styles.avatar}>
                         {post.authorAvatar ? (
                             <img
-                                src={post.authorAvatar || "/placeholder.svg"}
+                                src={
+                                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${post.authorAvatar}` ||
+                                    "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
+                                }
                                 alt={post.authorName}
                             />
                         ) : (

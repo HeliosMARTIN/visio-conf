@@ -448,8 +448,8 @@ export default function TeamForm({
                                                 {member.picture ? (
                                                     <img
                                                         src={
-                                                            member.picture ||
-                                                            "/placeholder.svg"
+                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                                         }
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
@@ -548,8 +548,8 @@ export default function TeamForm({
                                                 {member.picture ? (
                                                     <img
                                                         src={
-                                                            member.picture ||
-                                                            "/placeholder.svg"
+                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                                         }
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
@@ -614,8 +614,8 @@ export default function TeamForm({
                                             {user.picture ? (
                                                 <img
                                                     src={
-                                                        user.picture ||
-                                                        "/placeholder.svg"
+                                                        `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}` ||
+                                                        "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                                     }
                                                     alt={`${user.firstname} ${user.lastname}`}
                                                 />
