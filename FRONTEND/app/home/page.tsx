@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import styles from "./home.module.css";
 import { useAppContext } from "@/context/AppContext";
-import UsersList from "@/components/UsersList";
 import { User } from "@/types/User";
 import { Bell, Clock } from "lucide-react";
 import UsersListMessage from "@/components/home/UsersListMessage";
@@ -92,31 +91,22 @@ export default function HomePage() {
     },
   };
 
-  const fetchMessagesList = () => {
-    try {
-      if (controleur) {
-        const T = { messages_get_request: {} };
-        controleur.envoie(handler, T);
-      }
-    } catch (err) {
-      console.error("Erreur lors de la récupération des messages.", err);
+  // Fonctions de récupération des données
+  const fetchData = () => {
+    if (controleur) {
+      const usersRequest = { users_list_request: {} };
+      const messagesRequest = { messages_get_request: {} };
+      const callsRequest = { calls_get_request: {} };
+
+      controleur.envoie(handler, usersRequest);
+      controleur.envoie(handler, messagesRequest);
+      controleur.envoie(handler, callsRequest);
     }
   };
 
-  const fetchCallsList = () => {
-    try {
-      if (controleur) {
-        const T = { calls_get_request: {} };
-        controleur.envoie(handler, T);
-      }
-    } catch (err) {
-      console.error("Erreur lors de la récupération des appels.", err);
-    }
-  };
-
-  // Simulation Notif message
+  // Simulation de notification de message
   // const simulateMessageNotification = () => {
-  //   // Trouver deux utilisateurs aléatoires différents du currentUser
+  //   // Trouver des utilisateurs différents du currentUser
   //   const availableUsers = users.filter(
   //     (user) => user.email !== currentUser?.email
   //   );
@@ -137,14 +127,7 @@ export default function HomePage() {
   //     message_content: "Bonjour, pouvez-vous m'aider sur un projet ?",
   //     message_date_create: new Date().toISOString(),
   //     message_status: "sent",
-  //     message_sender: {
-  //       email: firstUser.email,
-  //       firstname: firstUser.firstname,
-  //       lastname: firstUser.lastname,
-  //       id: firstUser.id,
-  //       picture: firstUser.picture || "",
-  //       phone: firstUser.phone || "",
-  //     },
+  //     message_sender: firstUser,
   //   };
 
   //   // Si on a un deuxième utilisateur disponible
@@ -157,20 +140,12 @@ export default function HomePage() {
   //       message_content: "Avez-vous vu ma dernière présentation ?",
   //       message_date_create: new Date(Date.now() + 1000).toISOString(), // 1 seconde plus tard
   //       message_status: "sent",
-  //       message_sender: {
-  //         email: secondUser.email,
-  //         firstname: secondUser.firstname,
-  //         lastname: secondUser.lastname,
-  //         id: secondUser.id,
-  //         picture: secondUser.picture || "",
-  //         phone: secondUser.phone || "",
-  //       },
+  //       message_sender: firstUser,
   //     };
   //   }
 
   //   // Ajouter le(s) message(s) simulé(s) à la liste des messages
   //   if (secondMockMessage) {
-  //     // Si on a deux messages à ajouter
   //     setMessages((prevMessages) => [
   //       ...prevMessages,
   //       firstMockMessage,
@@ -178,15 +153,13 @@ export default function HomePage() {
   //     ]);
   //     console.log("Deux messages simulés ajoutés de personnes différentes");
   //   } else {
-  //     // Si on n'a qu'un seul message à ajouter
   //     setMessages((prevMessages) => [...prevMessages, firstMockMessage]);
   //     console.log("Un message simulé ajouté");
   //   }
   // };
 
-  // Simulation Notif Call
+  // Simulation de notification d'appel
   // const simulateCallNotification = () => {
-  //   // Trouver deux utilisateurs aléatoires différents du currentUser
   //   const availableUsers = users.filter(
   //     (user) => user.email !== currentUser?.email
   //   );
@@ -256,11 +229,9 @@ export default function HomePage() {
 
   //   // Ajouter le(s) appel(s) simulé(s) à la liste des appels
   //   if (secondMockCall) {
-  //     // Si on a deux appels à ajouter
   //     setCalls((prevCalls) => [...prevCalls, firstMockCall, secondMockCall!]);
   //     console.log("Deux appels simulés ajoutés de personnes différentes");
   //   } else {
-  //     // Si on n'a qu'un seul appel à ajouter
   //     setCalls((prevCalls) => [...prevCalls, firstMockCall]);
   //     console.log("Un appel simulé ajouté");
   //   }
@@ -269,9 +240,7 @@ export default function HomePage() {
   useEffect(() => {
     if (controleur && canal) {
       controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
-      fetchUsersList();
-      fetchMessagesList();
-      fetchCallsList();
+      fetchData();
     }
 
     return () => {
@@ -281,46 +250,21 @@ export default function HomePage() {
     };
   }, [pathname, controleur, canal, currentUser]);
 
-  const fetchUsersList = () => {
-    try {
-      if (controleur) {
-        const T = { users_list_request: {} };
-        controleur.envoie(handler, T);
-      }
-    } catch (err) {
-      setError(
-        "Erreur lors de la récupération des utilisateurs. Veuillez réessayer."
-      );
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) return <div>Chargement...</div>;
   if (!currentUser) return <div>Veuillez vous connecter</div>;
 
-  // Compter le nombre d'appels non manqués
-  const completedCallsCount = calls.filter(
-    (call) => call.call_type !== "missed"
-  ).length;
-
+  // Fonctions utilitaires pour les compteurs
   const getSentMessagesCount = () => {
     return messages.filter((msg) => msg.message_status === "sent").length;
   };
 
-  // Ajouter cette fonction pour compter les appels manqués
   const getMissedCallsCount = () => {
-    // Créer un Set pour stocker les emails uniques des appelants
     const uniqueCallers = new Set<string>();
-
-    // Parcourir tous les appels avec le statut "missed"
     calls
       .filter((call) => call.call_type === "missed")
       .forEach((call) => {
-        // Ajouter l'email de l'appelant au Set
         uniqueCallers.add(call.call_sender.email);
       });
-
-    // Retourner le nombre d'appelants uniques
     return uniqueCallers.size;
   };
 
@@ -338,7 +282,6 @@ export default function HomePage() {
               ) : (
                 <h3>{getSentMessagesCount()} messages en attente</h3>
               )}
-              {/* Simulation Notif message */}
               {/* <button
                 onClick={simulateMessageNotification}
                 style={{
@@ -374,22 +317,21 @@ export default function HomePage() {
               ) : (
                 <h3>{getMissedCallsCount()} appels manqués</h3>
               )}
-              {/* simultion de call */}
               {/* <button
-                onClick={simulateCallNotification}
-                style={{
-                  padding: "6px 12px",
-                  marginLeft: "auto",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
-              >
-                Simuler un appel
-              </button> */}
+                  onClick={simulateCallNotification}
+                  style={{
+                    padding: "6px 12px",
+                    marginLeft: "auto",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  Simuler un appel
+                </button> */}
             </div>
             <UsersListCall
               users={users}
