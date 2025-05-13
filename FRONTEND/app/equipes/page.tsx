@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react"
 import styles from "./page.module.css"
-import TeamsList from "./components/TeamsList"
-import ChannelView from "./components/ChannelView"
-import ChannelForm from "./components/ChannelForm"
-import TeamForm from "./components/TeamForm"
-import ChannelTabs from "./components/ChannelTabs"
+import TeamsList from "./components/teams/TeamsList"
+import ChannelView from "./components/channels/ChannelView"
+import ChannelForm from "./components/channels/ChannelForm"
+import TeamForm from "./components/teams/TeamForm"
+import ChannelTabs from "./components/channels/ChannelTabs"
 import type { Channel } from "@/types/Channel"
 import type { Team } from "@/types/Team"
 import { useAppContext } from "@/context/AppContext"
@@ -108,7 +108,9 @@ export default function EquipesPage() {
             if (msg.user_info_response) {
                 if (msg.user_info_response.etat) {
                     // Vérifier si l'utilisateur est administrateur
-                    setIsAdmin(msg.user_info_response.user.role === "admin")
+                    setIsAdmin(
+                        msg.user_info_response.user.roles.includes("admin")
+                    )
                 }
             }
         },
@@ -122,7 +124,7 @@ export default function EquipesPage() {
             const teamsRequest = { teams_list_request: {} }
             controleur.envoie(handler, teamsRequest)
 
-            setIsAdmin(currentUser.roles.includes("admin"))
+            setIsAdmin(currentUser.roles?.includes("admin"))
         }
 
         return () => {

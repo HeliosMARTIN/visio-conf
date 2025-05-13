@@ -40,7 +40,7 @@ export const ListeMessagesEmis = [
     "file_delete_request", // { fileId: string }
     "file_rename_request", // { fileId: string, newName: string }
     "file_move_request", // { fileId: string, newParentId: string }
-    "file_share_request", // { fileId: string, isPublic: boolean, userIds?: string[] }
+    "file_share_request", // { fileId: string, teamId?: string }
     "folder_create_request", // { name: string, parentId?: string }
     "file_download_request", // { fileId: string }
     //---- CHANNELS ----
@@ -103,7 +103,7 @@ export const ListeMessagesRecus = [
     "updated_role", //{ state : boolean}
     "deleted_role", // {state : boolean}
     //---- PERMISSIONS ----=
-    "perms_list_response", // { perms?: Permission[]} 
+    "perms_list_response", // { perms?: Permission[]}
     "user_perms_response", // { perms : Permission[]}
     "update_perm_response", // { state : boolean }
     "add_perm_response", // {message : string }=
