@@ -417,7 +417,7 @@ export default function FileExplorer({
                     onClick={() => setShowCreateFolderModal(true)}
                 >
                     <FolderPlus size={18} />
-                    <span>Nouvelle Dossier</span>
+                    <span>Nouveau Dossier</span>
                 </button>
 
                 <label className={styles.actionButton}>

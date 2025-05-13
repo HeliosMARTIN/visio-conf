@@ -1,0 +1,406 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import styles from "./home.module.css";
+import { useAppContext } from "@/context/AppContext";
+import UsersList from "@/components/UsersList";
+import { User } from "@/types/User";
+import { Bell, Clock } from "lucide-react";
+import UsersListMessage from "@/components/home/UsersListMessage";
+import UsersListCall from "@/components/home/UsersListCall";
+import { Message } from "@/types/Message";
+import { Call } from "@/types/Call";
+
+export default function HomePage() {
+  const pathname = usePathname();
+  const { controleur, canal, currentUser } = useAppContext();
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [calls, setCalls] = useState<Call[]>([]);
+
+  const nomDInstance = "HomePage";
+  const verbose = false;
+
+  const listeMessageEmis = [
+    "users_list_request",
+    "messages_get_request",
+    "calls_get_request",
+  ];
+
+  const listeMessageRecus = [
+    "users_list_response",
+    "messages_get_response",
+    "calls_get_response",
+  ];
+
+  const handler = {
+    nomDInstance,
+    traitementMessage: (msg: {
+      users_list_response?: {
+        etat: boolean;
+        users?: User[];
+        error?: string;
+      };
+      messages_get_response?: {
+        etat: boolean;
+        messages?: Message[];
+        error?: string;
+      };
+      calls_get_response?: {
+        etat: boolean;
+        calls?: Call[];
+        error?: string;
+      };
+    }) => {
+      if (verbose || controleur?.verboseall) {
+        console.log(`INFO: (${nomDInstance}) - traitementMessage - `, msg);
+      }
+
+      if (msg.users_list_response) {
+        setIsLoading(false);
+        if (!msg.users_list_response.etat) {
+          setError(
+            `Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`
+          );
+        } else {
+          setUsers(msg.users_list_response.users || []);
+        }
+      }
+
+      if (msg.messages_get_response) {
+        if (!msg.messages_get_response.etat) {
+          console.error(
+            `Erreur lors de la récupération des messages: ${msg.messages_get_response.error}`
+          );
+        } else {
+          setMessages(msg.messages_get_response.messages || []);
+        }
+      }
+
+      if (msg.calls_get_response) {
+        if (!msg.calls_get_response.etat) {
+          console.error(
+            `Erreur lors de la récupération des appels: ${msg.calls_get_response.error}`
+          );
+        } else {
+          setCalls(msg.calls_get_response.calls || []);
+        }
+      }
+    },
+  };
+
+  const fetchMessagesList = () => {
+    try {
+      if (controleur) {
+        const T = { messages_get_request: {} };
+        controleur.envoie(handler, T);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la récupération des messages.", err);
+    }
+  };
+
+  const fetchCallsList = () => {
+    try {
+      if (controleur) {
+        const T = { calls_get_request: {} };
+        controleur.envoie(handler, T);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la récupération des appels.", err);
+    }
+  };
+
+  // Simulation Notif message
+  // const simulateMessageNotification = () => {
+  //   // Trouver deux utilisateurs aléatoires différents du currentUser
+  //   const availableUsers = users.filter(
+  //     (user) => user.email !== currentUser?.email
+  //   );
+
+  //   if (availableUsers.length < 1 || !currentUser) {
+  //     console.error(
+  //       "Pas assez d'utilisateurs disponibles pour simuler des messages"
+  //     );
+  //     return;
+  //   }
+
+  //   // Prendre le premier utilisateur
+  //   const firstUser = availableUsers[0];
+
+  //   // Créer un message pour le premier utilisateur
+  //   const firstMockMessage: Message = {
+  //     message_uuid: `mock-${Date.now()}-1`,
+  //     message_content: "Bonjour, pouvez-vous m'aider sur un projet ?",
+  //     message_date_create: new Date().toISOString(),
+  //     message_status: "sent",
+  //     message_sender: {
+  //       email: firstUser.email,
+  //       firstname: firstUser.firstname,
+  //       lastname: firstUser.lastname,
+  //       id: firstUser.id,
+  //       picture: firstUser.picture || "",
+  //       phone: firstUser.phone || "",
+  //     },
+  //   };
+
+  //   // Si on a un deuxième utilisateur disponible
+  //   let secondMockMessage: Message | null = null;
+
+  //   if (availableUsers.length > 1) {
+  //     const secondUser = availableUsers[1];
+  //     secondMockMessage = {
+  //       message_uuid: `mock-${Date.now()}-2`,
+  //       message_content: "Avez-vous vu ma dernière présentation ?",
+  //       message_date_create: new Date(Date.now() + 1000).toISOString(), // 1 seconde plus tard
+  //       message_status: "sent",
+  //       message_sender: {
+  //         email: secondUser.email,
+  //         firstname: secondUser.firstname,
+  //         lastname: secondUser.lastname,
+  //         id: secondUser.id,
+  //         picture: secondUser.picture || "",
+  //         phone: secondUser.phone || "",
+  //       },
+  //     };
+  //   }
+
+  //   // Ajouter le(s) message(s) simulé(s) à la liste des messages
+  //   if (secondMockMessage) {
+  //     // Si on a deux messages à ajouter
+  //     setMessages((prevMessages) => [
+  //       ...prevMessages,
+  //       firstMockMessage,
+  //       secondMockMessage!,
+  //     ]);
+  //     console.log("Deux messages simulés ajoutés de personnes différentes");
+  //   } else {
+  //     // Si on n'a qu'un seul message à ajouter
+  //     setMessages((prevMessages) => [...prevMessages, firstMockMessage]);
+  //     console.log("Un message simulé ajouté");
+  //   }
+  // };
+
+  // Simulation Notif Call
+  // const simulateCallNotification = () => {
+  //   // Trouver deux utilisateurs aléatoires différents du currentUser
+  //   const availableUsers = users.filter(
+  //     (user) => user.email !== currentUser?.email
+  //   );
+
+  //   if (availableUsers.length < 1 || !currentUser) {
+  //     console.error(
+  //       "Pas assez d'utilisateurs disponibles pour simuler des appels"
+  //     );
+  //     return;
+  //   }
+
+  //   // Prendre le premier utilisateur
+  //   const firstUser = availableUsers[0];
+
+  //   // Créer un appel pour le premier utilisateur
+  //   const firstMockCall: Call = {
+  //     call_uuid: `mock-${Date.now()}-1`,
+  //     call_date_create: new Date().toISOString(),
+  //     call_date_end: new Date(Date.now() + 60000).toISOString(), // 1 minute plus tard
+  //     call_type: "missed", // missed, completed
+  //     call_sender: {
+  //       email: firstUser.email,
+  //       firstname: firstUser.firstname,
+  //       lastname: firstUser.lastname,
+  //       id: firstUser.id,
+  //       picture: firstUser.picture || "",
+  //       phone: firstUser.phone || "",
+  //     },
+  //     call_recipient: {
+  //       email: currentUser.email,
+  //       firstname: currentUser.firstname,
+  //       lastname: currentUser.lastname,
+  //       id: currentUser.id,
+  //       picture: currentUser.picture || "",
+  //       phone: currentUser.phone || "",
+  //     },
+  //   };
+
+  //   // Si on a un deuxième utilisateur disponible
+  //   let secondMockCall: Call | null = null;
+
+  //   if (availableUsers.length > 1) {
+  //     const secondUser = availableUsers[1];
+  //     secondMockCall = {
+  //       call_uuid: `mock-${Date.now()}-2`,
+  //       call_date_create: new Date(Date.now() - 300000).toISOString(), // 5 minutes avant
+  //       call_date_end: new Date(Date.now() - 270000).toISOString(), // 4:30 minutes avant
+  //       call_type: "missed", // appel manqué
+  //       call_sender: {
+  //         email: secondUser.email,
+  //         firstname: secondUser.firstname,
+  //         lastname: secondUser.lastname,
+  //         id: secondUser.id,
+  //         picture: secondUser.picture || "",
+  //         phone: secondUser.phone || "",
+  //       },
+  //       call_recipient: {
+  //         email: currentUser.email,
+  //         firstname: currentUser.firstname,
+  //         lastname: currentUser.lastname,
+  //         id: currentUser.id,
+  //         picture: currentUser.picture || "",
+  //         phone: currentUser.phone || "",
+  //       },
+  //     };
+  //   }
+
+  //   // Ajouter le(s) appel(s) simulé(s) à la liste des appels
+  //   if (secondMockCall) {
+  //     // Si on a deux appels à ajouter
+  //     setCalls((prevCalls) => [...prevCalls, firstMockCall, secondMockCall!]);
+  //     console.log("Deux appels simulés ajoutés de personnes différentes");
+  //   } else {
+  //     // Si on n'a qu'un seul appel à ajouter
+  //     setCalls((prevCalls) => [...prevCalls, firstMockCall]);
+  //     console.log("Un appel simulé ajouté");
+  //   }
+  // };
+
+  useEffect(() => {
+    if (controleur && canal) {
+      controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
+      fetchUsersList();
+      fetchMessagesList();
+      fetchCallsList();
+    }
+
+    return () => {
+      if (controleur) {
+        controleur.desincription(handler, listeMessageEmis, listeMessageRecus);
+      }
+    };
+  }, [pathname, controleur, canal, currentUser]);
+
+  const fetchUsersList = () => {
+    try {
+      if (controleur) {
+        const T = { users_list_request: {} };
+        controleur.envoie(handler, T);
+      }
+    } catch (err) {
+      setError(
+        "Erreur lors de la récupération des utilisateurs. Veuillez réessayer."
+      );
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) return <div>Chargement...</div>;
+  if (!currentUser) return <div>Veuillez vous connecter</div>;
+
+  // Compter le nombre d'appels non manqués
+  const completedCallsCount = calls.filter(
+    (call) => call.call_type !== "missed"
+  ).length;
+
+  const getSentMessagesCount = () => {
+    return messages.filter((msg) => msg.message_status === "sent").length;
+  };
+
+  // Ajouter cette fonction pour compter les appels manqués
+  const getMissedCallsCount = () => {
+    // Créer un Set pour stocker les emails uniques des appelants
+    const uniqueCallers = new Set<string>();
+
+    // Parcourir tous les appels avec le statut "missed"
+    calls
+      .filter((call) => call.call_type === "missed")
+      .forEach((call) => {
+        // Ajouter l'email de l'appelant au Set
+        uniqueCallers.add(call.call_sender.email);
+      });
+
+    // Retourner le nombre d'appelants uniques
+    return uniqueCallers.size;
+  };
+
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <section className={styles.section}>
+          <h1>Boite de réception</h1>
+          {error && <div className={styles.error}>{error}</div>}
+          <div className={styles.reception}>
+            <div className={styles.reception_header}>
+              <Bell />
+              {getSentMessagesCount() === 0 ? (
+                <h3>Vous avez aucune notification</h3>
+              ) : (
+                <h3>{getSentMessagesCount()} messages en attente</h3>
+              )}
+              {/* Simulation Notif message */}
+              {/* <button
+                onClick={simulateMessageNotification}
+                style={{
+                  padding: "6px 12px",
+                  marginLeft: "auto",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Simuler une notification
+              </button> */}
+            </div>
+            <UsersListMessage
+              users={users}
+              messages={messages}
+              currentUserEmail={currentUser?.email || ""}
+              isLoading={isLoading}
+            />
+          </div>
+        </section>
+        <section className={styles.section}>
+          <h1>Historique d'appels</h1>
+          {error && <div className={styles.error}>{error}</div>}
+          <div className={styles.reception}>
+            <div className={styles.reception_header}>
+              <Clock />
+              {getMissedCallsCount() === 0 ? (
+                <h3>Aucun appel manqué</h3>
+              ) : (
+                <h3>{getMissedCallsCount()} appels manqués</h3>
+              )}
+              {/* simultion de call */}
+              {/* <button
+                onClick={simulateCallNotification}
+                style={{
+                  padding: "6px 12px",
+                  marginLeft: "auto",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Simuler un appel
+              </button> */}
+            </div>
+            <UsersListCall
+              users={users}
+              calls={calls}
+              currentUserEmail={currentUser?.email || ""}
+              isLoading={isLoading}
+              limitCalls={5}
+            />
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

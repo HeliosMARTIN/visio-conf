@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #f9fafb;
+  background-color: #f7f7f7;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -90,7 +90,7 @@
   border-radius: 6px;
   border: 1px solid #e5e7eb;
   font-size: 14px;
-  background-color: #f9fafb;
+  background-color: #f7f7f7;
   transition: all 0.2s ease;
   color: #1E3664;
 }
@@ -133,7 +133,7 @@
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background-color: #f9fafb;
+  background-color: #f7f7f7;
   border-bottom: 1px solid #e5e7eb;
   font-size: 12px;
   font-weight: 500;

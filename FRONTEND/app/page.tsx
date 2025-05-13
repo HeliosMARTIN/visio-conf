@@ -6,11 +6,13 @@ import UsersList from "../components/UsersList"
 import CurrentUser from "../components/CurrentUser"
 import { User } from "../types/User"
 import { useAppContext } from "@/context/AppContext"
+import HomeAdmin from "../components/admin/HomeAdmin"
 import Cookies from "js-cookie"
 
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
+    const [tab, setTab] = useState<string>("");
     const pathname = usePathname()
 
     const nomDInstance = "HomePage"
@@ -197,31 +199,32 @@ export default function Home() {
         router.push("/discussion")
     }
 
-    return (
-        <div className={styles.page}>
-            <main className={styles.main}>
-                <h1>Accueil - Visioconf</h1>
-                {error && <div className={styles.error}>{error}</div>}
-                {uploadMessage && (
-                    <div className={styles.info}>{uploadMessage}</div>
-                )}
-                <button onClick={fetchUsersList}>Fetch Users List</button>
-                <UsersList
-                    users={users}
-                    currentUserEmail={currentUser?.email || ""}
-                />
-                <div style={{ marginTop: "1rem" }}>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        onChange={handleFileChange}
+    if(tab==="admin"){
+        return <HomeAdmin user={currentUser} />
+    }
+    else{
+        return (
+            <div className={styles.page}>
+                <main className={styles.main}>
+                    <h1>Accueil - Visioconf</h1>
+                    {error && <div className={styles.error}>{error}</div>}
+                    {uploadMessage && (
+                        <div className={styles.info}>{uploadMessage}</div>
+                    )}
+                    <button onClick={fetchUsersList}>Fetch Users List</button>
+                    <UsersList
+                        users={users}
+                        currentUserEmail={currentUser?.email || ""}
                     />
-                    <button onClick={handleUpload}>Upload File</button>
-                </div>
-                <button onClick={handleDiscussion}>Discussion</button>
-                <button onClick={handleLogout}>Logout</button>
-            </main>
-            {currentUser && <CurrentUser user={currentUser} />}
-        </div>
-    )
+                    <div style={{ marginTop: "1rem" }}>
+                        <input type="file" onChange={handleFileChange} />
+                        <button onClick={handleUpload}>Upload File</button>
+                    </div>
+                    <button onClick={handleLogout}>Logout</button>
+                    <button onClick={() => setTab("admin")}>Admin</button>
+                </main>
+                {currentUser && <CurrentUser user={currentUser} />}
+            </div>
+        )
+    }
 }

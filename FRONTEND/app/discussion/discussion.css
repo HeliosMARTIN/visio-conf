@@ -116,7 +116,7 @@ h3,h2, h1{
     flex: 1;
     padding: 10px;
     border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    border-radius: 10px;
     background-color: white;
     color: black;
   }
@@ -136,17 +136,18 @@ h3,h2, h1{
 
   .createDiscuss{
     background-color: white;
-    padding: 20px;
   }
 
   .createDiscuss > div{
+    height: 100%;
+    justify-content: space-between;
     display: flex;
     flex-direction: column;
-    gap: 4px;
   }
 
   .search-users{
     padding: 10px;
+    margin: 20px 20px 0 20px;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     display: flex;
@@ -156,6 +157,8 @@ h3,h2, h1{
   .search-users input {
     width: 100%;
     border: none;
+    background-color: #ffffff;
+    color: black;
   }
 
   .search-users input:focus {
@@ -165,11 +168,13 @@ h3,h2, h1{
   .search-results{
     width: 20%;
     padding: 10px;
+    margin-left:20px ;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    color: black;
   }
 
   .search-results div {
@@ -219,4 +224,46 @@ h3,h2, h1{
     display: flex;
     gap: 4px;
   }
-  
+
+  .custom-menu {
+    display: none;
+    width: 200px;
+    position: fixed;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .custom-menu button{
+    color: red;
+    background-color: white;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: left;
+  }
+
+  .success-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4caf50;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
