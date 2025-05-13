@@ -319,9 +319,16 @@ export default function ProfilPage() {
                 <p>
                   {currentUser.roles &&
                   Array.isArray(currentUser.roles) &&
-                  currentUser.roles.length > 0
-                    ? currentUser.roles.join(", ")
-                    : currentUser.roles || "Aucun rôle attribué"}
+                  currentUser.roles.filter(
+                    (role) => role !== null && role !== undefined && role !== ""
+                  ).length > 0
+                    ? currentUser.roles
+                        .filter(
+                          (role) =>
+                            role !== null && role !== undefined && role !== ""
+                        )
+                        .join(", ")
+                    : "Aucun rôle attribué"}
                 </p>
               </div>
             </div>
