@@ -94,6 +94,10 @@
   display: block;
 }
 
+.profileContainer .menuItem {
+  padding-left: 0;
+}
+
 .profileImage {
   border-radius: 50%;
   object-fit: cover;
