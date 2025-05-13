@@ -336,7 +336,7 @@ const initializeUsers = async () => {
     const adminRole = await Role.findOne({ role_uuid: "admin" })
     const userRole = await Role.findOne({ role_uuid: "user" })
 
-    if (adminRole && userRole && teacherRole && studentRole) {
+    if (adminRole && userRole) {
         // Ajout de l'administrateur
         usersToInsert.push({
             uuid: uuidv4(),
@@ -354,18 +354,7 @@ const initializeUsers = async () => {
         // Attribution des rôles aux utilisateurs
         for (const user of usersToInsert) {
             if (!user.roles || user.roles.length === 0) {
-                // Attribution de rôles spécifiques selon le job
-                if (
-                    user.job === "Professeur" ||
-                    user.job === "Responsable RH" ||
-                    user.job === "Responsable Technique"
-                ) {
-                    user.roles = [teacherRole._id, userRole._id]
-                } else if (user.job === "Étudiant") {
-                    user.roles = [studentRole._id, userRole._id]
-                } else {
-                    user.roles = [userRole._id]
-                }
+                user.roles = [userRole._id]
             }
         }
     } else {
