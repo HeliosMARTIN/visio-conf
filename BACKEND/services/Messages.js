@@ -261,7 +261,6 @@ class MessagesService {
                     $or: [
                         { firstname: new RegExp(searchQuery, "i") },
                         { lastname: new RegExp(searchQuery, "i") },
-                        { email: new RegExp(searchQuery, "i") },
                     ],
                 }
 

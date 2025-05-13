@@ -22,6 +22,8 @@ import RenameModal from "./RenameModal"
 import DeleteModal from "./DeleteModal"
 import MoveFileModal from "./MoveFileModal"
 import ShareModal from "./ShareModal"
+import { useAppContext } from "@/context/AppContext"
+import { getLink } from "../../../utils/fileHelpers"
 
 interface FileExplorerProps {
     files: FileItem[]
@@ -35,7 +37,6 @@ interface FileExplorerProps {
     onMoveFile: (fileId: string, newParentId: string) => void
     onShareFile: (fileId: string, isPublic: boolean) => void
     onNavigate: (folderId?: string) => void
-    onDownloadFile?: (fileId: string) => void
 }
 
 export default function FileExplorer({
@@ -50,7 +51,6 @@ export default function FileExplorer({
     onMoveFile,
     onShareFile,
     onNavigate,
-    onDownloadFile,
 }: FileExplorerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("grid")
     const [sortBy, setSortBy] = useState<SortBy>("name")
@@ -64,6 +64,8 @@ export default function FileExplorer({
     const [showShareModal, setShowShareModal] = useState(false)
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const { currentUser } = useAppContext()
 
     // Get folder names for breadcrumbs
     const [folderNames, setFolderNames] = useState<Record<string, string>>({})
@@ -141,10 +143,8 @@ export default function FileExplorer({
             onNavigate(file.id)
         } else {
             // For image files, open the thumbnail or download
-            if (file.mimeType?.startsWith("image/") && file.thumbnail) {
-                window.open(file.thumbnail, "_blank")
-            } else if (onDownloadFile) {
-                onDownloadFile(file.id)
+            if (file.mimeType?.startsWith("image/") && currentUser) {
+                window.open(getLink(currentUser, file.name), "_blank")
             }
         }
     }
@@ -167,12 +167,6 @@ export default function FileExplorer({
     const handleShareFile = (file: FileItem) => {
         setSelectedFile(file)
         setShowShareModal(true)
-    }
-
-    const handleDownloadFile = (file: FileItem) => {
-        if (onDownloadFile && file.type === "file") {
-            onDownloadFile(file.id)
-        }
     }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,7 +261,9 @@ export default function FileExplorer({
 
                     <div className={styles.breadcrumbs}>
                         {currentPath.length === 0 ? (
-                            <span className={styles.breadcrumbItem}>Home</span>
+                            <span className={styles.breadcrumbItem}>
+                                Accueil
+                            </span>
                         ) : (
                             <>
                                 <span
@@ -276,7 +272,7 @@ export default function FileExplorer({
                                         handleNavigateToBreadcrumb(-1)
                                     }
                                 >
-                                    Home
+                                    Accueil
                                 </span>
                                 {currentPath.map((folderId, index) => (
                                     <span key={folderId}>
@@ -319,7 +315,7 @@ export default function FileExplorer({
                     <Search className={styles.searchIcon} size={18} />
                     <input
                         type="text"
-                        placeholder="Search files..."
+                        placeholder="Rechercher des fichiers..."
                         className={styles.searchInput}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -332,7 +328,7 @@ export default function FileExplorer({
                             viewMode === "grid" ? styles.active : ""
                         }`}
                         onClick={() => setViewMode("grid")}
-                        aria-label="Grid view"
+                        aria-label="Vue en grille"
                     >
                         <Grid size={18} />
                     </button>
@@ -341,7 +337,7 @@ export default function FileExplorer({
                             viewMode === "list" ? styles.active : ""
                         }`}
                         onClick={() => setViewMode("list")}
-                        aria-label="List view"
+                        aria-label="Vue en liste"
                     >
                         <List size={18} />
                     </button>
@@ -354,7 +350,7 @@ export default function FileExplorer({
                         className={`${styles.listHeaderItem} ${styles.nameHeader}`}
                         onClick={() => handleSortChange("name")}
                     >
-                        Name
+                        Nom
                         {sortBy === "name" && (
                             <span className={styles.sortIcon}>
                                 {sortOrder === "asc" ? (
@@ -369,7 +365,7 @@ export default function FileExplorer({
                         className={`${styles.listHeaderItem} ${styles.dateHeader}`}
                         onClick={() => handleSortChange("date")}
                     >
-                        Modified
+                        Modifié
                         {sortBy === "date" && (
                             <span className={styles.sortIcon}>
                                 {sortOrder === "asc" ? (
@@ -384,7 +380,7 @@ export default function FileExplorer({
                         className={`${styles.listHeaderItem} ${styles.sizeHeader}`}
                         onClick={() => handleSortChange("size")}
                     >
-                        Size
+                        Taille
                         {sortBy === "size" && (
                             <span className={styles.sortIcon}>
                                 {sortOrder === "asc" ? (
@@ -412,7 +408,6 @@ export default function FileExplorer({
                     onRenameFile={handleRenameFile}
                     onMoveFile={handleMoveFile}
                     onShareFile={handleShareFile}
-                    onDownloadFile={handleDownloadFile}
                 />
             </div>
 
@@ -422,7 +417,7 @@ export default function FileExplorer({
                     onClick={() => setShowCreateFolderModal(true)}
                 >
                     <FolderPlus size={18} />
-                    <span>New Folder</span>
+                    <span>Nouveau Dossier</span>
                 </button>
 
                 <label className={styles.actionButton}>
@@ -433,7 +428,7 @@ export default function FileExplorer({
                         style={{ display: "none" }}
                     />
                     <Upload size={18} />
-                    <span>Upload</span>
+                    <span>Téléverser</span>
                 </label>
             </div>
 

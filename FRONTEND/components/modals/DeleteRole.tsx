@@ -35,16 +35,16 @@ export default function DeleteRole({
                 <p className={styles.text}>Souhaitez-vous vraiment supprimer le rôle "{roleName}" ?</p>
             </DialogContent>
             <DialogActions sx={{display: "flex", justifyContent: "space-between"}}>
-                <Button 
+                <button 
                     onClick={() => {setOpenDeleteRole(false)}}
                     style={{backgroundColor: "#0698D6"}}
                     className={styles.button}
-                >Annuler</Button>
-                <Button
+                >Annuler</button>
+                <button
                     onClick={handleDeleteRole}
                     style={{backgroundColor: "#E02727"}}
                     className={styles.button}
-                >Supprimer le rôle</Button>
+                >Supprimer le rôle</button>
             </DialogActions>
         </Dialog>
     )

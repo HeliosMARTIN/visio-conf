@@ -48,7 +48,7 @@ export default function ShareModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.modalHeader}>
-                    <h3>Share {file.name}</h3>
+                    <h3>Partager {file.name}</h3>
                     <button
                         className={styles.closeButton}
                         onClick={onCloseModal}
@@ -70,8 +70,10 @@ export default function ShareModal({
                                     className={styles.checkbox}
                                 />
                                 <span>
-                                    Make{" "}
-                                    {file.type === "folder" ? "folder" : "file"}{" "}
+                                    Rendre{" "}
+                                    {file.type === "folder"
+                                        ? "le dossier"
+                                        : "le fichier"}{" "}
                                     public
                                 </span>
                             </label>
@@ -106,10 +108,10 @@ export default function ShareModal({
                             className={styles.cancelButton}
                             onClick={onCloseModal}
                         >
-                            Cancel
+                            Annuler
                         </button>
                         <button type="submit" className={styles.confirmButton}>
-                            Save
+                            Enregistrer
                         </button>
                     </div>
                 </form>

@@ -78,7 +78,9 @@ export default function MoveFileModal({
             }
             controleur?.envoie(handler, T)
         } catch (err) {
-            setError("Failed to fetch folders. Please try again.")
+            setError(
+                "Échec de la récupération des dossiers. Veuillez réessayer."
+            )
             setIsLoading(false)
         }
     }
@@ -107,7 +109,10 @@ export default function MoveFileModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.modalHeader}>
-                    <h3>Move {file.type === "folder" ? "Folder" : "File"}</h3>
+                    <h3>
+                        Déplacer{" "}
+                        {file.type === "folder" ? "Dossier" : "Fichier"}
+                    </h3>
                     <button
                         className={styles.closeButton}
                         onClick={onCloseModal}
@@ -118,7 +123,7 @@ export default function MoveFileModal({
 
                 <form onSubmit={handleSubmit}>
                     <div className={styles.modalBody}>
-                        <p>Select destination folder:</p>
+                        <p>Sélectionnez le dossier de destination :</p>
 
                         {error && (
                             <div className={styles.errorMessage}>{error}</div>
@@ -134,12 +139,12 @@ export default function MoveFileModal({
                                 onClick={() => handleFolderClick("")}
                             >
                                 <FolderOpen size={18} />
-                                <span>Home (Root)</span>
+                                <span>Accueil (Racine)</span>
                             </div>
 
                             {isLoading ? (
                                 <div className={styles.loading}>
-                                    Loading folders...
+                                    Chargement des dossiers...
                                 </div>
                             ) : (
                                 folders.map((folder) => (
@@ -166,7 +171,7 @@ export default function MoveFileModal({
 
                             {!isLoading && folders.length === 0 && (
                                 <div className={styles.emptyMessage}>
-                                    No other folders available
+                                    Aucun autre dossier disponible
                                 </div>
                             )}
                         </div>
@@ -178,10 +183,10 @@ export default function MoveFileModal({
                             className={styles.cancelButton}
                             onClick={onCloseModal}
                         >
-                            Cancel
+                            Annuler
                         </button>
                         <button type="submit" className={styles.confirmButton}>
-                            Move
+                            Déplacer
                         </button>
                     </div>
                 </form>

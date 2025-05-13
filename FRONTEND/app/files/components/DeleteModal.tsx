@@ -21,7 +21,10 @@ export default function DeleteModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={styles.modalHeader}>
-                    <h3>Delete {file.type === "folder" ? "Folder" : "File"}</h3>
+                    <h3>
+                        Supprimer{" "}
+                        {file.type === "folder" ? "Dossier" : "Fichier"}
+                    </h3>
                     <button
                         className={styles.closeButton}
                         onClick={onCloseModal}
@@ -34,12 +37,12 @@ export default function DeleteModal({
                     <div className={styles.warningMessage}>
                         <AlertTriangle className={styles.warningIcon} />
                         <p>
-                            Are you sure you want to delete{" "}
-                            <strong>{file.name}</strong>?
+                            Êtes-vous sûr de vouloir supprimer{" "}
+                            <strong>{file.name}</strong> ?
                             {file.type === "folder" &&
-                                " All contents will be deleted."}
+                                " Tout le contenu sera supprimé."}
                             <br />
-                            This action cannot be undone.
+                            Cette action est irréversible.
                         </p>
                     </div>
                 </div>
@@ -50,14 +53,14 @@ export default function DeleteModal({
                         className={styles.cancelButton}
                         onClick={onCloseModal}
                     >
-                        Cancel
+                        Annuler
                     </button>
                     <button
                         type="button"
                         className={`${styles.confirmButton} ${styles.deleteButton}`}
                         onClick={() => onDeleteFile(file.id)}
                     >
-                        Delete
+                        Supprimer
                     </button>
                 </div>
             </motion.div>
