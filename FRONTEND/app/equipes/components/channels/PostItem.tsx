@@ -74,8 +74,19 @@ export default function PostItem({
     }
 
     const isAuthor = post.authorId === currentUserId
-    const responseCount = post.responseCount || 0
-    const postId = post.id || post._id
+
+    // Ajout d'un état local pour les réponses, synchronisé avec post.responses
+    const [responses, setResponses] = useState<any[]>(post.responses || [])
+    // Ajout d'un état local pour le nombre de réponses, synchronisé avec post.responseCount
+    const [responseCount, setResponseCount] = useState<number>(
+        post.responseCount || 0
+    )
+
+    // Synchronise les réponses locales et le count avec les props à chaque changement
+    useEffect(() => {
+        setResponses(post.responses || [])
+        setResponseCount(post.responseCount++)
+    }, [post.responses])
 
     return (
         <motion.div
@@ -176,9 +187,9 @@ export default function PostItem({
                 </div>
             )}
 
-            {isExpanded && post.responses && post.responses.length > 0 && (
+            {isExpanded && responses && responses.length > 0 && (
                 <div className={styles.responsesContainer}>
-                    {post.responses.map((response: any) => (
+                    {responses.map((response: any) => (
                         <PostResponseItem
                             key={
                                 response.id ||
