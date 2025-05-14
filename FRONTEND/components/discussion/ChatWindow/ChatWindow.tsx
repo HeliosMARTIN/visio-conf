@@ -138,26 +138,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         const messageUuid = uuidv4()
         const currentDate = new Date()
 
-        // Créer un message temporaire pour l'affichage immédiat
-        const tempMessage: Message = {
-            message_uuid: messageUuid,
-            message_content: newMessage.trim(),
-            message_sender: {
-                _id: currentUser.id,
-                id: currentUser.id,
-                firstname: currentUser.firstname || "",
-                lastname: currentUser.lastname || "",
-                picture: currentUser.picture || "",
-                email: currentUser.email,
-                phone: currentUser.phone || "",
-            },
-            message_date_create: currentDate.toISOString(),
-            message_status: "sent",
-        }
-
-        // Ajouter le message temporaire à l'état local
-        setLocalMessages((prev) => [...prev, tempMessage])
-
         const message = {
             message_send_request: {
                 userEmail: currentUser.email,
