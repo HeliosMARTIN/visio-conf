@@ -33,9 +33,9 @@ export default function ChannelTabs({
             <div className={styles.tabsContainer}>
                 {sortedChannels.map((channel) => (
                     <div
-                        key={channel._id}
+                        key={channel.id}
                         className={`${styles.tab} ${
-                            selectedChannel?._id === channel._id
+                            selectedChannel?.id === channel.id
                                 ? styles.selected
                                 : ""
                         }`}

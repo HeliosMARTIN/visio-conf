@@ -141,11 +141,7 @@ export default function ChannelView({
     }
 
     useEffect(() => {
-        console.log("hereee use effect", channelId)
-
         if (controleur && canal && channelId) {
-            console.log("hereeee channel view")
-
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
 
             // Récupérer les membres du canal
