@@ -804,6 +804,231 @@ const initializeChannelPosts = async (channels, users) => {
     }
 }
 
+const initializeFiles = async (users) => {
+    if (!users) {
+        console.error("Utilisateurs manquants")
+        return
+    }
+
+    await File.deleteMany({})
+
+    // Création de dossiers et fichiers pour chaque utilisateur
+    for (const user of users) {
+        // Dossiers racine
+        const rootFolders = [
+            {
+                id: uuidv4(),
+                name: "Documents",
+                type: "folder",
+                ownerId: user.uuid,
+                parentId: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                id: uuidv4(),
+                name: "Images",
+                type: "folder",
+                ownerId: user.uuid,
+                parentId: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                id: uuidv4(),
+                name: "Projets",
+                type: "folder",
+                ownerId: user.uuid,
+                parentId: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ]
+
+        // Insertion des dossiers racine
+        for (const folder of rootFolders) {
+            const newFolder = new File(folder)
+            await newFolder.save()
+            console.log(
+                `Dossier ${folder.name} créé pour ${user.firstname} ${user.lastname}`
+            )
+
+            // Sous-dossiers et fichiers
+            if (folder.name === "Documents") {
+                // Sous-dossier Cours
+                const coursFolder = new File({
+                    id: uuidv4(),
+                    name: "Cours",
+                    type: "folder",
+                    ownerId: user.uuid,
+                    parentId: folder.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                })
+                await coursFolder.save()
+
+                // Fichiers dans Cours
+                const coursFiles = [
+                    {
+                        id: uuidv4(),
+                        name: "cours_web.pdf",
+                        type: "file",
+                        size: 1024 * 1024 * 2, // 2 MB
+                        mimeType: "application/pdf",
+                        extension: "pdf",
+                        ownerId: user.uuid,
+                        parentId: coursFolder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/cours_web.pdf`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "notes_cours.docx",
+                        type: "file",
+                        size: 1024 * 512, // 512 KB
+                        mimeType:
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        extension: "docx",
+                        ownerId: user.uuid,
+                        parentId: coursFolder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/notes_cours.docx`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                ]
+
+                for (const file of coursFiles) {
+                    const newFile = new File(file)
+                    await newFile.save()
+                }
+
+                // Fichiers dans Documents
+                const docFiles = [
+                    {
+                        id: uuidv4(),
+                        name: "rapport_annuel.pdf",
+                        type: "file",
+                        size: 1024 * 1024 * 3, // 3 MB
+                        mimeType: "application/pdf",
+                        extension: "pdf",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${
+                            user.uuid
+                        }/${uuidv4()}/rapport_annuel.pdf`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                ]
+
+                for (const file of docFiles) {
+                    const newFile = new File(file)
+                    await newFile.save()
+                }
+            } else if (folder.name === "Images") {
+                // Fichiers dans Images
+                const imageFiles = [
+                    {
+                        id: uuidv4(),
+                        name: "photo_profil.jpg",
+                        type: "file",
+                        size: 1024 * 256, // 256 KB
+                        mimeType: "image/jpeg",
+                        extension: "jpg",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/photo_profil.jpg`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "logo_universite.png",
+                        type: "file",
+                        size: 1024 * 128, // 128 KB
+                        mimeType: "image/png",
+                        extension: "png",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${
+                            user.uuid
+                        }/${uuidv4()}/logo_universite.png`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                ]
+
+                for (const file of imageFiles) {
+                    const newFile = new File(file)
+                    await newFile.save()
+                }
+            } else if (folder.name === "Projets") {
+                // Sous-dossier Projet Web
+                const projetWebFolder = new File({
+                    id: uuidv4(),
+                    name: "Projet Web",
+                    type: "folder",
+                    ownerId: user.uuid,
+                    parentId: folder.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                })
+                await projetWebFolder.save()
+
+                // Fichiers dans Projet Web
+                const projetWebFiles = [
+                    {
+                        id: uuidv4(),
+                        name: "index.html",
+                        type: "file",
+                        size: 1024 * 10, // 10 KB
+                        mimeType: "text/html",
+                        extension: "html",
+                        ownerId: user.uuid,
+                        parentId: projetWebFolder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/index.html`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "style.css",
+                        type: "file",
+                        size: 1024 * 5, // 5 KB
+                        mimeType: "text/css",
+                        extension: "css",
+                        ownerId: user.uuid,
+                        parentId: projetWebFolder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/style.css`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "script.js",
+                        type: "file",
+                        size: 1024 * 8, // 8 KB
+                        mimeType: "application/javascript",
+                        extension: "js",
+                        ownerId: user.uuid,
+                        parentId: projetWebFolder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/script.js`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                ]
+
+                for (const file of projetWebFiles) {
+                    const newFile = new File(file)
+                    await newFile.save()
+                }
+            }
+        }
+    }
+    console.log("Fichiers et dossiers créés pour tous les utilisateurs")
+}
+
 // Fonction principale d'initialisation
 const initDb = async () => {
     const mongoUri = process.env.MONGO_URI
@@ -845,6 +1070,8 @@ const initDb = async () => {
         const channels = await initializeChannels(teams, users)
         await initializeChannelMembers(channels)
         await initializeChannelPosts(channels, users)
+
+        await initializeFiles(users)
 
         console.log("Initialisation de la base de données terminée avec succès")
         await mongoose.connection.close()

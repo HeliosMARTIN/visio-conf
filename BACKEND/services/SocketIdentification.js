@@ -1,3 +1,5 @@
+import User from "../models/user.js"
+
 /**
  * Service responsable de la gestion des associations entre utilisateurs et sockets WebSocket
  * Cette version utilise le stockage en mémoire au lieu de la base de données
@@ -31,7 +33,30 @@ class SocketIdentificationService {
                 return null
             }
 
-            const userInfo = this.socketToUser.get(socketId)
+            let userInfo = this.socketToUser.get(socketId)
+
+            // Si userInfo absent ou incomplet, tente de charger depuis la base
+            if (
+                !userInfo ||
+                !userInfo._id ||
+                !userInfo.uuid ||
+                !userInfo.email
+            ) {
+                // Cherche l'userId via userToSocket
+                let userId = null
+                for (const [uid, sid] of this.userToSocket.entries()) {
+                    if (sid === socketId) {
+                        userId = uid
+                        break
+                    }
+                }
+                if (userId) {
+                    userInfo = await User.findById(userId).lean()
+                    if (userInfo) {
+                        this.socketToUser.set(socketId, userInfo)
+                    }
+                }
+            }
 
             if (this.verbose) {
                 if (userInfo) {
@@ -70,11 +95,22 @@ class SocketIdentificationService {
                 return null
             }
 
-            // Si userInfo n'est pas fourni, utiliser les informations existantes ou créer un objet minimal
-            const updatedUserInfo =
-                userInfo || this.userToSocket.has(userId)
-                    ? this.socketToUser.get(this.userToSocket.get(userId))
-                    : { _id: userId }
+            let updatedUserInfo = userInfo
+            if (!updatedUserInfo) {
+                // Cherche l'ancien socket pour ce user
+                const oldSocketId = this.userToSocket.get(userId)
+                console.log(this.userToSocket)
+
+                if (oldSocketId) {
+                    updatedUserInfo = await this.getUserInfoBySocketId(
+                        oldSocketId
+                    )
+                }
+                // Si toujours rien, objet minimal
+                if (!updatedUserInfo) {
+                    updatedUserInfo = { _id: userId }
+                }
+            }
 
             // Si l'utilisateur avait déjà un socket, le supprimer
             if (this.userToSocket.has(userId)) {
