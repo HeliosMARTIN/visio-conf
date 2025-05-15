@@ -263,7 +263,10 @@ export default function ProfilPopUp({ user }: { user: User }) {
             )}
           </div>
 
-          <div className={`${styles.shadowBloc} ${styles.parametres}`}>
+          <div 
+            onClick={() => router.push("/profil")} 
+            className={`${styles.shadowBloc} ${styles.parametres}`}
+          >
             <Settings size={21} />
             <p>Paramètres</p>
           </div>
