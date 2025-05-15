@@ -250,7 +250,6 @@ export default function ProfilPage() {
         controleur.envoie(handler, uploadMessage)
     }
 
-    console.log("currentUser", currentUser)
     if (!currentUser) {
         return (
             <div className={styles.page}>
