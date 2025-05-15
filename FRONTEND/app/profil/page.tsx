@@ -263,6 +263,12 @@ export default function ProfilPage() {
         )
     }
 
+    // Ajout : filtrer les rôles valides
+    const filteredRoles =
+        currentUser.roles && Array.isArray(currentUser.roles)
+            ? currentUser.roles.filter((role) => !!role && role !== "")
+            : []
+
     return (
         <div className={styles.page}>
             <main className={styles.main}>
@@ -317,47 +323,54 @@ export default function ProfilPage() {
                                 "Aucune description disponible"}
                         </p>
 
-            <h3>
-              {currentUser.firstname || "Prénom"}{" "}
-              {currentUser.lastname || "Nom"}
-            </h3>
-            <p>{currentUser.desc || "Aucune description disponible"}</p>
+                        <h3>
+                            {currentUser.firstname || "Prénom"}{" "}
+                            {currentUser.lastname || "Nom"}
+                        </h3>
+                        <p>
+                            {currentUser.desc ||
+                                "Aucune description disponible"}
+                        </p>
 
-            <div className={styles.profilItemsContainer}>
-              <div className={styles.profilItem}>
-                <h4>Nom</h4>
-                <p>{currentUser.lastname || "Non renseigné"}</p>
-              </div>
-              <div className={styles.profilItem}>
-                <h4>Prénom</h4>
-                <p>{currentUser.firstname || "Non renseigné"}</p>
-              </div>
-              <div className={styles.profilItem}>
-                <h4>Compte créé</h4>
-                <p>{formatDate(currentUser.date_create)}</p>
-              </div>
-              <div className={styles.profilItem}>
-                <h4>Dernière connexion</h4>
-                <p>{formatDate(currentUser.last_connection)}</p>
-              </div>
-              <div className={styles.profilItem}>
-                <h4>Email</h4>
-                <p>{currentUser.email || "Email non renseigné"}</p>
-              </div>
-              <div className={styles.profilItem}>
-                <h4>Rôles</h4>
-                <p>
-                  {currentUser.roles &&
-                  Array.isArray(currentUser.roles) &&
-                  filteredRoles.length > 0
-                    ? filteredRoles.join(", ")
-                    : "Aucun rôle attribué"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+                        <div className={styles.profilItemsContainer}>
+                            <div className={styles.profilItem}>
+                                <h4>Nom</h4>
+                                <p>{currentUser.lastname || "Non renseigné"}</p>
+                            </div>
+                            <div className={styles.profilItem}>
+                                <h4>Prénom</h4>
+                                <p>
+                                    {currentUser.firstname || "Non renseigné"}
+                                </p>
+                            </div>
+                            <div className={styles.profilItem}>
+                                <h4>Compte créé</h4>
+                                <p>{formatDate(currentUser.date_create)}</p>
+                            </div>
+                            <div className={styles.profilItem}>
+                                <h4>Dernière connexion</h4>
+                                <p>{formatDate(currentUser.last_connection)}</p>
+                            </div>
+                            <div className={styles.profilItem}>
+                                <h4>Email</h4>
+                                <p>
+                                    {currentUser.email || "Email non renseigné"}
+                                </p>
+                            </div>
+                            <div className={styles.profilItem}>
+                                <h4>Rôles</h4>
+                                <p>
+                                    {currentUser.roles &&
+                                    Array.isArray(currentUser.roles) &&
+                                    filteredRoles.length > 0
+                                        ? filteredRoles.join(", ")
+                                        : "Aucun rôle attribué"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    )
 }
