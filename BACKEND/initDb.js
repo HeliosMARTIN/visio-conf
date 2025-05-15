@@ -11,6 +11,8 @@ import Channel from "./models/channel.js"
 import ChannelPost from "./models/channelPost.js"
 import ChannelPostResponse from "./models/channelPostResponse.js"
 import File from "./models/file.js"
+import TeamMember from "./models/teamMember.js"
+import ChannelMember from "./models/channelMember.js"
 
 dotenv.config()
 
@@ -393,12 +395,40 @@ const initializeDiscussions = async (users) => {
             discussion_creator: users[0]._id,
             discussion_members: [users[0]._id, users[1]._id],
             discussion_name: "Discussion John et Janny",
+            discussion_messages: [
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Salut Janny, comment vas-tu ?",
+                    message_sender: users[0]._id,
+                    message_date_create: new Date(),
+                },
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Très bien John, merci !",
+                    message_sender: users[1]._id,
+                    message_date_create: new Date(),
+                },
+            ],
         },
         {
             discussion_uuid: uuidv4(),
             discussion_creator: users[2]._id,
             discussion_members: [users[2]._id, users[3]._id],
             discussion_name: "Discussion Jean et Hélios",
+            discussion_messages: [
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Hélios, tu as avancé sur le projet ?",
+                    message_sender: users[2]._id,
+                    message_date_create: new Date(),
+                },
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Oui Jean, je t'envoie ça ce soir.",
+                    message_sender: users[3]._id,
+                    message_date_create: new Date(),
+                },
+            ],
         },
         {
             discussion_uuid: uuidv4(),
@@ -406,6 +436,14 @@ const initializeDiscussions = async (users) => {
             discussion_members: [users[0]._id, users[2]._id, users[4]._id],
             discussion_name: "Équipe pédagogique",
             discussion_isGroup: true,
+            discussion_messages: [
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Réunion demain à 10h.",
+                    message_sender: users[0]._id,
+                    message_date_create: new Date(),
+                },
+            ],
         },
         {
             discussion_uuid: uuidv4(),
@@ -413,12 +451,28 @@ const initializeDiscussions = async (users) => {
             discussion_members: [users[3]._id, users[5]._id, users[7]._id],
             discussion_name: "Projet étudiant",
             discussion_isGroup: true,
+            discussion_messages: [
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "On commence le projet aujourd'hui !",
+                    message_sender: users[3]._id,
+                    message_date_create: new Date(),
+                },
+            ],
         },
         {
             discussion_uuid: uuidv4(),
             discussion_creator: users[4]._id,
             discussion_members: [users[4]._id, users[6]._id],
             discussion_name: "Discussion Sophie et Marie",
+            discussion_messages: [
+                {
+                    message_uuid: uuidv4(),
+                    message_content: "Marie, peux-tu m'envoyer le planning ?",
+                    message_sender: users[4]._id,
+                    message_date_create: new Date(),
+                },
+            ],
         },
     ]
 
@@ -433,328 +487,268 @@ const initializeDiscussions = async (users) => {
     return insertedDiscussions
 }
 
+// Nouvelle fonction pour initialiser les équipes
 const initializeTeams = async (users) => {
-    if (!users || users.length < 3) {
+    if (!users || users.length < 2) {
         console.error("Pas assez d'utilisateurs pour créer des équipes")
-        return
+        return []
     }
 
     await Team.deleteMany({})
 
-    const teamsToInsert = [
+    // Définition des équipes à créer
+    const teamsToCreate = [
         {
-            id: uuidv4(),
             name: "Département MMI",
             description:
-                "Équipe du département Métiers du Multimédia et de l'Internet",
+                "Équipe des enseignants et personnels du département MMI",
             createdBy: users[0]._id,
-            isPublic: true,
-            createdAt: new Date(),
+            members: [
+                { userId: users[0]._id, role: "admin", joinedAt: new Date() },
+                { userId: users[1]._id, role: "member", joinedAt: new Date() },
+                { userId: users[2]._id, role: "member", joinedAt: new Date() },
+                { userId: users[4]._id, role: "member", joinedAt: new Date() },
+                { userId: users[6]._id, role: "member", joinedAt: new Date() },
+            ],
         },
         {
-            id: uuidv4(),
-            name: "Projet Tutoré",
-            description:
-                "Équipe pour le suivi des projets tutorés des étudiants",
+            name: "Projet Web Avancé",
+            description: "Équipe de développement pour le projet web avancé",
             createdBy: users[2]._id,
-            isPublic: true,
-            createdAt: new Date(),
+            members: [
+                { userId: users[2]._id, role: "admin", joinedAt: new Date() },
+                { userId: users[3]._id, role: "member", joinedAt: new Date() },
+                { userId: users[5]._id, role: "member", joinedAt: new Date() },
+                { userId: users[7]._id, role: "member", joinedAt: new Date() },
+            ],
         },
         {
-            id: uuidv4(),
-            name: "Développement Web",
-            description:
-                "Équipe des enseignants et étudiants en développement web",
-            createdBy: users[3]._id,
-            isPublic: false,
-            createdAt: new Date(),
-        },
-        {
-            id: uuidv4(),
-            name: "Communication",
-            description: "Équipe de communication de l'université",
-            createdBy: users[4]._id,
-            isPublic: true,
-            createdAt: new Date(),
+            name: "Administration",
+            description: "Équipe administrative de l'université",
+            createdBy: users[6]._id,
+            members: [
+                { userId: users[6]._id, role: "admin", joinedAt: new Date() },
+                { userId: users[0]._id, role: "member", joinedAt: new Date() },
+                { userId: users[4]._id, role: "member", joinedAt: new Date() },
+            ],
         },
     ]
 
     const insertedTeams = []
-    for (const teamData of teamsToInsert) {
-        const newTeam = new Team(teamData)
-        await newTeam.save()
-        insertedTeams.push(newTeam)
-        console.log(`Équipe ${teamData.name} insérée`)
-    }
 
-    // Ajout des membres aux équipes
-    const teamMembers = [
-        // Département MMI
-        {
-            teamId: insertedTeams[0].id,
-            userId: users[0]._id,
-            role: "admin",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[0].id,
-            userId: users[1]._id, // Janny Doey - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[0].id,
-            userId: users[2]._id,
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[0].id,
-            userId: users[4]._id,
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[0].id,
-            userId: users[6]._id, // Marie Leroy - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
+    // Création des équipes
+    for (const teamData of teamsToCreate) {
+        const team = new Team({
+            name: teamData.name,
+            description: teamData.description,
+            createdBy: teamData.createdBy,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        })
 
-        // Projet Tutoré
-        {
-            teamId: insertedTeams[1].id,
-            userId: users[2]._id,
-            role: "admin",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[1].id,
-            userId: users[0]._id,
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[1].id,
-            userId: users[3]._id,
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[1].id,
-            userId: users[5]._id, // Thomas Petit - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
+        await team.save()
 
-        // Développement Web
-        {
-            teamId: insertedTeams[2].id,
-            userId: users[3]._id,
-            role: "admin",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[2].id,
-            userId: users[0]._id,
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[2].id,
-            userId: users[5]._id, // Thomas Petit - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
+        // Ajout des informations de membres pour l'utilisation ultérieure
+        team.members = teamData.members.map((member) => ({
+            ...member,
+            teamId: team._id,
+        }))
 
-        // Communication
-        {
-            teamId: insertedTeams[3].id,
-            userId: users[4]._id,
-            role: "admin",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[3].id,
-            userId: users[1]._id, // Janny Doey - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
-        {
-            teamId: insertedTeams[3].id,
-            userId: users[6]._id, // Marie Leroy - Utilisation de _id au lieu de uuid
-            role: "member",
-            joinedAt: new Date(),
-        },
-    ]
-
-    // Mise à jour des équipes avec les membres
-    for (const member of teamMembers) {
-        const team = insertedTeams.find((t) => t.id === member.teamId)
-        if (team) {
-            if (!team.members) team.members = []
-            team.members.push(member)
-            await team.save()
-        }
+        insertedTeams.push(team)
+        console.log(`Équipe "${teamData.name}" créée`)
     }
 
     return insertedTeams
 }
 
-const initializeChannels = async (teams, users) => {
-    if (!teams || !users) {
-        console.error("Équipes ou utilisateurs manquants")
+// Fonction pour initialiser les membres d'équipe
+const initializeTeamMembers = async (teams) => {
+    if (!teams || teams.length === 0) {
+        console.error("Aucune équipe disponible pour créer des membres")
         return
+    }
+
+    await TeamMember.deleteMany({})
+
+    for (const team of teams) {
+        if (team.members && team.members.length > 0) {
+            for (const member of team.members) {
+                const teamMember = new TeamMember({
+                    teamId: team._id,
+                    userId: member.userId,
+                    role: member.role,
+                    joinedAt: member.joinedAt || new Date(),
+                })
+
+                await teamMember.save()
+            }
+        }
+    }
+
+    console.log("Membres d'équipes insérés dans TeamMember")
+}
+
+// Nouvelle fonction pour initialiser les canaux
+const initializeChannels = async (teams, users) => {
+    if (!teams || teams.length === 0) {
+        console.error("Aucune équipe disponible pour créer des canaux")
+        return []
     }
 
     await Channel.deleteMany({})
 
-    const channelsToInsert = []
+    const insertedChannels = []
 
-    // Création de canaux pour chaque équipe
+    // Pour chaque équipe, créer des canaux
     for (const team of teams) {
         // Canal général (toujours présent)
-        channelsToInsert.push({
-            id: uuidv4(),
+        const generalChannel = new Channel({
             name: "Général",
-            teamId: team.id,
+            teamId: team._id,
             isPublic: true,
             createdBy: team.createdBy,
             createdAt: new Date(),
+            updatedAt: new Date(),
         })
 
+        await generalChannel.save()
+
+        // Ajouter tous les membres de l'équipe au canal général
+        generalChannel.members = team.members.map((member) => ({
+            userId: member.userId,
+            role: member.role,
+            channelId: generalChannel._id,
+            joinedAt: new Date(),
+        }))
+
+        insertedChannels.push(generalChannel)
+
         // Canaux supplémentaires selon l'équipe
+        const additionalChannels = []
+
         if (team.name === "Département MMI") {
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Annonces",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Réunions",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Administration",
-                teamId: team.id,
-                isPublic: false,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-        } else if (team.name === "Projet Tutoré") {
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Suivi des projets",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Ressources",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-        } else if (team.name === "Développement Web") {
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Frontend",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Backend",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Projets",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-        } else if (team.name === "Communication") {
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Événements",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
-            channelsToInsert.push({
-                id: uuidv4(),
-                name: "Réseaux sociaux",
-                teamId: team.id,
-                isPublic: true,
-                createdBy: team.createdBy,
-                createdAt: new Date(),
-            })
+            additionalChannels.push(
+                {
+                    name: "Réunions",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                },
+                {
+                    name: "Événements",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                },
+                {
+                    name: "Direction",
+                    isPublic: false, // Canal privé
+                    createdBy: team.createdBy,
+                    // Seulement certains membres
+                    members: team.members.filter((m) => m.role === "admin"),
+                }
+            )
+        } else if (team.name === "Projet Web Avancé") {
+            additionalChannels.push(
+                {
+                    name: "Frontend",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                },
+                {
+                    name: "Backend",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                },
+                {
+                    name: "Design",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                }
+            )
+        } else if (team.name === "Administration") {
+            additionalChannels.push(
+                {
+                    name: "Plannings",
+                    isPublic: true,
+                    createdBy: team.createdBy,
+                },
+                {
+                    name: "Budget",
+                    isPublic: false,
+                    createdBy: team.createdBy,
+                    members: team.members.filter((m) => m.role === "admin"),
+                }
+            )
         }
-    }
 
-    const insertedChannels = []
-    for (const channelData of channelsToInsert) {
-        const newChannel = new Channel(channelData)
-        await newChannel.save()
-        insertedChannels.push(newChannel)
-        console.log(
-            `Canal ${channelData.name} inséré dans l'équipe ${
-                teams.find((t) => t.id === channelData.teamId).name
-            }`
-        )
-    }
+        // Créer les canaux supplémentaires
+        for (const channelData of additionalChannels) {
+            const channel = new Channel({
+                name: channelData.name,
+                teamId: team._id,
+                isPublic: channelData.isPublic,
+                createdBy: channelData.createdBy,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            })
 
-    // Ajout des membres aux canaux
-    for (const channel of insertedChannels) {
-        const team = teams.find((t) => t.id === channel.teamId)
-        if (team && team.members) {
-            // Pour les canaux publics, tous les membres de l'équipe sont membres
-            if (channel.isPublic) {
+            await channel.save()
+
+            // Définir les membres du canal
+            if (channelData.members) {
+                channel.members = channelData.members.map((member) => ({
+                    userId: member.userId,
+                    role: member.role,
+                    channelId: channel._id,
+                    joinedAt: new Date(),
+                }))
+            } else if (channelData.isPublic) {
+                // Si public, tous les membres de l'équipe sont membres du canal
                 channel.members = team.members.map((member) => ({
                     userId: member.userId,
                     role: member.role,
+                    channelId: channel._id,
                     joinedAt: new Date(),
                 }))
             }
-            // Pour les canaux privés, seulement les admins et quelques membres
-            else {
-                channel.members = team.members
-                    .filter(
-                        (member) =>
-                            member.role === "admin" || Math.random() > 0.5
-                    )
-                    .map((member) => ({
-                        userId: member.userId,
-                        role: member.role,
-                        joinedAt: new Date(),
-                    }))
-            }
-            await channel.save()
+
+            insertedChannels.push(channel)
+            console.log(
+                `Canal "${channelData.name}" créé pour l'équipe "${team.name}"`
+            )
         }
     }
 
     return insertedChannels
 }
 
+// Fonction pour initialiser les membres des canaux
+const initializeChannelMembers = async (channels) => {
+    if (!channels || channels.length === 0) {
+        console.error("Aucun canal disponible pour créer des membres")
+        return
+    }
+
+    await ChannelMember.deleteMany({})
+
+    for (const channel of channels) {
+        if (channel.members && channel.members.length > 0) {
+            for (const member of channel.members) {
+                const channelMember = new ChannelMember({
+                    channelId: channel.channelId || channel._id,
+                    userId: member.userId,
+                    role: member.role,
+                    joinedAt: member.joinedAt || new Date(),
+                })
+
+                await channelMember.save()
+            }
+        }
+    }
+
+    console.log("Membres de canaux insérés dans ChannelMember")
+}
+
+// Ajout de posts et réponses par défaut dans les channels
 const initializeChannelPosts = async (channels, users) => {
     if (!channels || !users) {
         console.error("Canaux ou utilisateurs manquants")
@@ -766,15 +760,9 @@ const initializeChannelPosts = async (channels, users) => {
 
     const insertedPosts = []
 
-    // Création de posts pour chaque canal
     for (const channel of channels) {
-        const team = await Team.findOne({ id: channel.teamId })
-        if (!team) continue
-
-        const teamMembers = team.members || []
+        // On prend les membres du channel pour choisir les auteurs
         const channelMembers = channel.members || []
-
-        // Récupération des IDs des utilisateurs qui sont membres du canal
         const memberUserIds = channelMembers.map((m) => m.userId.toString())
         const eligibleUsers = users.filter((u) =>
             memberUserIds.includes(u._id.toString())
@@ -782,340 +770,55 @@ const initializeChannelPosts = async (channels, users) => {
 
         if (eligibleUsers.length === 0) continue
 
-        const postCount = Math.floor(Math.random() * 8) + 2 // Entre 2 et 10 posts par canal
-
-        for (let i = 0; i < postCount; i++) {
+        // 2 posts par channel
+        for (let i = 0; i < 2; i++) {
             const author =
                 eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)]
 
             const postData = {
-                _id: mongoose.Types.ObjectId(),
-                channelId: channel.id,
-                content: `Post ${i + 1} dans le canal ${
-                    channel.name
-                } de l'équipe ${team.name}. ${getRandomContent()}`,
-                author: {
-                    _id: author._id,
-                    firstname: author.firstname,
-                    lastname: author.lastname,
-                },
-                createdAt: new Date(Date.now() - (postCount - i) * 86400000), // Posts espacés d'un jour
-                updatedAt: new Date(Date.now() - (postCount - i) * 86400000),
+                channelId: channel._id,
+                content: `Message ${i + 1} dans le canal ${channel.name}`,
+                authorId: author._id,
+                createdAt: new Date(Date.now() - (2 - i) * 86400000),
+                updatedAt: new Date(Date.now() - (2 - i) * 86400000),
             }
 
             const newPost = new ChannelPost(postData)
             await newPost.save()
             insertedPosts.push(newPost)
 
-            // Ajout de réponses aux posts
-            const responseCount = Math.floor(Math.random() * 5) // Entre 0 et 4 réponses par post
-
-            for (let j = 0; j < responseCount; j++) {
-                const responder =
-                    eligibleUsers[
-                        Math.floor(Math.random() * eligibleUsers.length)
-                    ]
-
-                const responseData = {
-                    _id: mongoose.Types.ObjectId(),
-                    postId: newPost._id,
-                    content: `Réponse ${j + 1} au post de ${
-                        author.firstname
-                    }. ${getRandomResponse()}`,
-                    author: {
-                        _id: responder._id,
-                        firstname: responder.firstname,
-                        lastname: responder.lastname,
-                    },
-                    createdAt: new Date(
-                        postData.createdAt.getTime() + (j + 1) * 3600000
-                    ), // Réponses espacées d'une heure après le post
-                    updatedAt: new Date(
-                        postData.createdAt.getTime() + (j + 1) * 3600000
-                    ),
-                }
-
-                const newResponse = new ChannelPostResponse(responseData)
-                await newResponse.save()
+            // 1 réponse par post
+            const responder =
+                eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)]
+            const responseData = {
+                postId: newPost._id,
+                content: `Réponse à "${postData.content}"`,
+                authorId: responder._id,
+                createdAt: new Date(postData.createdAt.getTime() + 3600000),
+                updatedAt: new Date(postData.createdAt.getTime() + 3600000),
             }
+            const newResponse = new ChannelPostResponse(responseData)
+            await newResponse.save()
         }
-
-        console.log(`${postCount} posts créés dans le canal ${channel.name}`)
+        console.log(`2 posts créés dans le canal ${channel.name}`)
     }
-}
-
-const initializeFiles = async (users) => {
-    if (!users) {
-        console.error("Utilisateurs manquants")
-        return
-    }
-
-    await File.deleteMany({})
-
-    // Création de dossiers et fichiers pour chaque utilisateur
-    for (const user of users) {
-        // Dossiers racine
-        const rootFolders = [
-            {
-                id: uuidv4(),
-                name: "Documents",
-                type: "folder",
-                ownerId: user.uuid,
-                parentId: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-            {
-                id: uuidv4(),
-                name: "Images",
-                type: "folder",
-                ownerId: user.uuid,
-                parentId: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-            {
-                id: uuidv4(),
-                name: "Projets",
-                type: "folder",
-                ownerId: user.uuid,
-                parentId: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-        ]
-
-        // Insertion des dossiers racine
-        for (const folder of rootFolders) {
-            const newFolder = new File(folder)
-            await newFolder.save()
-            console.log(
-                `Dossier ${folder.name} créé pour ${user.firstname} ${user.lastname}`
-            )
-
-            // Sous-dossiers et fichiers
-            if (folder.name === "Documents") {
-                // Sous-dossier Cours
-                const coursFolder = new File({
-                    id: uuidv4(),
-                    name: "Cours",
-                    type: "folder",
-                    ownerId: user.uuid,
-                    parentId: folder.id,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                })
-                await coursFolder.save()
-
-                // Fichiers dans Cours
-                const coursFiles = [
-                    {
-                        id: uuidv4(),
-                        name: "cours_web.pdf",
-                        type: "file",
-                        size: 1024 * 1024 * 2, // 2 MB
-                        mimeType: "application/pdf",
-                        extension: "pdf",
-                        ownerId: user.uuid,
-                        parentId: coursFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/cours_web.pdf`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                    {
-                        id: uuidv4(),
-                        name: "notes_cours.docx",
-                        type: "file",
-                        size: 1024 * 512, // 512 KB
-                        mimeType:
-                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        extension: "docx",
-                        ownerId: user.uuid,
-                        parentId: coursFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/notes_cours.docx`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                ]
-
-                for (const file of coursFiles) {
-                    const newFile = new File(file)
-                    await newFile.save()
-                }
-
-                // Fichiers dans Documents
-                const docFiles = [
-                    {
-                        id: uuidv4(),
-                        name: "rapport_annuel.pdf",
-                        type: "file",
-                        size: 1024 * 1024 * 3, // 3 MB
-                        mimeType: "application/pdf",
-                        extension: "pdf",
-                        ownerId: user.uuid,
-                        parentId: folder.id,
-                        path: `files/${
-                            user.uuid
-                        }/${uuidv4()}/rapport_annuel.pdf`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                ]
-
-                for (const file of docFiles) {
-                    const newFile = new File(file)
-                    await newFile.save()
-                }
-            } else if (folder.name === "Images") {
-                // Fichiers dans Images
-                const imageFiles = [
-                    {
-                        id: uuidv4(),
-                        name: "photo_profil.jpg",
-                        type: "file",
-                        size: 1024 * 256, // 256 KB
-                        mimeType: "image/jpeg",
-                        extension: "jpg",
-                        ownerId: user.uuid,
-                        parentId: folder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/photo_profil.jpg`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                    {
-                        id: uuidv4(),
-                        name: "logo_universite.png",
-                        type: "file",
-                        size: 1024 * 128, // 128 KB
-                        mimeType: "image/png",
-                        extension: "png",
-                        ownerId: user.uuid,
-                        parentId: folder.id,
-                        path: `files/${
-                            user.uuid
-                        }/${uuidv4()}/logo_universite.png`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                ]
-
-                for (const file of imageFiles) {
-                    const newFile = new File(file)
-                    await newFile.save()
-                }
-            } else if (folder.name === "Projets") {
-                // Sous-dossier Projet Web
-                const projetWebFolder = new File({
-                    id: uuidv4(),
-                    name: "Projet Web",
-                    type: "folder",
-                    ownerId: user.uuid,
-                    parentId: folder.id,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                })
-                await projetWebFolder.save()
-
-                // Fichiers dans Projet Web
-                const projetWebFiles = [
-                    {
-                        id: uuidv4(),
-                        name: "index.html",
-                        type: "file",
-                        size: 1024 * 10, // 10 KB
-                        mimeType: "text/html",
-                        extension: "html",
-                        ownerId: user.uuid,
-                        parentId: projetWebFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/index.html`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                    {
-                        id: uuidv4(),
-                        name: "style.css",
-                        type: "file",
-                        size: 1024 * 5, // 5 KB
-                        mimeType: "text/css",
-                        extension: "css",
-                        ownerId: user.uuid,
-                        parentId: projetWebFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/style.css`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                    {
-                        id: uuidv4(),
-                        name: "script.js",
-                        type: "file",
-                        size: 1024 * 8, // 8 KB
-                        mimeType: "application/javascript",
-                        extension: "js",
-                        ownerId: user.uuid,
-                        parentId: projetWebFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/script.js`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                ]
-
-                for (const file of projetWebFiles) {
-                    const newFile = new File(file)
-                    await newFile.save()
-                }
-            }
-        }
-    }
-    console.log("Fichiers et dossiers créés pour tous les utilisateurs")
-}
-
-// Fonctions utilitaires pour générer du contenu aléatoire
-function getRandomContent() {
-    const contents = [
-        "Bonjour à tous, j'espère que vous allez bien aujourd'hui.",
-        "Rappel important : la réunion est prévue pour demain à 14h en salle B204.",
-        "Je viens de mettre à jour les documents du projet, n'hésitez pas à les consulter.",
-        "Quelqu'un pourrait-il m'aider avec le problème de configuration du serveur ?",
-        "Félicitations à toute l'équipe pour le travail accompli cette semaine !",
-        "Voici les nouvelles directives pour le semestre à venir.",
-        "Je partage avec vous cet article intéressant sur les nouvelles technologies web.",
-        "N'oubliez pas de rendre vos rapports avant vendredi prochain.",
-        "Bienvenue aux nouveaux membres de l'équipe !",
-        "Nous avons besoin de volontaires pour organiser l'événement du mois prochain.",
-    ]
-    return contents[Math.floor(Math.random() * contents.length)]
-}
-
-function getRandomResponse() {
-    const responses = [
-        "Merci pour l'information !",
-        "Je suis disponible pour aider si besoin.",
-        "Pouvez-vous préciser davantage ?",
-        "Je ne pourrai pas être présent, désolé.",
-        "Excellente initiative !",
-        "J'ai déjà commencé à travailler dessus.",
-        "Je vais regarder ça dès que possible.",
-        "Avons-nous une date limite pour ce projet ?",
-        "Je suis d'accord avec cette approche.",
-        "Pouvons-nous en discuter lors de la prochaine réunion ?",
-    ]
-    return responses[Math.floor(Math.random() * responses.length)]
 }
 
 // Fonction principale d'initialisation
-const mongoUri = process.env.MONGO_URI
-if (!mongoUri) {
-    throw new Error(
-        "MONGO_URI n'est pas défini dans les variables d'environnement"
-    )
-}
+const initDb = async () => {
+    const mongoUri = process.env.MONGO_URI
+    if (!mongoUri) {
+        throw new Error(
+            "MONGO_URI n'est pas défini dans les variables d'environnement"
+        )
+    }
 
-mongoose
-    .connect(mongoUri, {
-        user: process.env.MONGO_USER,
-        pass: process.env.MONGO_PASSWORD,
-    })
-    .then(async () => {
+    try {
+        await mongoose.connect(mongoUri, {
+            user: process.env.MONGO_USER,
+            pass: process.env.MONGO_PASSWORD,
+        })
+
         console.log("Connecté à MongoDB")
 
         // Initialisation des collections
@@ -1128,22 +831,48 @@ mongoose
         await ChannelPost.init()
         await ChannelPostResponse.init()
         await File.init()
+        await TeamMember.init()
+        await ChannelMember.init()
 
         // Création des données
         await initializeRoles()
         const users = await initializeUsers()
         const discussions = await initializeDiscussions(users)
+
+        // Initialisation des équipes et canaux avec les nouvelles fonctions
         const teams = await initializeTeams(users)
+        await initializeTeamMembers(teams)
         const channels = await initializeChannels(teams, users)
+        await initializeChannelMembers(channels)
         await initializeChannelPosts(channels, users)
-        await initializeFiles(users)
 
         console.log("Initialisation de la base de données terminée avec succès")
-        mongoose.connection.close()
-    })
-    .catch((err) => {
+        await mongoose.connection.close()
+        console.log("Connexion à MongoDB fermée")
+
+        return { success: true }
+    } catch (err) {
         console.error(
             "Erreur lors de l'initialisation de la base de données:",
             err
         )
+        return { success: false, error: err.message }
+    }
+}
+
+initDb()
+    .then((result) => {
+        if (result.success) {
+            console.log("Initialisation terminée avec succès")
+            process.exit(0)
+        } else {
+            console.error("Échec de l'initialisation:", result.error)
+            process.exit(1)
+        }
     })
+    .catch((err) => {
+        console.error("Erreur non gérée:", err)
+        process.exit(1)
+    })
+
+export default initDb
