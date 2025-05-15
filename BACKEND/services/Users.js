@@ -105,11 +105,15 @@ class UsersService {
             )
             if (!user) throw new Error("User not found")
 
+            // Utiliser SocketIdentificationService pour obtenir le socket id
+            const socketId = SocketIdentificationService.getUserSocketId(
+                user._id?.toString()
+            )
             const message = {
                 update_user_roles_response: {
                     userId: mesg.update_user_roles_request.user_id,
                 },
-                id: [mesg.id, user.socket_id],
+                id: [mesg.id, socketId].filter(Boolean),
             }
             this.controleur.envoie(this, message)
         }

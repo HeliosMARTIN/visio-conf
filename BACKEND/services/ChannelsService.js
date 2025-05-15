@@ -968,13 +968,15 @@ class ChannelsService {
             const channelMembers = await ChannelMember.find({ channelId })
             const userIds = channelMembers.map((m) => m.userId.toString())
 
-            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
-            const users = await User.find({
-                _id: { $in: userIds },
-                socket_id: { $ne: null },
-            }).select("socket_id")
-
-            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+            // Utiliser SocketIdentificationService pour obtenir les socket ids connectés
+            const socketIdPromises = userIds.map(async (userId) => {
+                const socketId =
+                    SocketIdentificationService.getUserSocketId(userId)
+                return socketId
+            })
+            const socketIds = (await Promise.all(socketIdPromises)).filter(
+                Boolean
+            )
 
             // Réponse à tous les membres connectés du channel
             const responseMessage = {
@@ -1078,13 +1080,15 @@ class ChannelsService {
             })
             const userIds = channelMembers.map((m) => m.userId.toString())
 
-            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
-            const users = await User.find({
-                _id: { $in: userIds },
-                socket_id: { $ne: null },
-            }).select("socket_id")
-
-            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+            // Utiliser SocketIdentificationService pour obtenir les socket ids connectés
+            const socketIdPromises = userIds.map(async (userId) => {
+                const socketId =
+                    await SocketIdentificationService.getUserSocketId(userId)
+                return socketId
+            })
+            const socketIds = (await Promise.all(socketIdPromises)).filter(
+                Boolean
+            )
 
             // Réponse à tous les membres connectés du channel
             const responseMessage = {
