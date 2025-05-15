@@ -10,6 +10,7 @@ import UsersListMessage from "@/components/home/UsersListMessage";
 import UsersListCall from "@/components/home/UsersListCall";
 import { Message } from "@/types/Message";
 import { Call } from "@/types/Call";
+import UserListAmis from "@/components/home/UserListAmis";
 
 export default function HomePage() {
   const pathname = usePathname();
@@ -230,119 +231,65 @@ export default function HomePage() {
     return messages.filter((msg) => msg.message_status === "sent").length;
   };
 
-  const getMissedCallsCount = () => {
-    const uniqueCallers = new Set<string>();
-    calls
-      .filter((call) => call.call_type === "missed")
-      .forEach((call) => {
-        uniqueCallers.add(call.call_sender.email);
-      });
-    return uniqueCallers.size;
-  };
-
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <div className={styles.notification}>
-          <section className={styles.section}>
-            <h1>Boite de réception</h1>
-            {error && <div className={styles.error}>{error}</div>}
-            <div className={styles.reception}>
-              <div className={styles.reception_header}>
-                <Bell />
-                {getSentMessagesCount() === 0 ? (
-                  <h3>Vous avez aucune notification</h3>
-                ) : (
-                  <h3>{getSentMessagesCount()} messages en attente</h3>
-                )}
-                <button
-                  onClick={simulateMessageNotification}
-                  style={{
-                    padding: "6px 12px",
-                    marginLeft: "auto",
-                    backgroundColor: "#007bff",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                  }}
-                >
-                  Simuler une notification
-                </button>
-              </div>
-              <UsersListMessage
-                users={users}
-                messages={messages}
-                currentUserEmail={currentUser?.email || ""}
-                isLoading={isLoading}
-              />
-            </div>
-          </section>
-          <section className={styles.section}>
-            <h1>Historique d'appels</h1>
-            {error && <div className={styles.error}>{error}</div>}
-            <div className={styles.reception}>
-              <div className={styles.reception_header}>
-                <Clock />
-                {getMissedCallsCount() === 0 ? (
-                  <h3>Aucun appel manqué</h3>
-                ) : (
-                  <h3>{getMissedCallsCount()} appels manqués</h3>
-                )}
-                <button
-                  onClick={simulateCallNotification}
-                  style={{
-                    padding: "6px 12px",
-                    marginLeft: "auto",
-                    backgroundColor: "#007bff",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                  }}
-                >
-                  Simuler un appel
-                </button>
-              </div>
-              <UsersListCall
-                users={users}
-                calls={calls}
-                currentUserEmail={currentUser?.email || ""}
-                isLoading={isLoading}
-                limitCalls={5}
-              />
-            </div>
-          </section>
-        </div>
-        <section className={styles.amis}>
-          <h1>Liste d'amis</h1>
-          <div className={styles.amis_list_scroll}>
-            {users
-              .filter((user) => user.email !== currentUser.email)
-              .map((user) => (
-                <a href="/discussion" key={user.id}>
-                  <div className={styles.amis_item}>
-                    <img
-                      src={
-                        user.picture
-                          ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
-                          : "/images/default_profile_picture.png"
-                      }
-                      alt={`${user.firstname} ${user.lastname}`}
-                      className={styles.amis_avatar}
-                    />
-                    <div className={styles.amis_info}>
-                      <h2>{`${user.firstname} ${user.lastname}`}</h2>
-                      <p>{user.email}</p>
-                    </div>
-                  </div>
-                </a>
-              ))}
-          </div>
+    <main className={styles.main}>
+      <div className={styles.notification}>
+        <section className={styles.section}>
+          <h1>Boite de réception</h1>
+          {error && <div className={styles.error}>{error}</div>}
+          {/* <button
+            onClick={simulateMessageNotification}
+            style={{
+              padding: "6px 12px",
+              marginLeft: "auto",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Simuler une notification
+          </button> */}
+          <UsersListMessage
+            users={users}
+            messages={messages}
+            currentUserEmail={currentUser?.email || ""}
+            isLoading={isLoading}
+          />
         </section>
-      </main>
-    </div>
+        <section className={styles.section}>
+          <h1>Historique d'appels</h1>
+          {error && <div className={styles.error}>{error}</div>}
+          {/* <button
+            onClick={simulateCallNotification}
+            style={{
+              padding: "6px 12px",
+              marginLeft: "auto",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Simuler un appel
+          </button> */}
+          <UsersListCall
+            users={users}
+            calls={calls}
+            currentUserEmail={currentUser?.email || ""}
+            isLoading={isLoading}
+            limitCalls={5}
+          />
+        </section>
+      </div>
+      <section className={styles.amis}>
+        <h1>Liste d'amis</h1>
+        <UserListAmis users={users} currentUserEmail={currentUser.email} />
+      </section>
+    </main>
   );
 }

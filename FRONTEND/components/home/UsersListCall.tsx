@@ -1,6 +1,5 @@
 "use client";
 import type { User } from "../../types/User";
-import UserInfo from "../UserInfo";
 import { UsersListSkeleton } from "../UserSkeleton";
 import styles from "./UsersListCall.module.css";
 import { useState, useEffect } from "react";
@@ -9,6 +8,7 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   PhoneMissed,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Call } from "@/types/Call";
@@ -31,31 +31,23 @@ export default function UsersListCall({
   currentUserEmail,
   isLoading = false,
   calls = [],
-  limitCalls = 5, // Limite par défaut à 5 appels
+  limitCalls = 5,
 }: UsersListCallProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<UserWithCall[]>([]);
 
   useEffect(() => {
-    // Trier les appels par date (les plus récents d'abord)
     const sortedCalls = [...calls].sort(
       (a, b) =>
         new Date(b.call_date_create).getTime() -
         new Date(a.call_date_create).getTime()
     );
-
-    // Prendre seulement les 5 (ou limitCalls) plus récents
     const recentCalls = sortedCalls.slice(0, limitCalls);
 
-    // Associer chaque appel à l'utilisateur correspondant
     const latestCallsByUser = new Map<string, Call>();
-
     recentCalls.forEach((call) => {
-      // Vérifier si l'utilisateur courant est le destinataire de l'appel
       if (call.call_recipient.email === currentUserEmail) {
-        // Si oui, associer l'appel à l'expéditeur
         const otherParticipant = call.call_sender;
-
         if (
           !latestCallsByUser.has(otherParticipant.email) ||
           new Date(call.call_date_create) >
@@ -66,9 +58,7 @@ export default function UsersListCall({
           latestCallsByUser.set(otherParticipant.email, call);
         }
       } else if (call.call_sender.email === currentUserEmail) {
-        // Si l'utilisateur courant est l'expéditeur, associer l'appel au destinataire
         const otherParticipant = call.call_recipient;
-
         if (
           !latestCallsByUser.has(otherParticipant.email) ||
           new Date(call.call_date_create) >
@@ -81,7 +71,6 @@ export default function UsersListCall({
       }
     });
 
-    // Créer une liste d'utilisateurs avec leurs derniers appels
     const usersWithCalls: UserWithCall[] = users
       .filter(
         (user) =>
@@ -92,7 +81,6 @@ export default function UsersListCall({
         latestCall: latestCallsByUser.get(user.email),
       }));
 
-    // Filtrer en fonction du terme de recherche
     if (searchTerm.trim() === "") {
       setFilteredUsers(usersWithCalls);
     } else {
@@ -107,15 +95,12 @@ export default function UsersListCall({
     }
   }, [searchTerm, users, currentUserEmail, calls, limitCalls]);
 
-  // Fonction pour formater la durée de l'appel
   const formatCallDuration = (call: Call): string => {
-    // Calculer la durée en secondes entre call_date_create et call_date_end
     const startDate = new Date(call.call_date_create);
     const endDate = new Date(call.call_date_end);
     const durationSeconds = Math.floor(
       (endDate.getTime() - startDate.getTime()) / 1000
     );
-
     if (durationSeconds < 60) {
       return `${durationSeconds}s`;
     }
@@ -124,7 +109,6 @@ export default function UsersListCall({
     return `${minutes}m ${remainingSeconds}s`;
   };
 
-  // Fonction pour obtenir l'icône correspondant au type d'appel
   const getCallIcon = (callType: string, isOutgoing: boolean) => {
     if (callType === "missed") {
       return <PhoneMissed className={styles.missedCall} size={16} />;
@@ -135,27 +119,45 @@ export default function UsersListCall({
     }
   };
 
-  return (
-    <div className={styles.usersListContainer}>
-      {calls.length > 0 && (
-        <div className={styles.searchContainer}>
-          <Search className={styles.searchIcon} size={18} />
-          <input
-            type="text"
-            placeholder="Rechercher un contact..."
-            className={styles.searchInput}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      )}
+  const getMissedCallsCount = () => {
+    const uniqueCallers = new Set<string>();
+    calls
+      .filter((call) => call.call_type === "missed")
+      .forEach((call) => {
+        uniqueCallers.add(call.call_sender.email);
+      });
+    return uniqueCallers.size;
+  };
 
-      {isLoading ? (
-        <ul className={styles.usersList}>
-          <UsersListSkeleton />
-        </ul>
-      ) : (
-        <>
+  return (
+    <div className={styles.reception}>
+      <div className={styles.reception_header}>
+        <Clock />
+        {getMissedCallsCount() === 0 ? (
+          <h3>Aucun appel manqué</h3>
+        ) : (
+          <h3>{getMissedCallsCount()} appels manqués</h3>
+        )}
+      </div>
+      <div className={styles.usersListContainer}>
+        {calls.length > 0 && (
+          <div className={styles.searchContainer}>
+            <Search className={styles.searchIcon} size={18} />
+            <input
+              type="text"
+              placeholder="Rechercher un contact..."
+              className={styles.searchInput}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
+
+        {isLoading ? (
+          <ul className={styles.usersList}>
+            <UsersListSkeleton />
+          </ul>
+        ) : (
           <div className={styles.usersListWrapper}>
             <AnimatePresence>
               <ul className={styles.usersList}>
@@ -216,8 +218,8 @@ export default function UsersListCall({
               </ul>
             </AnimatePresence>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }

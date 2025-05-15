@@ -1,3 +1,24 @@
+.reception {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  width: 30rem;
+  gap: 32px;
+  max-height: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(210, 204, 175, 0.3);
+  box-shadow: 0px 0px 11px 0px rgba(30, 54, 100, 0.3);
+}
+
+.reception_header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
 .usersListContainer {
   display: flex;
   flex-direction: column;

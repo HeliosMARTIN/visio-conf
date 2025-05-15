@@ -74,66 +74,71 @@ export default function UserInfoMessage({
   const avatarColor = getColorFromName(fullName);
 
   return (
-    <motion.li
-      className={`${styles.userCard} ${
-        isCurrentUser ? styles.currentUser : ""
-      }`}
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-    >
-      <div className={styles.userAvatar}>
-        <img
-          src={
-            user.picture
-              ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
-              : "/images/default_profile_picture.png"
-          }
-          alt={fullName}
-          className={styles.profileImage}
-          width={40}
-          height={40}
-          style={{ objectFit: "cover", borderRadius: "50%" }}
-        />
-      </div>
-      <div className={styles.userInfo}>
-        <h3 className={styles.userName}>{fullName}</h3>
-        <div className={styles.userDetails}>
-          {message && (
-            <div className={styles.messagePreview}>
-              <p>{message.message_content}</p>
-              <span className={styles.messageTime}>
-                {new Date(message.message_date_create).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-      <motion.div
-        className={styles.userActions}
-        initial={{ opacity: 0, x: 10 }}
-        animate={{
-          opacity: isHovered ? 1 : pendingMessageCount > 0 ? 1 : 0,
-          x: isHovered || pendingMessageCount > 0 ? 0 : 10,
-        }}
+    <a href="/discussion">
+      <motion.li
+        className={`${styles.userCard} ${
+          isCurrentUser ? styles.currentUser : ""
+        }`}
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
       >
-        {isHovered ? (
-          <button className={styles.actionButton} aria-label="Message">
-            <MessageCircle size={18} />
-            <span>Message</span>
-          </button>
-        ) : pendingMessageCount > 0 ? (
-          <div className={styles.pendingBadge}>
-            <span>{pendingMessageCount}</span>
+        <div className={styles.userAvatar}>
+          <img
+            src={
+              user.picture
+                ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
+                : "/images/default_profile_picture.png"
+            }
+            alt={fullName}
+            className={styles.profileImage}
+            width={40}
+            height={40}
+            style={{ objectFit: "cover", borderRadius: "50%" }}
+          />
+        </div>
+        <div className={styles.userInfo}>
+          <h3 className={styles.userName}>{fullName}</h3>
+          <div className={styles.userDetails}>
+            {message && (
+              <div className={styles.messagePreview}>
+                <p>{message.message_content}</p>
+                <span className={styles.messageTime}>
+                  {new Date(message.message_date_create).toLocaleTimeString(
+                    [],
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
+                </span>
+              </div>
+            )}
           </div>
-        ) : null}
-      </motion.div>
-    </motion.li>
+        </div>
+        <motion.div
+          className={styles.userActions}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{
+            opacity: isHovered ? 1 : pendingMessageCount > 0 ? 1 : 0,
+            x: isHovered || pendingMessageCount > 0 ? 0 : 10,
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          {isHovered ? (
+            <button className={styles.actionButton} aria-label="Message">
+              <MessageCircle size={18} />
+              <span>Message</span>
+            </button>
+          ) : pendingMessageCount > 0 ? (
+            <div className={styles.pendingBadge}>
+              <span>{pendingMessageCount}</span>
+            </div>
+          ) : null}
+        </motion.div>
+      </motion.li>
+    </a>
   );
 }

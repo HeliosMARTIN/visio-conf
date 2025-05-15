@@ -1,3 +1,24 @@
+.reception {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  width: 30rem;
+  gap: 32px;
+  max-height: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(210, 204, 175, 0.3);
+  box-shadow: 0px 0px 11px 0px rgba(30, 54, 100, 0.3);
+}
+
+.reception_header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
 .usersListContainer {
   display: flex;
   flex-direction: column;
@@ -34,20 +55,12 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
-.usersCount {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 12px;
-}
-
 .usersListWrapper {
   width: 100%;
   overflow-y: auto;
-  max-height: calc(
-    100vh - 280px
-  ); /* Adjust based on your header and other elements */
+  max-height: calc(100vh - 280px); /* Ajuste selon ton layout */
   border-radius: 8px;
-  padding-right: 4px; /* Add some padding to prevent content from touching the scrollbar */
+  padding-right: 4px;
 }
 
 .usersList {
@@ -58,6 +71,19 @@
   padding: 0;
   margin: 0;
   width: 100%;
+}
+
+.userWithMessageContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  justify-content: space-between;
 }
 
 .noResults {
