@@ -153,7 +153,7 @@ class TeamsService {
 
     async handleTeamCreate(mesg) {
         try {
-            const { name, description } = mesg.team_create_request
+            const { name, description, members } = mesg.team_create_request
 
             // Get user info from socket ID
             const socketId = mesg.id
@@ -187,6 +187,29 @@ class TeamsService {
 
             await creatorMember.save()
 
+            // Ajouter les membres fournis (hors créateur déjà admin)
+            if (Array.isArray(members) && members.length > 0) {
+                // On convertit tout en string pour la comparaison
+                const creatorIdStr = userInfo._id.toString()
+                const filteredMembers = members.filter(
+                    (userId) => userId.toString() !== creatorIdStr
+                )
+
+                for (const userId of filteredMembers) {
+                    try {
+                        const member = new TeamMember({
+                            teamId: team._id,
+                            userId,
+                            role: "member",
+                            joinedAt: new Date(),
+                        })
+                        await member.save()
+                    } catch (err) {
+                        console.log("Error adding member", userId, err)
+                    }
+                }
+            }
+
             // Create a default "General" channel for the team
             const generalChannel = new Channel({
                 name: "Général",
@@ -208,6 +231,31 @@ class TeamsService {
             })
 
             await channelMember.save()
+
+            // Ajouter les membres fournis au channel général (hors créateur déjà admin)
+            if (Array.isArray(members) && members.length > 0) {
+                const creatorIdStr = userInfo._id.toString()
+                const filteredMembers = members.filter(
+                    (userId) => userId.toString() !== creatorIdStr
+                )
+                for (const userId of filteredMembers) {
+                    try {
+                        const member = new ChannelMember({
+                            channelId: generalChannel._id,
+                            userId,
+                            role: "member",
+                            joinedAt: new Date(),
+                        })
+                        await member.save()
+                    } catch (err) {
+                        console.log(
+                            "Error adding member to channel",
+                            userId,
+                            err
+                        )
+                    }
+                }
+            }
 
             const message = {
                 team_create_response: {
