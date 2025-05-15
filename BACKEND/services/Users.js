@@ -176,7 +176,7 @@ class UsersService {
                 const { userId } = mesg.user_info_request
                 const user = await User.findById(
                     userId,
-                    "firstname lastname email picture phone"
+                    "firstname lastname email picture phone disturb_status"
                 )
 
                 if (user) {
@@ -187,6 +187,7 @@ class UsersService {
                         email: user.email,
                         picture: user.picture,
                         phone: user.phone,
+                        disturb_status: user.disturb_status
                     }
                     const message = {
                         user_info_response: { etat: true, userInfo },
@@ -358,6 +359,7 @@ class UsersService {
                 email: user.email,
                 picture: user.picture,
                 phone: user.phone,
+                disturb_status: user.disturb_status,
             }
             const message = {
                 update_user_response: {
@@ -385,7 +387,7 @@ class UsersService {
             const { userId } = mesg.user_info_request
             const user = await User.findById(
                 userId,
-                "firstname lastname email picture phone roles"
+                "firstname lastname email picture phone roles disturb_status"
             ).populate("roles", "name") // Populate the roles to get their names
 
             if (user) {
@@ -396,6 +398,7 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
+                    disturb_status: user.disturb_status,
                     roles: user.roles.map((role) => role.name), // Extract role names
                 }
                 const message = {
