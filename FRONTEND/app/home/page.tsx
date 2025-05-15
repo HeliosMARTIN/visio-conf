@@ -105,137 +105,109 @@ export default function HomePage() {
   };
 
   // Simulation de notification de message
-  // const simulateMessageNotification = () => {
-  //   // Trouver des utilisateurs différents du currentUser
-  //   const availableUsers = users.filter(
-  //     (user) => user.email !== currentUser?.email
-  //   );
+  const simulateMessageNotification = () => {
+    // Trouver des utilisateurs différents du currentUser
+    const availableUsers = users.filter(
+      (user) => user.email !== currentUser?.email
+    );
 
-  //   if (availableUsers.length < 1 || !currentUser) {
-  //     console.error(
-  //       "Pas assez d'utilisateurs disponibles pour simuler des messages"
-  //     );
-  //     return;
-  //   }
+    if (availableUsers.length < 1 || !currentUser) {
+      console.error(
+        "Pas assez d'utilisateurs disponibles pour simuler des messages"
+      );
+      return;
+    }
 
-  //   // Prendre le premier utilisateur
-  //   const firstUser = availableUsers[0];
+    // Prendre le premier utilisateur
+    const firstUser = availableUsers[0];
 
-  //   // Créer un message pour le premier utilisateur
-  //   const firstMockMessage: Message = {
-  //     message_uuid: `mock-${Date.now()}-1`,
-  //     message_content: "Bonjour, pouvez-vous m'aider sur un projet ?",
-  //     message_date_create: new Date().toISOString(),
-  //     message_status: "sent",
-  //     message_sender: firstUser,
-  //   };
+    // Créer un message pour le premier utilisateur
+    const firstMockMessage: Message = {
+      message_uuid: `mock-${Date.now()}-1`,
+      message_content: "Bonjour, pouvez-vous m'aider sur un projet ?",
+      message_date_create: new Date().toISOString(),
+      message_status: "sent",
+      message_sender: firstUser,
+    };
 
-  //   // Si on a un deuxième utilisateur disponible
-  //   let secondMockMessage: Message | null = null;
+    // Si on a un deuxième utilisateur disponible
+    let secondMockMessage: Message | null = null;
 
-  //   if (availableUsers.length > 1) {
-  //     const secondUser = availableUsers[1];
-  //     secondMockMessage = {
-  //       message_uuid: `mock-${Date.now()}-2`,
-  //       message_content: "Avez-vous vu ma dernière présentation ?",
-  //       message_date_create: new Date(Date.now() + 1000).toISOString(), // 1 seconde plus tard
-  //       message_status: "sent",
-  //       message_sender: firstUser,
-  //     };
-  //   }
+    if (availableUsers.length > 1) {
+      const secondUser = availableUsers[1];
+      secondMockMessage = {
+        message_uuid: `mock-${Date.now()}-2`,
+        message_content: "Avez-vous vu ma dernière présentation ?",
+        message_date_create: new Date(Date.now() + 1000).toISOString(), // 1 seconde plus tard
+        message_status: "sent",
+        message_sender: firstUser,
+      };
+    }
 
-  //   // Ajouter le(s) message(s) simulé(s) à la liste des messages
-  //   if (secondMockMessage) {
-  //     setMessages((prevMessages) => [
-  //       ...prevMessages,
-  //       firstMockMessage,
-  //       secondMockMessage!,
-  //     ]);
-  //     console.log("Deux messages simulés ajoutés de personnes différentes");
-  //   } else {
-  //     setMessages((prevMessages) => [...prevMessages, firstMockMessage]);
-  //     console.log("Un message simulé ajouté");
-  //   }
-  // };
+    // Ajouter le(s) message(s) simulé(s) à la liste des messages
+    if (secondMockMessage) {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        firstMockMessage,
+        secondMockMessage!,
+      ]);
+      console.log("Deux messages simulés ajoutés de personnes différentes");
+    } else {
+      setMessages((prevMessages) => [...prevMessages, firstMockMessage]);
+      console.log("Un message simulé ajouté");
+    }
+  };
 
   // Simulation de notification d'appel
-  // const simulateCallNotification = () => {
-  //   const availableUsers = users.filter(
-  //     (user) => user.email !== currentUser?.email
-  //   );
+  const simulateCallNotification = () => {
+    const availableUsers = users.filter(
+      (user) => user.email !== currentUser?.email
+    );
 
-  //   if (availableUsers.length < 1 || !currentUser) {
-  //     console.error(
-  //       "Pas assez d'utilisateurs disponibles pour simuler des appels"
-  //     );
-  //     return;
-  //   }
+    if (availableUsers.length < 1 || !currentUser) {
+      console.error(
+        "Pas assez d'utilisateurs disponibles pour simuler des appels"
+      );
+      return;
+    }
 
-  //   // Prendre le premier utilisateur
-  //   const firstUser = availableUsers[0];
+    // Prendre le premier utilisateur
+    const firstUser = availableUsers[0];
 
-  //   // Créer un appel pour le premier utilisateur
-  //   const firstMockCall: Call = {
-  //     call_uuid: `mock-${Date.now()}-1`,
-  //     call_date_create: new Date().toISOString(),
-  //     call_date_end: new Date(Date.now() + 60000).toISOString(), // 1 minute plus tard
-  //     call_type: "missed", // missed, completed
-  //     call_sender: {
-  //       email: firstUser.email,
-  //       firstname: firstUser.firstname,
-  //       lastname: firstUser.lastname,
-  //       id: firstUser.id,
-  //       picture: firstUser.picture || "",
-  //       phone: firstUser.phone || "",
-  //     },
-  //     call_recipient: {
-  //       email: currentUser.email,
-  //       firstname: currentUser.firstname,
-  //       lastname: currentUser.lastname,
-  //       id: currentUser.id,
-  //       picture: currentUser.picture || "",
-  //       phone: currentUser.phone || "",
-  //     },
-  //   };
+    // Créer un appel pour le premier utilisateur
+    const firstMockCall: Call = {
+      call_uuid: `mock-${Date.now()}-1`,
+      call_date_create: new Date().toISOString(),
+      call_date_end: new Date(Date.now() + 60000).toISOString(), // 1 minute plus tard
+      call_type: "missed", // missed, completed
+      call_sender: firstUser,
+      call_recipient: currentUser,
+    };
 
-  //   // Si on a un deuxième utilisateur disponible
-  //   let secondMockCall: Call | null = null;
+    // Si on a un deuxième utilisateur disponible
+    let secondMockCall: Call | null = null;
 
-  //   if (availableUsers.length > 1) {
-  //     const secondUser = availableUsers[1];
-  //     secondMockCall = {
-  //       call_uuid: `mock-${Date.now()}-2`,
-  //       call_date_create: new Date(Date.now() - 300000).toISOString(), // 5 minutes avant
-  //       call_date_end: new Date(Date.now() - 270000).toISOString(), // 4:30 minutes avant
-  //       call_type: "missed", // appel manqué
-  //       call_sender: {
-  //         email: secondUser.email,
-  //         firstname: secondUser.firstname,
-  //         lastname: secondUser.lastname,
-  //         id: secondUser.id,
-  //         picture: secondUser.picture || "",
-  //         phone: secondUser.phone || "",
-  //       },
-  //       call_recipient: {
-  //         email: currentUser.email,
-  //         firstname: currentUser.firstname,
-  //         lastname: currentUser.lastname,
-  //         id: currentUser.id,
-  //         picture: currentUser.picture || "",
-  //         phone: currentUser.phone || "",
-  //       },
-  //     };
-  //   }
+    if (availableUsers.length > 1) {
+      const secondUser = availableUsers[1];
+      secondMockCall = {
+        call_uuid: `mock-${Date.now()}-2`,
+        call_date_create: new Date(Date.now() - 300000).toISOString(), // 5 minutes avant
+        call_date_end: new Date(Date.now() - 270000).toISOString(), // 4:30 minutes avant
+        call_type: "missed", // appel manqué
+        call_sender: firstUser,
+        call_recipient: currentUser,
+      };
+    }
 
-  //   // Ajouter le(s) appel(s) simulé(s) à la liste des appels
-  //   if (secondMockCall) {
-  //     setCalls((prevCalls) => [...prevCalls, firstMockCall, secondMockCall!]);
-  //     console.log("Deux appels simulés ajoutés de personnes différentes");
-  //   } else {
-  //     setCalls((prevCalls) => [...prevCalls, firstMockCall]);
-  //     console.log("Un appel simulé ajouté");
-  //   }
-  // };
+    // Ajouter le(s) appel(s) simulé(s) à la liste des appels
+    if (secondMockCall) {
+      setCalls((prevCalls) => [...prevCalls, firstMockCall, secondMockCall!]);
+      console.log("Deux appels simulés ajoutés de personnes différentes");
+    } else {
+      setCalls((prevCalls) => [...prevCalls, firstMockCall]);
+      console.log("Un appel simulé ajouté");
+    }
+  };
 
   useEffect(() => {
     if (controleur && canal) {
@@ -271,53 +243,54 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <section className={styles.section}>
-          <h1>Boite de réception</h1>
-          {error && <div className={styles.error}>{error}</div>}
-          <div className={styles.reception}>
-            <div className={styles.reception_header}>
-              <Bell />
-              {getSentMessagesCount() === 0 ? (
-                <h3>Vous avez aucune notification</h3>
-              ) : (
-                <h3>{getSentMessagesCount()} messages en attente</h3>
-              )}
-              {/* <button
-                onClick={simulateMessageNotification}
-                style={{
-                  padding: "6px 12px",
-                  marginLeft: "auto",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
-              >
-                Simuler une notification
-              </button> */}
+        <div className={styles.notification}>
+          <section className={styles.section}>
+            <h1>Boite de réception</h1>
+            {error && <div className={styles.error}>{error}</div>}
+            <div className={styles.reception}>
+              <div className={styles.reception_header}>
+                <Bell />
+                {getSentMessagesCount() === 0 ? (
+                  <h3>Vous avez aucune notification</h3>
+                ) : (
+                  <h3>{getSentMessagesCount()} messages en attente</h3>
+                )}
+                <button
+                  onClick={simulateMessageNotification}
+                  style={{
+                    padding: "6px 12px",
+                    marginLeft: "auto",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  Simuler une notification
+                </button>
+              </div>
+              <UsersListMessage
+                users={users}
+                messages={messages}
+                currentUserEmail={currentUser?.email || ""}
+                isLoading={isLoading}
+              />
             </div>
-            <UsersListMessage
-              users={users}
-              messages={messages}
-              currentUserEmail={currentUser?.email || ""}
-              isLoading={isLoading}
-            />
-          </div>
-        </section>
-        <section className={styles.section}>
-          <h1>Historique d'appels</h1>
-          {error && <div className={styles.error}>{error}</div>}
-          <div className={styles.reception}>
-            <div className={styles.reception_header}>
-              <Clock />
-              {getMissedCallsCount() === 0 ? (
-                <h3>Aucun appel manqué</h3>
-              ) : (
-                <h3>{getMissedCallsCount()} appels manqués</h3>
-              )}
-              {/* <button
+          </section>
+          <section className={styles.section}>
+            <h1>Historique d'appels</h1>
+            {error && <div className={styles.error}>{error}</div>}
+            <div className={styles.reception}>
+              <div className={styles.reception_header}>
+                <Clock />
+                {getMissedCallsCount() === 0 ? (
+                  <h3>Aucun appel manqué</h3>
+                ) : (
+                  <h3>{getMissedCallsCount()} appels manqués</h3>
+                )}
+                <button
                   onClick={simulateCallNotification}
                   style={{
                     padding: "6px 12px",
@@ -331,15 +304,42 @@ export default function HomePage() {
                   }}
                 >
                   Simuler un appel
-                </button> */}
+                </button>
+              </div>
+              <UsersListCall
+                users={users}
+                calls={calls}
+                currentUserEmail={currentUser?.email || ""}
+                isLoading={isLoading}
+                limitCalls={5}
+              />
             </div>
-            <UsersListCall
-              users={users}
-              calls={calls}
-              currentUserEmail={currentUser?.email || ""}
-              isLoading={isLoading}
-              limitCalls={5}
-            />
+          </section>
+        </div>
+        <section className={styles.amis}>
+          <h1>Liste d'amis</h1>
+          <div className={styles.amis_list_scroll}>
+            {users
+              .filter((user) => user.email !== currentUser.email)
+              .map((user) => (
+                <a href="/discussion" key={user.id}>
+                  <div className={styles.amis_item}>
+                    <img
+                      src={
+                        user.picture
+                          ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
+                          : "/images/default_profile_picture.png"
+                      }
+                      alt={`${user.firstname} ${user.lastname}`}
+                      className={styles.amis_avatar}
+                    />
+                    <div className={styles.amis_info}>
+                      <h2>{`${user.firstname} ${user.lastname}`}</h2>
+                      <p>{user.email}</p>
+                    </div>
+                  </div>
+                </a>
+              ))}
           </div>
         </section>
       </main>

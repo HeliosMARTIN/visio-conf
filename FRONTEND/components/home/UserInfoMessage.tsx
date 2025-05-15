@@ -84,11 +84,19 @@ export default function UserInfoMessage({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <div
-        className={styles.userAvatar}
-        style={{ backgroundColor: avatarColor }}
-      >
-        {initials}
+      <div className={styles.userAvatar}>
+        <img
+          src={
+            user.picture
+              ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
+              : "/images/default_profile_picture.png"
+          }
+          alt={fullName}
+          className={styles.profileImage}
+          width={40}
+          height={40}
+          style={{ objectFit: "cover", borderRadius: "50%" }}
+        />
       </div>
       <div className={styles.userInfo}>
         <h3 className={styles.userName}>{fullName}</h3>
