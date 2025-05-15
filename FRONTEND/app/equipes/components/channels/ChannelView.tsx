@@ -188,6 +188,7 @@ export default function ChannelView({
             },
         }
         controleur?.envoie(handler, postRequest)
+        setNewPostContent("")
     }
 
     const handleAddResponse = (postId: string, content: string) => {

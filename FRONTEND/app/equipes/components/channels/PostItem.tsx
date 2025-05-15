@@ -85,7 +85,9 @@ export default function PostItem({
     // Synchronise les réponses locales et le count avec les props à chaque changement
     useEffect(() => {
         setResponses(post.responses || [])
-        setResponseCount(post.responseCount++)
+        if (post.responses.length) {
+            setResponseCount(post.responseCount++)
+        }
     }, [post.responses])
 
     return (
