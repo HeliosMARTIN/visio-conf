@@ -76,9 +76,9 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
             setIsCreating(true)
 
             // Compatibilité avec les deux types d'ID
-            const currentUserId = currentUser.id
+            const currentUserId = currentUser.email
 
-            const otherUserIds = selectedUsers.map((user) => user.id)
+            const otherUserIds = selectedUsers.map((user) => user.email)
 
             const message_request = {
                 message_send_request: {

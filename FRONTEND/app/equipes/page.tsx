@@ -31,16 +31,12 @@ export default function EquipesPage() {
     const listeMessageEmis = [
         "teams_list_request",
         "team_channels_request",
-        "user_info_request",
         "channel_members_request",
     ]
     const listeMessageRecus = [
         "teams_list_response",
         "team_channels_response",
-        "user_info_response",
         "channel_members_response",
-        "new_channel_post",
-        "new_post_response",
     ]
 
     const handler = {
@@ -104,15 +100,6 @@ export default function EquipesPage() {
                     )
                 }
             }
-
-            if (msg.user_info_response) {
-                if (msg.user_info_response.etat) {
-                    // Vérifier si l'utilisateur est administrateur
-                    setIsAdmin(
-                        msg.user_info_response.user.roles.includes("admin")
-                    )
-                }
-            }
         },
     }
 
@@ -124,7 +111,7 @@ export default function EquipesPage() {
             const teamsRequest = { teams_list_request: {} }
             controleur.envoie(handler, teamsRequest)
 
-            setIsAdmin(currentUser.roles?.includes("admin"))
+            setIsAdmin(currentUser.roles?.includes("Administrateur") || false)
         }
 
         return () => {
