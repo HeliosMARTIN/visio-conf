@@ -55,6 +55,7 @@ La fonctionnalité "Annuaire" permet aux utilisateurs de consulter la liste de t
 -   Affiche un squelette de chargement pendant le chargement des données
 -   Affiche le nombre d'utilisateurs trouvés
 -   Affiche un message lorsqu'aucun utilisateur n'est trouvé
+-   Affiche la liste des utilisateurs de visio-conf
 
 **Dépendances**:
 
