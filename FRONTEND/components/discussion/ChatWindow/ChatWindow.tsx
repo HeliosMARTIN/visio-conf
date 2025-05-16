@@ -13,7 +13,7 @@ interface ChatWindowProps {
     discussion?: Discussion
     messages: Message[]
     currentUser: User
-} 
+}
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
     discussion,

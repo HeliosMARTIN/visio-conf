@@ -4,6 +4,7 @@ import ChannelPost from "../models/channelPost.js"
 import ChannelPostResponse from "../models/channelPostResponse.js"
 import User from "../models/user.js"
 import SocketIdentificationService from "./SocketIdentification.js"
+import TeamMember from "../models/teamMember.js" // Ajout de l'import TeamMember
 
 class ChannelsService {
     controleur
@@ -20,11 +21,7 @@ class ChannelsService {
         "channel_remove_member_response",
         "channel_posts_response",
         "channel_post_create_response",
-        "channel_post_responses_response",
         "channel_post_response_create_response",
-        // Nouveaux messages pour les diffusions en temps réel
-        "new_channel_post",
-        "new_post_response",
     ]
     listeDesMessagesRecus = [
         "channels_list_request",
@@ -38,7 +35,6 @@ class ChannelsService {
         "channel_remove_member_request",
         "channel_posts_request",
         "channel_post_create_request",
-        "channel_post_responses_request",
         "channel_post_response_create_request",
     ]
 
@@ -112,10 +108,6 @@ class ChannelsService {
 
         if (mesg.channel_post_create_request) {
             await this.handleChannelPostCreate(mesg)
-        }
-
-        if (mesg.channel_post_responses_request) {
-            await this.handleChannelPostResponses(mesg)
         }
 
         if (mesg.channel_post_response_create_request) {
@@ -237,8 +229,24 @@ class ChannelsService {
 
             await creatorMember.save()
 
-            // Add additional members if provided and channel is private
-            if (!isPublic && members && members.length > 0) {
+            if (isPublic) {
+                // Utiliser TeamMember pour récupérer les userIds de la team
+                const teamMembers = await TeamMember.find({ teamId })
+                const userIds = teamMembers
+                    .map((tm) => tm.userId.toString())
+                    .filter((id) => id !== userInfo._id.toString())
+
+                const memberPromises = userIds.map((userId) => {
+                    const member = new ChannelMember({
+                        channelId: channel._id,
+                        userId,
+                        role: "member",
+                        joinedAt: new Date(),
+                    })
+                    return member.save()
+                })
+                await Promise.all(memberPromises)
+            } else if (!isPublic && members && members.length > 0) {
                 const memberPromises = members.map((userId) => {
                     if (userId !== userInfo._id.toString()) {
                         const member = new ChannelMember({
@@ -856,7 +864,7 @@ class ChannelsService {
                         id: post._id,
                         channelId: post.channelId,
                         content: post.content,
-                        authorId: post.authorId._id,
+                        authorId: post.authorId,
                         authorName: `${post.authorId.firstname} ${post.authorId.lastname}`,
                         authorAvatar: post.authorId.picture,
                         createdAt: post.createdAt,
@@ -956,112 +964,33 @@ class ChannelsService {
                 responses: [],
             }
 
-            // Réponse à l'émetteur
+            // Récupérer tous les membres du channel pour envoyer la réponse à tous les sockets concernés
+            const channelMembers = await ChannelMember.find({ channelId })
+            const userIds = channelMembers.map((m) => m.userId.toString())
+
+            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
+            const users = await User.find({
+                _id: { $in: userIds },
+                socket_id: { $ne: null },
+            }).select("socket_id")
+
+            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+
+            // Réponse à tous les membres connectés du channel
             const responseMessage = {
                 channel_post_create_response: {
                     etat: true,
                     post: newPost,
                 },
-                id: [mesg.id],
+                id: socketIds,
             }
             this.controleur.envoie(this, responseMessage)
-
-            // Diffusion à tous les clients
-            const broadcastMessage = {
-                new_channel_post: {
-                    etat: true,
-                    channelId,
-                    post: newPost,
-                },
-            }
-            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_create_response: {
                     etat: false,
                     error: error.message,
                     channelId: mesg.channel_post_create_request?.channelId,
-                },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-    }
-
-    async handleChannelPostResponses(mesg) {
-        try {
-            const { postId } = mesg.channel_post_responses_request
-
-            // Get user info from socket ID
-            const socketId = mesg.id
-            const userInfo =
-                await SocketIdentificationService.getUserInfoBySocketId(
-                    socketId
-                )
-
-            if (!userInfo) {
-                throw new Error("Utilisateur non authentifié")
-            }
-
-            // Check if post exists
-            const post = await ChannelPost.findById(postId)
-
-            if (!post) {
-                throw new Error("Message non trouvé")
-            }
-
-            // Check if channel exists
-            const channel = await Channel.findById(post.channelId)
-
-            if (!channel) {
-                throw new Error("Canal non trouvé")
-            }
-
-            // If channel is private, check if user is a member
-            if (!channel.isPublic) {
-                const isMember = await ChannelMember.findOne({
-                    channelId: post.channelId,
-                    userId: userInfo._id,
-                })
-
-                if (!isMember) {
-                    throw new Error("Vous n'avez pas accès à ce canal")
-                }
-            }
-
-            // Get all responses for the post
-            const responses = await ChannelPostResponse.find({ postId })
-                .sort({ createdAt: 1 })
-                .populate("authorId", "firstname lastname picture")
-
-            const formattedResponses = responses.map((response) => ({
-                _id: response._id,
-                id: response._id,
-                postId: response.postId,
-                content: response.content,
-                authorId: response.authorId._id,
-                authorName: `${response.authorId.firstname} ${response.authorId.lastname}`,
-                authorAvatar: response.authorId.picture,
-                createdAt: response.createdAt,
-                updatedAt: response.updatedAt,
-            }))
-
-            const message = {
-                channel_post_responses_response: {
-                    etat: true,
-                    postId,
-                    responses: formattedResponses,
-                },
-                id: [mesg.id],
-            }
-
-            this.controleur.envoie(this, message)
-        } catch (error) {
-            const message = {
-                channel_post_responses_response: {
-                    etat: false,
-                    error: error.message,
-                    postId: mesg.channel_post_responses_request?.postId,
                 },
                 id: [mesg.id],
             }
@@ -1143,27 +1072,30 @@ class ChannelsService {
                 updatedAt: response.updatedAt,
             }
 
-            // Réponse à l'émetteur
+            // Récupérer tous les membres du channel pour envoyer la réponse à tous les sockets concernés
+            const channelMembers = await ChannelMember.find({
+                channelId: post.channelId,
+            })
+            const userIds = channelMembers.map((m) => m.userId.toString())
+
+            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
+            const users = await User.find({
+                _id: { $in: userIds },
+                socket_id: { $ne: null },
+            }).select("socket_id")
+
+            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+
+            // Réponse à tous les membres connectés du channel
             const responseMessage = {
                 channel_post_response_create_response: {
                     etat: true,
                     postId,
                     response: newResponse,
                 },
-                id: [mesg.id],
+                id: socketIds,
             }
             this.controleur.envoie(this, responseMessage)
-
-            // Diffusion à tous les clients
-            const broadcastMessage = {
-                new_post_response: {
-                    etat: true,
-                    channelId: post.channelId,
-                    postId,
-                    response: newResponse,
-                },
-            }
-            this.controleur.envoie(this, broadcastMessage)
         } catch (error) {
             const message = {
                 channel_post_response_create_response: {

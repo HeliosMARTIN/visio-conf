@@ -18,7 +18,7 @@ import {
 import type { Team } from "@/types/Team"
 
 interface User {
-    _id: string
+    id: string
     firstname: string
     lastname: string
     picture?: string
@@ -90,7 +90,7 @@ export default function ChannelForm({
                     `${user.firstname} ${user.lastname}`
                         .toLowerCase()
                         .includes(searchTerm.toLowerCase()) &&
-                    user._id !== currentUser?._id
+                    user.id !== currentUser?.id
             )
             setFilteredMembers(filtered)
         }
@@ -139,10 +139,10 @@ export default function ChannelForm({
                     // Filtrer pour exclure l'utilisateur courant de la liste
                     const otherUsers = members
                         .filter(
-                            (member: any) => member.userId !== currentUser?._id
+                            (member: any) => member.userId !== currentUser?.id
                         )
                         .map((member: any) => ({
-                            _id: member.userId,
+                            id: member.userId,
                             firstname: member.firstname,
                             lastname: member.lastname,
                             picture: member.picture,
@@ -161,11 +161,11 @@ export default function ChannelForm({
                     // Récupérer les utilisateurs qui sont membres
                     const memberUsers = members
                         .filter(
-                            (member: any) => member.userId !== currentUser?._id
+                            (member: any) => member.userId !== currentUser?.id
                         )
                         .map((member: any) => {
                             return {
-                                _id: member.userId,
+                                id: member.userId,
                                 firstname: member.firstname,
                                 lastname: member.lastname,
                                 picture: member.picture,
@@ -230,7 +230,7 @@ export default function ChannelForm({
                     isPublic,
                     teamId: team.id,
                     members: !isPublic
-                        ? selectedMembers.map((member) => member._id)
+                        ? selectedMembers.map((member) => member.id)
                         : [],
                 },
             }
@@ -243,7 +243,7 @@ export default function ChannelForm({
                     isPublic,
                     teamId: team.id,
                     members: !isPublic
-                        ? selectedMembers.map((member) => member._id)
+                        ? selectedMembers.map((member) => member.id)
                         : [],
                 },
             }
@@ -258,13 +258,13 @@ export default function ChannelForm({
 
     const toggleMember = (user: User) => {
         const isMemberSelected = selectedMembers.some(
-            (member) => member._id === user._id
+            (member) => member.id === user.id
         )
 
         if (isMemberSelected) {
             // Retirer le membre
             setSelectedMembers(
-                selectedMembers.filter((member) => member._id !== user._id)
+                selectedMembers.filter((member) => member.id !== user.id)
             )
         } else {
             // Ajouter le membre
@@ -395,7 +395,7 @@ export default function ChannelForm({
                                     <div className={styles.membersList}>
                                         {selectedMembers.map((member) => (
                                             <div
-                                                key={member._id}
+                                                key={member.id}
                                                 className={styles.memberItem}
                                             >
                                                 <div
@@ -472,12 +472,12 @@ export default function ChannelForm({
                                             (user) =>
                                                 !selectedMembers.some(
                                                     (member) =>
-                                                        member._id === user._id
+                                                        member.id === user.id
                                                 )
                                         )
                                         .map((user) => (
                                             <div
-                                                key={user._id}
+                                                key={user.id}
                                                 className={styles.userItem}
                                             >
                                                 <div

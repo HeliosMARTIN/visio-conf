@@ -8,7 +8,7 @@ import { Eye, EyeOff } from "lucide-react"
 import Cookies from "js-cookie"
 
 export default function LoginForm() {
-    const { controleur, currentUser, setCurrentUser } = useAppContext()
+    const { controleur, currentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -41,7 +41,7 @@ export default function LoginForm() {
                     const token = msg.login_response.token
                     if (token) {
                         Cookies.set("token", token, {
-                            secure: true,
+                            secure: false,
                             sameSite: "strict",
                             expires: 7, // 7 days
                         }) // Use cookies

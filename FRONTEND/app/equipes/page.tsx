@@ -30,17 +30,13 @@ export default function EquipesPage() {
 
     const listeMessageEmis = [
         "teams_list_request",
-        "team_channels_request",
-        "user_info_request",
+        "channels_list_request",
         "channel_members_request",
     ]
     const listeMessageRecus = [
         "teams_list_response",
-        "team_channels_response",
-        "user_info_response",
+        "channels_list_response",
         "channel_members_response",
-        "new_channel_post",
-        "new_post_response",
     ]
 
     const handler = {
@@ -82,34 +78,25 @@ export default function EquipesPage() {
                 }
             }
 
-            if (msg.team_channels_response) {
-                if (msg.team_channels_response.etat) {
-                    setChannels(msg.team_channels_response.channels || [])
+            if (msg.channels_list_response) {
+                if (msg.channels_list_response.etat) {
+                    setChannels(msg.channels_list_response.channels || [])
                     setIsLoadingChannels(false)
 
                     // Si aucun canal n'est sélectionné et qu'il y a des canaux, sélectionner le premier
                     if (
                         !selectedChannel &&
-                        msg.team_channels_response.channels &&
-                        msg.team_channels_response.channels.length > 0
+                        msg.channels_list_response.channels &&
+                        msg.channels_list_response.channels.length > 0
                     ) {
                         setSelectedChannel(
-                            msg.team_channels_response.channels[0]
+                            msg.channels_list_response.channels[0]
                         )
                     }
                 } else {
                     console.error(
                         "Erreur lors de la récupération des canaux:",
-                        msg.team_channels_response.error
-                    )
-                }
-            }
-
-            if (msg.user_info_response) {
-                if (msg.user_info_response.etat) {
-                    // Vérifier si l'utilisateur est administrateur
-                    setIsAdmin(
-                        msg.user_info_response.user.roles.includes("admin")
+                        msg.channels_list_response.error
                     )
                 }
             }
@@ -124,7 +111,7 @@ export default function EquipesPage() {
             const teamsRequest = { teams_list_request: {} }
             controleur.envoie(handler, teamsRequest)
 
-            setIsAdmin(currentUser.roles?.includes("admin"))
+            setIsAdmin(currentUser.roles?.includes("Administrateur") || false)
         }
 
         return () => {
@@ -141,7 +128,7 @@ export default function EquipesPage() {
     const loadTeamChannels = (teamId: string) => {
         if (controleur && canal) {
             setIsLoadingChannels(true)
-            const channelsRequest = { team_channels_request: { teamId } }
+            const channelsRequest = { channels_list_request: { teamId } }
             controleur.envoie(handler, channelsRequest)
         }
     }

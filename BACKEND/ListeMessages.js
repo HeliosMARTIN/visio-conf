@@ -23,6 +23,7 @@ export const ListeMessagesEmis = [
     "users_search_request", // { requestArgs : string }
     "discuss_remove_member_request", // { UserId : uuid, convId : uuid }
     "discuss_remove_message_request", // { messageId : uuid, convId : uuid }
+    "message_status_request", // { convId: uuid }
     //---- ROLES ----
     "roles_list_request", // No data
     "one_role_request", // { role_id : ObjectId}=
@@ -66,7 +67,6 @@ export const ListeMessagesEmis = [
     "team_members_request", // { teamId: string }
     "team_add_member_request", // { teamId: string, userId: string }
     "team_remove_member_request", // { teamId: string, userId: string }
-    "team_channels_request", // { teamId: string }
 ]
 
 /**
@@ -94,6 +94,7 @@ export const ListeMessagesRecus = [
     "users_search_response", // {  etat: boolean, users?: User[], error?: string }
     "discuss_remove_member_response", // { etat: boolean, error?: string }
     "discuss_remove_message_response", // { etat: boolean, error?: string }
+    "message_status_response", // {etat: boolean, error?: string }
     //---- ROLES ----
     "roles_list_response", // {role_list : Role[]}
     "one_role_response", // {role : Role}
@@ -138,5 +139,4 @@ export const ListeMessagesRecus = [
     "team_members_response", // { etat: boolean, teamId?: string, members?: TeamMember[], error?: string }
     "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
     "team_remove_member_response", // { etat: boolean, teamId?: string, userId?: string, error?: string }
-    "team_channels_response", // { etat: boolean, teamId?: string, channels?: Channel[], error?: string }
 ]

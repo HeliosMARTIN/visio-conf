@@ -18,7 +18,6 @@ class TeamsService {
         "team_members_response",
         "team_add_member_response",
         "team_remove_member_response",
-        "team_channels_response",
     ]
     listeDesMessagesRecus = [
         "teams_list_request",
@@ -30,7 +29,6 @@ class TeamsService {
         "team_members_request",
         "team_add_member_request",
         "team_remove_member_request",
-        "team_channels_request",
     ]
 
     constructor(c, nom) {
@@ -95,10 +93,6 @@ class TeamsService {
         if (mesg.team_remove_member_request) {
             await this.handleTeamRemoveMember(mesg)
         }
-
-        if (mesg.team_channels_request) {
-            await this.handleTeamChannels(mesg)
-        }
     }
 
     async handleTeamsList(mesg) {
@@ -159,7 +153,7 @@ class TeamsService {
 
     async handleTeamCreate(mesg) {
         try {
-            const { name, description } = mesg.team_create_request
+            const { name, description, members } = mesg.team_create_request
 
             // Get user info from socket ID
             const socketId = mesg.id
@@ -193,6 +187,29 @@ class TeamsService {
 
             await creatorMember.save()
 
+            // Ajouter les membres fournis (hors créateur déjà admin)
+            if (Array.isArray(members) && members.length > 0) {
+                // On convertit tout en string pour la comparaison
+                const creatorIdStr = userInfo._id.toString()
+                const filteredMembers = members.filter(
+                    (userId) => userId.toString() !== creatorIdStr
+                )
+
+                for (const userId of filteredMembers) {
+                    try {
+                        const member = new TeamMember({
+                            teamId: team._id,
+                            userId,
+                            role: "member",
+                            joinedAt: new Date(),
+                        })
+                        await member.save()
+                    } catch (err) {
+                        console.log("Error adding member", userId, err)
+                    }
+                }
+            }
+
             // Create a default "General" channel for the team
             const generalChannel = new Channel({
                 name: "Général",
@@ -214,6 +231,31 @@ class TeamsService {
             })
 
             await channelMember.save()
+
+            // Ajouter les membres fournis au channel général (hors créateur déjà admin)
+            if (Array.isArray(members) && members.length > 0) {
+                const creatorIdStr = userInfo._id.toString()
+                const filteredMembers = members.filter(
+                    (userId) => userId.toString() !== creatorIdStr
+                )
+                for (const userId of filteredMembers) {
+                    try {
+                        const member = new ChannelMember({
+                            channelId: generalChannel._id,
+                            userId,
+                            role: "member",
+                            joinedAt: new Date(),
+                        })
+                        await member.save()
+                    } catch (err) {
+                        console.log(
+                            "Error adding member to channel",
+                            userId,
+                            err
+                        )
+                    }
+                }
+            }
 
             const message = {
                 team_create_response: {
@@ -789,87 +831,6 @@ class TeamsService {
                 team_remove_member_response: {
                     etat: false,
                     error: error.message,
-                },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-    }
-
-    async handleTeamChannels(mesg) {
-        try {
-            const { teamId } = mesg.team_channels_request
-
-            // Get user info from socket ID
-            const socketId = mesg.id
-            const userInfo =
-                await SocketIdentificationService.getUserInfoBySocketId(
-                    socketId
-                )
-
-            if (!userInfo) {
-                throw new Error("Utilisateur non authentifié")
-            }
-
-            // Check if team exists
-            const team = await Team.findById(teamId)
-
-            if (!team) {
-                throw new Error("Équipe non trouvée")
-            }
-
-            // Check if user is a member of the team
-            const isMember = await TeamMember.findOne({
-                teamId,
-                userId: userInfo._id,
-            })
-
-            if (!isMember) {
-                throw new Error("Vous n'avez pas accès à cette équipe")
-            }
-
-            // Get all channels for this team
-            const channels = await Channel.find({ teamId })
-
-            // Get channels where user is a member
-            const memberChannelIds = await ChannelMember.find({
-                userId: userInfo._id,
-            }).distinct("channelId")
-
-            // Format channels with membership info
-            const formattedChannels = channels.map((channel) => {
-                const isMember = memberChannelIds.some(
-                    (id) => id.toString() === channel._id.toString()
-                )
-
-                return {
-                    id: channel._id,
-                    name: channel.name,
-                    teamId: channel.teamId,
-                    isPublic: channel.isPublic,
-                    createdAt: channel.createdAt,
-                    updatedAt: channel.updatedAt,
-                    createdBy: channel.createdBy,
-                    isMember,
-                }
-            })
-
-            const message = {
-                team_channels_response: {
-                    etat: true,
-                    teamId,
-                    channels: formattedChannels,
-                },
-                id: [mesg.id],
-            }
-
-            this.controleur.envoie(this, message)
-        } catch (error) {
-            const message = {
-                team_channels_response: {
-                    etat: false,
-                    error: error.message,
-                    teamId: mesg.team_channels_request?.teamId,
                 },
                 id: [mesg.id],
             }

@@ -250,7 +250,6 @@ export default function ProfilPage() {
         controleur.envoie(handler, uploadMessage)
     }
 
-    console.log("currentUser", currentUser)
     if (!currentUser) {
         return (
             <div className={styles.page}>
@@ -263,6 +262,12 @@ export default function ProfilPage() {
             </div>
         )
     }
+
+    // Ajout : filtrer les rôles valides
+    const filteredRoles =
+        currentUser.roles && Array.isArray(currentUser.roles)
+            ? currentUser.roles.filter((role) => !!role && role !== "")
+            : []
 
     return (
         <div className={styles.page}>
@@ -318,6 +323,15 @@ export default function ProfilPage() {
                                 "Aucune description disponible"}
                         </p>
 
+                        <h3>
+                            {currentUser.firstname || "Prénom"}{" "}
+                            {currentUser.lastname || "Nom"}
+                        </h3>
+                        <p>
+                            {currentUser.desc ||
+                                "Aucune description disponible"}
+                        </p>
+
                         <div className={styles.profilItemsContainer}>
                             <div className={styles.profilItem}>
                                 <h4>Nom</h4>
@@ -348,10 +362,9 @@ export default function ProfilPage() {
                                 <p>
                                     {currentUser.roles &&
                                     Array.isArray(currentUser.roles) &&
-                                    currentUser.roles.length > 0
-                                        ? currentUser.roles.join(", ")
-                                        : currentUser.roles ||
-                                          "Aucun rôle attribué"}
+                                    filteredRoles.length > 0
+                                        ? filteredRoles.join(", ")
+                                        : "Aucun rôle attribué"}
                                 </p>
                             </div>
                         </div>
