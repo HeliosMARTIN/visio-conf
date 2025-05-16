@@ -90,6 +90,7 @@
   padding-top: 20px;
   display: flex;
   justify-content: left;
+  z-index: 1000;
 }
 
 .profileLink {

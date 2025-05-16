@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import styles from "./Menu.module.css"
-import { useAppContext } from "@/context/AppContext"
-import ProfilPopUp from "../components/ProfilPopUp"
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import styles from "./Menu.module.css";
+import { useAppContext } from "@/context/AppContext";
+import ProfilPopUp from "../components/ProfilPopUp";
 import { UserRoundCog } from "lucide-react";
 
 export default function Menu({ children }: { children: React.ReactNode }) {
@@ -115,20 +115,8 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                 </Link>
               )}
           </nav>
-
-                    <div className={styles.profileContainer}>
-                        <ProfilPopUp/> 
-                    </div>
-                </div>
-            </div>
-            <div
-                className={`${styles.contentContainer} ${
-                    !collapsed ? styles.contentExpanded : ""
-                }`}
-              >
-                {currentUser?.firstname} {currentUser?.lastname}
-              </span>
-            </Link>
+          <div className={styles.profileContainer}>
+            {currentUser && <ProfilPopUp user={currentUser} />}
           </div>
         </div>
       </div>
