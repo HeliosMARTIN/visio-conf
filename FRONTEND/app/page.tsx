@@ -151,11 +151,7 @@ export default function Home() {
         }
     }
 
-    const handleLogout = () => {
-        Cookies.remove("token") // Remove token from cookies
-        setCurrentUser(null)
-        router.push("/login")
-    }
+    const { logout } = useAppContext();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -220,11 +216,11 @@ export default function Home() {
                         <input type="file" onChange={handleFileChange} />
                         <button onClick={handleUpload}>Upload File</button>
                     </div>
-                    <button onClick={handleLogout}>Logout</button>
+                    <button onClick={logout}>Logout</button>
                     <button onClick={() => setTab("admin")}>Admin</button>
                 </main>
                 {currentUser && <CurrentUser user={currentUser} />}
             </div>
-        )
+        );
     }
 }
