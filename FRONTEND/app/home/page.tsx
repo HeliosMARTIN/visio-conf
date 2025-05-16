@@ -1,16 +1,37 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import styles from "./home.module.css";
 import { useAppContext } from "@/context/AppContext";
-import { User } from "@/types/User";
-import { Bell, Clock } from "lucide-react";
-import UsersListMessage from "@/components/home/UsersListMessage";
-import UsersListCall from "@/components/home/UsersListCall";
-import { Message } from "@/types/Message";
-import { Call } from "@/types/Call";
+import type { User } from "@/types/User";
+import type { Message } from "@/types/Message";
+import type { Call } from "@/types/Call";
+import {
+  Bell,
+  Clock,
+  Users,
+  MessageSquare,
+  PhoneCall,
+  Video,
+  Search,
+  UserPlus,
+  FileUp,
+  X,
+  Calendar,
+  FileText,
+  Activity,
+  Zap,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import UserListAmis from "@/components/home/UserListAmis";
+
+// Type étendu pour inclure le statut
+interface ExtendedUser extends User {
+  status: "online" | "away" | "offline";
+}
 
 export default function HomePage() {
   const pathname = usePathname();
@@ -20,6 +41,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState<ExtendedUser[]>([]);
 
   const nomDInstance = "HomePage";
   const verbose = false;
@@ -36,6 +59,17 @@ export default function HomePage() {
     "calls_get_response",
   ];
 
+  // Assignation de statuts aux utilisateurs pour la démo
+  const assignStatus = (email: string): "online" | "away" | "offline" => {
+    // Utiliser l'email comme seed pour avoir un statut cohérent
+    const hash = email
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const statuses = ["online", "away", "offline"] as const;
+    return statuses[hash % 3];
+  };
+
+  // Gestionnaire de messages du contrôleur
   const handler = {
     nomDInstance,
     traitementMessage: (msg: {
@@ -66,18 +100,28 @@ export default function HomePage() {
             `Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`
           );
         } else {
-          setUsers(msg.users_list_response.users || []);
+          const usersList = msg.users_list_response.users || [];
+          setUsers(usersList);
+
+          // Initialiser les utilisateurs filtrés avec tous les utilisateurs
+          if (currentUser) {
+            const extendedUsers = usersList
+              .filter((user) => user.email !== currentUser.email)
+              .map((user) => ({
+                ...user,
+                status: assignStatus(user.email),
+              }));
+            setFilteredUsers(extendedUsers);
+          }
         }
       }
 
       if (msg.messages_get_response) {
-        if (!msg.messages_get_response.etat) {
-          console.error(
-            `Erreur lors de la récupération des messages: ${msg.messages_get_response.error}`
-          );
-        } else {
-          setMessages(msg.messages_get_response.messages || []);
-        }
+        console.log(
+          "DEBUG: messages_get_response",
+          msg.messages_get_response.messages
+        );
+        setMessages(msg.messages_get_response.messages || []);
       }
 
       if (msg.calls_get_response) {
@@ -92,124 +136,122 @@ export default function HomePage() {
     },
   };
 
-  // Fonctions de récupération des données
+  // Récupération des données
   const fetchData = () => {
     if (controleur) {
-      const usersRequest = { users_list_request: {} };
-      const messagesRequest = { messages_get_request: {} };
-      const callsRequest = { calls_get_request: {} };
-
-      controleur.envoie(handler, usersRequest);
-      controleur.envoie(handler, messagesRequest);
-      controleur.envoie(handler, callsRequest);
+      controleur.envoie(handler, { users_list_request: {} });
+      controleur.envoie(handler, { messages_get_request: {} });
+      controleur.envoie(handler, { calls_get_request: {} });
     }
   };
 
-  // Simulation de notification de message
-  const simulateMessageNotification = () => {
-    // Trouver des utilisateurs différents du currentUser
-    const availableUsers = users.filter(
-      (user) => user.email !== currentUser?.email
-    );
+  // Fonction de recherche
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
 
-    if (availableUsers.length < 1 || !currentUser) {
-      console.error(
-        "Pas assez d'utilisateurs disponibles pour simuler des messages"
-      );
-      return;
-    }
+    if (!currentUser) return;
 
-    // Prendre le premier utilisateur
-    const firstUser = availableUsers[0];
-
-    // Créer un message pour le premier utilisateur
-    const firstMockMessage: Message = {
-      message_uuid: `mock-${Date.now()}-1`,
-      message_content: "Bonjour, pouvez-vous m'aider sur un projet ?",
-      message_date_create: new Date().toISOString(),
-      message_status: "sent",
-      message_sender: firstUser,
-    };
-
-    // Si on a un deuxième utilisateur disponible
-    let secondMockMessage: Message | null = null;
-
-    if (availableUsers.length > 1) {
-      const secondUser = availableUsers[1];
-      secondMockMessage = {
-        message_uuid: `mock-${Date.now()}-2`,
-        message_content: "Avez-vous vu ma dernière présentation ?",
-        message_date_create: new Date(Date.now() + 1000).toISOString(), // 1 seconde plus tard
-        message_status: "sent",
-        message_sender: firstUser,
-      };
-    }
-
-    // Ajouter le(s) message(s) simulé(s) à la liste des messages
-    if (secondMockMessage) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        firstMockMessage,
-        secondMockMessage!,
-      ]);
-      console.log("Deux messages simulés ajoutés de personnes différentes");
+    if (query.trim() === "") {
+      // Si la recherche est vide, afficher tous les utilisateurs
+      const allUsers = users
+        .filter((user) => user.email !== currentUser.email)
+        .map((user) => ({
+          ...user,
+          status: assignStatus(user.email),
+        }));
+      setFilteredUsers(allUsers);
     } else {
-      setMessages((prevMessages) => [...prevMessages, firstMockMessage]);
-      console.log("Un message simulé ajouté");
+      // Filtrer les utilisateurs en fonction de la recherche
+      const filtered = users
+        .filter((user) => user.email !== currentUser.email)
+        .filter(
+          (user) =>
+            user.firstname.toLowerCase().includes(query) ||
+            user.lastname.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query) ||
+            (user.phone && user.phone.includes(query))
+        )
+        .map((user) => ({
+          ...user,
+          status: assignStatus(user.email),
+        }));
+      setFilteredUsers(filtered);
     }
   };
 
-  // Simulation de notification d'appel
-  const simulateCallNotification = () => {
-    const availableUsers = users.filter(
-      (user) => user.email !== currentUser?.email
+  // Effacer la recherche
+  const clearSearch = () => {
+    setSearchQuery("");
+    if (currentUser) {
+      const allUsers = users
+        .filter((user) => user.email !== currentUser.email)
+        .map((user) => ({
+          ...user,
+          status: assignStatus(user.email),
+        }));
+      setFilteredUsers(allUsers);
+    }
+  };
+
+  // Statistiques
+  const getSentMessagesCount = () => {
+    return messages.filter((msg) => msg.message_status === "sent").length;
+  };
+
+  const getMissedCallsCount = () => {
+    return calls.filter((call) => call.call_type === "missed").length;
+  };
+
+  const getActiveUsersCount = () => {
+    // Simulons que 60% des utilisateurs sont actifs
+    return Math.floor(
+      users.filter((user) => user.email !== currentUser?.email).length * 0.6
     );
-
-    if (availableUsers.length < 1 || !currentUser) {
-      console.error(
-        "Pas assez d'utilisateurs disponibles pour simuler des appels"
-      );
-      return;
-    }
-
-    // Prendre le premier utilisateur
-    const firstUser = availableUsers[0];
-
-    // Créer un appel pour le premier utilisateur
-    const firstMockCall: Call = {
-      call_uuid: `mock-${Date.now()}-1`,
-      call_date_create: new Date().toISOString(),
-      call_date_end: new Date(Date.now() + 60000).toISOString(), // 1 minute plus tard
-      call_type: "missed", // missed, completed
-      call_sender: firstUser,
-      call_recipient: currentUser,
-    };
-
-    // Si on a un deuxième utilisateur disponible
-    let secondMockCall: Call | null = null;
-
-    if (availableUsers.length > 1) {
-      const secondUser = availableUsers[1];
-      secondMockCall = {
-        call_uuid: `mock-${Date.now()}-2`,
-        call_date_create: new Date(Date.now() - 300000).toISOString(), // 5 minutes avant
-        call_date_end: new Date(Date.now() - 270000).toISOString(), // 4:30 minutes avant
-        call_type: "missed", // appel manqué
-        call_sender: firstUser,
-        call_recipient: currentUser,
-      };
-    }
-
-    // Ajouter le(s) appel(s) simulé(s) à la liste des appels
-    if (secondMockCall) {
-      setCalls((prevCalls) => [...prevCalls, firstMockCall, secondMockCall!]);
-      console.log("Deux appels simulés ajoutés de personnes différentes");
-    } else {
-      setCalls((prevCalls) => [...prevCalls, firstMockCall]);
-      console.log("Un appel simulé ajouté");
-    }
   };
 
+  // Génération de données fictives pour les activités récentes
+  const getRecentActivities = () => {
+    if (!messages.length || !users.length || !currentUser) return [];
+
+    // On ne garde que les messages reçus (pas envoyés par l'utilisateur courant)
+    const receivedMessages = messages
+      .filter(
+        (msg) =>
+          msg.message_sender &&
+          msg.message_sender.email &&
+          msg.message_sender.email !== currentUser.email
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.message_date_create).getTime() -
+          new Date(a.message_date_create).getTime()
+      );
+
+    // On limite à 10 activités récentes
+    return receivedMessages.slice(0, 10).map((msg) => {
+      // On récupère l'utilisateur complet si possible
+      const sender = users.find((u) => u.email === msg.message_sender?.email) ||
+        msg.message_sender || {
+          firstname: "Inconnu",
+          lastname: "",
+          picture: "",
+        };
+      return {
+        type: "message",
+        user: sender,
+        time: new Date(msg.message_date_create).toLocaleString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        content: "A envoyé un nouveau message",
+      };
+    });
+  };
+
+  // Effet pour l'inscription/désinscription au contrôleur
   useEffect(() => {
     if (controleur && canal) {
       controleur.inscription(handler, listeMessageEmis, listeMessageRecus);
@@ -223,73 +265,238 @@ export default function HomePage() {
     };
   }, [pathname, controleur, canal, currentUser]);
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (!currentUser) return <div>Veuillez vous connecter</div>;
+  // Mettre à jour les utilisateurs filtrés lorsque les utilisateurs ou currentUser changent
+  useEffect(() => {
+    if (currentUser && users.length > 0) {
+      const extendedUsers = users
+        .filter((user) => user.email !== currentUser.email)
+        .map((user) => ({
+          ...user,
+          status: assignStatus(user.email),
+        }));
+      setFilteredUsers(extendedUsers);
+    }
+  }, [users, currentUser]);
 
-  // Fonctions utilitaires pour les compteurs
-  const getSentMessagesCount = () => {
-    return messages.filter((msg) => msg.message_status === "sent").length;
-  };
+  // Affichage du chargement
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+
+  // Affichage si non connecté
+  if (!currentUser)
+    return (
+      <div className="flex items-center justify-center h-screen flex-col gap-4">
+        <div className="text-xl font-semibold text-gray-700">
+          Veuillez vous connecter
+        </div>
+        <a
+          href="/login"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Se connecter
+        </a>
+      </div>
+    );
+
+  const recentActivities = getRecentActivities();
 
   return (
-    <main className={styles.main}>
-      <div className={styles.notification}>
-        <section className={styles.section}>
-          <h1>Boite de réception</h1>
-          {error && <div className={styles.error}>{error}</div>}
-          {/* <button
-            onClick={simulateMessageNotification}
-            style={{
-              padding: "6px 12px",
-              marginLeft: "auto",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
+    <div className={styles.page}>
+      <main className={styles.main}>
+        {/* Colonne principale */}
+        <div className={styles.mainColumn}>
+          {/* Tableau de bord */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={styles.dashboard_summary}
           >
-            Simuler une notification
-          </button> */}
-          <UsersListMessage
-            users={users}
-            messages={messages}
-            currentUserEmail={currentUser?.email || ""}
-            isLoading={isLoading}
-          />
-        </section>
-        <section className={styles.section}>
-          <h1>Historique d'appels</h1>
-          {error && <div className={styles.error}>{error}</div>}
-          {/* <button
-            onClick={simulateCallNotification}
-            style={{
-              padding: "6px 12px",
-              marginLeft: "auto",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Simuler un appel
-          </button> */}
-          <UsersListCall
-            users={users}
-            calls={calls}
-            currentUserEmail={currentUser?.email || ""}
-            isLoading={isLoading}
-            limitCalls={5}
-          />
-        </section>
-      </div>
-      <section className={styles.amis}>
-        <h1>Liste d'amis</h1>
-        <UserListAmis users={users} currentUserEmail={currentUser.email} />
-      </section>
-    </main>
+            <h1 className={styles.sectionTitle}>
+              <Zap size={22} /> Tableau de bord
+            </h1>
+            <div className={styles.summary_cards}>
+              <motion.div
+                className={styles.summary_card}
+                whileHover={{ scale: 1.02 }}
+                style={{ borderColor: "#1E3664" }}
+              >
+                <div className={styles.summary_card_icon}>
+                  <MessageSquare size={20} />
+                </div>
+                <h3>Messages non lus</h3>
+                <p>{getSentMessagesCount()}</p>
+              </motion.div>
+
+              <motion.div
+                className={styles.summary_card}
+                whileHover={{ scale: 1.02 }}
+                style={{ borderColor: "#F59E0B" }}
+              >
+                <div className={styles.summary_card_icon}>
+                  <PhoneCall size={20} />
+                </div>
+                <h3>Appels manqués</h3>
+                <p>{getMissedCallsCount()}</p>
+              </motion.div>
+
+              <motion.div
+                className={styles.summary_card}
+                whileHover={{ scale: 1.02 }}
+                style={{ borderColor: "#10B981" }}
+              >
+                <div className={styles.summary_card_icon}>
+                  <Users size={20} />
+                </div>
+                <h3>Contacts actifs</h3>
+                <p>{getActiveUsersCount()}</p>
+              </motion.div>
+            </div>
+
+            <div className={styles.quick_actions}>
+              <a href="/discussion" className={styles.quick_action}>
+                <MessageSquare size={16} />
+                <span>Nouvelle discussion</span>
+              </a>
+              <a href="/discussion" className={styles.quick_action}>
+                <Video size={16} />
+                <span>Démarrer un appel</span>
+              </a>
+              <a href="/files" className={styles.quick_action}>
+                <FileUp size={16} />
+                <span>Partager un fichier</span>
+              </a>
+              <a href="/equipes" className={styles.quick_action}>
+                <UserPlus size={16} />
+                <span>Créer une équipe</span>
+              </a>
+            </div>
+          </motion.div>
+
+          <div className={styles.contentColumns}>
+            {/* Activités récentes */}
+            <motion.section
+              className={styles.section}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <h2 className={styles.sectionTitle}>
+                <Activity size={20} /> Activités récentes
+              </h2>
+
+              <div className={styles.activitiesList}>
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={index} className={styles.activityItem}>
+                      <div className={styles.activityAvatar}>
+                        <img
+                          src={
+                            activity.user.picture
+                              ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${activity.user.picture}`
+                              : "/images/default_profile_picture.png"
+                          }
+                          alt={`${activity.user.firstname} ${activity.user.lastname}`}
+                        />
+                      </div>
+                      <div className={styles.activityContent}>
+                        <div className={styles.activityHeader}>
+                          <span className={styles.activityUser}>
+                            {activity.user.firstname} {activity.user.lastname}
+                          </span>
+                          <span className={styles.activityTime}>
+                            {activity.time}
+                          </span>
+                        </div>
+                        <p className={styles.activityText}>
+                          {activity.content}
+                        </p>
+                      </div>
+                      <div className={styles.activityIcon}>
+                        {activity.type === "message" && (
+                          <MessageSquare size={16} />
+                        )}
+                        {activity.type === "call" && <PhoneCall size={16} />}
+                        {activity.type === "file" && <FileText size={16} />}
+                        {activity.type === "team" && <Users size={16} />}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyActivities}>
+                    <Activity size={40} />
+                    <p>Aucune activité récente</p>
+                  </div>
+                )}
+              </div>
+            </motion.section>
+          </div>
+        </div>
+
+        {/* Colonne des contacts */}
+        <motion.section
+          className={styles.contactsColumn}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <h2 className={styles.sectionTitle}>
+            <Users size={20} /> Contacts
+          </h2>
+
+          <div className={styles.searchContainer}>
+            <Search className={styles.searchIcon} size={16} />
+            <input
+              type="text"
+              placeholder="Rechercher un contact..."
+              className={styles.searchInput}
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            {searchQuery && (
+              <button onClick={clearSearch} className={styles.clearButton}>
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {filteredUsers.length > 0 ? (
+            <UserListAmis
+              users={filteredUsers}
+              currentUserEmail={currentUser.email}
+            />
+          ) : (
+            <div className={styles.empty_state}>
+              {searchQuery ? (
+                <>
+                  <Search size={40} />
+                  <h3>Aucun résultat trouvé</h3>
+                  <p>
+                    Aucun contact ne correspond à votre recherche "{searchQuery}
+                    "
+                  </p>
+                  <button onClick={clearSearch} className={styles.resetButton}>
+                    Réinitialiser la recherche
+                  </button>
+                </>
+              ) : (
+                <>
+                  <UserPlus size={40} />
+                  <h3>Aucun contact</h3>
+                  <p>
+                    Commencez à ajouter des contacts pour les voir apparaître
+                    ici
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+        </motion.section>
+      </main>
+    </div>
   );
 }
