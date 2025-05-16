@@ -1,4 +1,6 @@
 import { ListeMessagesEmis, ListeMessagesRecus } from "./ListeMessages.js"
+import SocketIdentificationService from "./services/SocketIdentification.js"
+import User from "./models/user.js"
 
 class CanalSocketio {
     controleur
@@ -55,11 +57,35 @@ class CanalSocketio {
                 socket.emit("donne_liste", JSON.stringify(T))
             })
 
-            socket.on("disconnect", () => {
-                let message = new Object()
-                message.client_deconnexion = socket.id
-                this.controleur.envoie(this, message)
-            })
+            socket.on("disconnect", async () => {
+                try {
+                  const socketId = socket.id;
+                  const userInfo = await SocketIdentificationService.getUserInfoBySocketId(socketId);
+              
+                  if (!userInfo) {
+                    console.warn(`Aucun utilisateur trouvé pour le socket.id ${socketId}`);
+                  } else {
+                    // Mise à jour via findOneAndUpdate (comme dans updateUser)
+                    const user = await User.findOneAndUpdate(
+                      { _id: userInfo._id },
+                      { disturb_status: "offline" },
+                      { new: true }
+                    );
+              
+                    if (user) {
+                      console.log(`👋 Utilisateur ${user.firstname} ${user.lastname} mis en offline à la déconnexion.`);
+                    } else {
+                      console.warn(`Utilisateur avec l'ID ${userInfo._id} non trouvé en base.`);
+                    }
+                  }
+                } catch (err) {
+                  console.error("Erreur lors du passage en offline à la déconnexion :", err);
+                } finally {
+                  let message = { client_deconnexion: socket.id };
+                  this.controleur.envoie(this, message);
+                }
+              });
+              
         })
     }
 

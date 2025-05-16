@@ -88,6 +88,8 @@
   display: flex;
   margin-top: auto;
   padding-top: 20px;
+  display: flex;
+  justify-content: left;
 }
 
 .profileLink {
