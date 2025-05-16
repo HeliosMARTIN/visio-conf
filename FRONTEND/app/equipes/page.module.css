@@ -2,13 +2,14 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
+  width: 100%;
 }
 
 .sidebar {
   width: 280px;
   border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
   background-color: #ffffff;
 }
 
@@ -17,6 +18,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .teamContent {
@@ -80,14 +82,15 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b7280;
+  padding: 20px;
   text-align: center;
+  color: #6b7280;
 }
 
 .emptyState h2 {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: #111827;
 }
 
@@ -98,15 +101,15 @@
 }
 
 .createTeamButton {
-  padding: 10px 20px;
+  padding: 10px 16px;
   background-color: #4f46e5;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .createTeamButton:hover {
@@ -118,9 +121,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
   flex: 1;
   color: #6b7280;
-  text-align: center;
 }
 
 .emptyChannelState h3 {
@@ -133,4 +138,37 @@
 .emptyChannelState p {
   font-size: 14px;
   color: #6b7280;
+}
+
+.formOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .content {
+    height: 60%;
+  }
 }

@@ -1,19 +1,23 @@
 .container {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
-  overflow: hidden;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  position: relative;
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  justify-content: space-between;
+  padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .titleContainer {
@@ -27,78 +31,85 @@
 }
 
 .title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #111827;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  color: #111827;
+}
+
+.teamName {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6b7280;
+  margin-top: 4px;
 }
 
 .closeButton {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #f3f4f6;
-  color: #6b7280;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .closeButton:hover {
-  background-color: #e5e7eb;
-  color: #4b5563;
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .form {
-  padding: 24px;
-  max-height: 80vh;
+  padding: 20px 20px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   overflow-y: auto;
+  flex-grow: 1;
 }
 
 .formGroup {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .label {
-  display: block;
   font-size: 14px;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 8px;
 }
 
 .inputWrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .inputIcon {
   position: absolute;
   left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   color: #6b7280;
 }
 
 .input {
   width: 100%;
-  padding: 12px 12px 12px 40px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 15px;
-  outline: none;
-  transition: all 0.2s ease;
-  background-color: #f9fafb;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
   color: #111827;
-}
-
-.input::placeholder {
-  color: #9ca3af;
+  background-color: white;
 }
 
 .input:focus {
+  outline: none;
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
@@ -112,26 +123,26 @@
 .visibilityOption {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   text-align: left;
 }
 
 .visibilityOption:hover {
-  background-color: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 .visibilityOption.selected {
   border-color: #4f46e5;
-  background-color: #eff6ff;
+  background-color: #f5f3ff;
 }
 
 .visibilityIcon {
+  margin-right: 12px;
   color: #4f46e5;
 }
 
@@ -156,167 +167,83 @@
   color: #4f46e5;
 }
 
-.error {
-  padding: 12px;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
-.formActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.cancelButton {
-  padding: 10px 16px;
-  border-radius: 6px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cancelButton:hover {
-  background-color: #e5e7eb;
-}
-
-.submitButton {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 6px;
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.submitButton:hover:not(:disabled) {
-  background-color: #4338ca;
-}
-
-.submitButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.buttonSpinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Styles pour la sélection des membres */
 .membersSelection {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
   border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 16px;
 }
 
 .searchContainer {
   position: relative;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
 }
 
 .searchIcon {
   position: absolute;
   left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   color: #6b7280;
 }
 
 .searchInput {
   width: 100%;
-  padding: 10px 12px 10px 36px;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
   font-size: 14px;
-  outline: none;
   transition: border-color 0.2s;
-  background-color: #ffffff;
   color: #111827;
+  background-color: white;
 }
 
 .searchInput:focus {
+  outline: none;
   border-color: #4f46e5;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
-.selectedMembers,
-.usersList {
-  border-radius: 6px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
+.selectedMembers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.selectedMembersTitle,
-.usersListTitle {
+.selectedMembersTitle {
   font-size: 14px;
   font-weight: 500;
   color: #374151;
-  padding: 12px 16px;
   margin: 0;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f3f4f6;
 }
 
-.membersList,
-.usersList {
+.membersList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   max-height: 200px;
   overflow-y: auto;
 }
 
-.memberItem,
-.userItem {
+.memberItem {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.memberItem:last-child,
-.userItem:last-child {
-  border-bottom: none;
+  padding: 8px 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
 }
 
 .memberAvatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #4f46e5;
-  color: #ffffff;
+  background-color: #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
   margin-right: 12px;
   overflow: hidden;
 }
@@ -337,48 +264,200 @@
   color: #111827;
 }
 
-.teamName {
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
-  display: block;
-}
-
-.addButton,
-.removeButton {
+.removeButton,
+.addButton {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: 4px;
+  background-color: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.addButton {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.addButton:hover {
-  background-color: #bbf7d0;
+  transition: all 0.2s;
 }
 
 .removeButton {
-  background-color: #fee2e2;
-  color: #991b1b;
+  color: #ef4444;
 }
 
 .removeButton:hover {
-  background-color: #fecaca;
+  background-color: #fee2e2;
+}
+
+.addButton {
+  color: #10b981;
+}
+
+.addButton:hover {
+  background-color: #d1fae5;
+}
+
+.usersList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usersListTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.userItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.userItem:hover {
+  background-color: #f3f4f6;
 }
 
 .loadingUsers,
 .noResults {
-  padding: 16px;
+  padding: 12px;
   text-align: center;
   color: #6b7280;
   font-size: 14px;
+}
+
+.error {
+  padding: 12px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 0px;
+  border-top: 1px solid #e5e7eb;
+  background-color: white;
+  position: sticky;
+  bottom: 0px;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.cancelButton,
+.submitButton {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancelButton:hover {
+  background-color: #f3f4f6;
+}
+
+.submitButton {
+  background-color: #4f46e5;
+  border: none;
+  color: white;
+}
+
+.submitButton:hover {
+  background-color: #4338ca;
+}
+
+.submitButton:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
+}
+
+.buttonSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.deleteButton {
+  margin-right: auto;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  transition: all 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #fecaca;
+}
+
+.deleteConfirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.cancelDeleteButton {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  cursor: pointer;
+}
+
+.confirmDeleteButton {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #ef4444;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.confirmDeleteButton:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
 }

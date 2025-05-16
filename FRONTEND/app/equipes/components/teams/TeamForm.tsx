@@ -5,7 +5,7 @@ import styles from "./TeamForm.module.css"
 import { useAppContext } from "@/context/AppContext"
 import { Users, X, Search, Plus, Trash2, AlertCircle } from "lucide-react"
 import type { Team, TeamMember } from "@/types/Team"
-import { User } from "@/types/User"
+import type { User } from "@/types/User"
 
 interface TeamFormProps {
     onTeamCreated: (team: Team) => void
@@ -33,7 +33,6 @@ export default function TeamForm({
     const [isEditing, setIsEditing] = useState(false)
     const [successMessage, setSuccessMessage] = useState("")
     const [isDeleting, setIsDeleting] = useState(false)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
     const nomDInstance = "TeamForm"
     const verbose = false
@@ -413,15 +412,6 @@ export default function TeamForm({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>
-                        {isEditing
-                            ? "Membres de l'équipe"
-                            : "Ajouter des membres"}
-                        {!isEditing && (
-                            <span className={styles.requiredField}>*</span>
-                        )}
-                    </label>
-
                     {isEditing && canManageMembers && (
                         <div className={styles.membersSection}>
                             <h3 className={styles.sectionTitle}>
@@ -666,49 +656,13 @@ export default function TeamForm({
 
                 <div className={styles.formActions}>
                     {isEditing && canManageMembers && (
-                        <>
-                            {showDeleteConfirm ? (
-                                <div className={styles.deleteConfirm}>
-                                    <span>
-                                        Êtes-vous sûr de vouloir supprimer cette
-                                        équipe ?
-                                    </span>
-                                    <div className={styles.confirmButtons}>
-                                        <button
-                                            type="button"
-                                            className={
-                                                styles.cancelDeleteButton
-                                            }
-                                            onClick={() =>
-                                                setShowDeleteConfirm(false)
-                                            }
-                                        >
-                                            Annuler
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={
-                                                styles.confirmDeleteButton
-                                            }
-                                            onClick={handleDeleteTeam}
-                                            disabled={isDeleting}
-                                        >
-                                            {isDeleting
-                                                ? "Suppression..."
-                                                : "Confirmer"}
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className={styles.deleteButton}
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                >
-                                    Supprimer l'équipe
-                                </button>
-                            )}
-                        </>
+                        <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteTeam()}
+                        >
+                            Supprimer l'équipe
+                        </button>
                     )}
                     <button
                         type="button"

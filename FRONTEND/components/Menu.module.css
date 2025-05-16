@@ -125,6 +125,7 @@
   margin-left: 80px;
   flex-grow: 1;
   transition: margin-left 0.3s ease;
+  width: calc(100% - 80px);
 }
 
 .contentExpanded {

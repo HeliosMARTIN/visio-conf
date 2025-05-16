@@ -204,6 +204,7 @@ export default function EquipesPage() {
         const teamsRequest = { teams_list_request: {} }
         controleur?.envoie(handler, teamsRequest)
 
+        // Sélectionner automatiquement la nouvelle équipe
         setSelectedTeam(newTeam)
         setShowTeamForm(false)
         loadTeamChannels(newTeam.id)
@@ -254,18 +255,22 @@ export default function EquipesPage() {
 
             <div className={styles.content}>
                 {showTeamForm ? (
-                    <TeamForm
-                        onTeamCreated={handleTeamCreated}
-                        onCancel={handleCancelTeamForm}
-                        teamToEdit={teamToEdit}
-                    />
+                    <div className={styles.formOverlay}>
+                        <TeamForm
+                            onTeamCreated={handleTeamCreated}
+                            onCancel={handleCancelTeamForm}
+                            teamToEdit={teamToEdit}
+                        />
+                    </div>
                 ) : showChannelForm && selectedTeam ? (
-                    <ChannelForm
-                        onChannelCreated={handleChannelCreated}
-                        onCancel={handleCancelChannelForm}
-                        channelToEdit={channelToEdit}
-                        team={selectedTeam}
-                    />
+                    <div className={styles.formOverlay}>
+                        <ChannelForm
+                            onChannelCreated={handleChannelCreated}
+                            onCancel={handleCancelChannelForm}
+                            channelToEdit={channelToEdit}
+                            team={selectedTeam}
+                        />
+                    </div>
                 ) : selectedTeam ? (
                     <div className={styles.teamContent}>
                         <ChannelTabs
@@ -273,19 +278,14 @@ export default function EquipesPage() {
                             selectedChannel={selectedChannel}
                             onSelectChannel={handleChannelSelect}
                             onCreateChannel={handleCreateChannel}
-                            onEditChannel={handleEditChannel}
-                            isAdmin={isTeamAdmin}
                         />
 
                         {selectedChannel ? (
                             <ChannelView
                                 channel={selectedChannel}
                                 userId={currentUser?.id || ""}
-                                onEditChannel={
-                                    isTeamAdmin
-                                        ? () =>
-                                              handleEditChannel(selectedChannel)
-                                        : undefined
+                                onEditChannel={() =>
+                                    handleEditChannel(selectedChannel)
                                 }
                             />
                         ) : (

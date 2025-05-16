@@ -16,13 +16,15 @@ import { useAppContext } from "@/context/AppContext"
 interface ChannelViewProps {
     channel: Channel
     userId: string
-    onEditChannel?: () => void
+    onEditChannel: () => void
+    onChannelDeleted?: () => void // Ajout de la prop pour la suppression du canal
 }
 
 export default function ChannelView({
     channel,
     userId,
     onEditChannel,
+    onChannelDeleted,
 }: ChannelViewProps) {
     const { controleur, canal } = useAppContext()
     const [posts, setPosts] = useState<any[]>([])
@@ -44,12 +46,14 @@ export default function ChannelView({
         "channel_members_request",
         "channel_post_create_request",
         "channel_post_response_create_request",
+        "channel_delete_request",
     ]
     const listeMessageRecus = [
         "channel_posts_response",
         "channel_members_response",
         "channel_post_create_response",
         "channel_post_response_create_response",
+        "channel_delete_response",
     ]
 
     // Assurons-nous que nous utilisons l'ID correct
@@ -137,6 +141,20 @@ export default function ChannelView({
                     )
                 }
             }
+
+            if (msg.channel_delete_response) {
+                if (msg.channel_delete_response.etat) {
+                    console.log("Canal supprimé avec succès.")
+                    if (onChannelDeleted) {
+                        onChannelDeleted()
+                    }
+                } else {
+                    console.error(
+                        "Erreur lors de la suppression du canal:",
+                        msg.channel_delete_response.error
+                    )
+                }
+            }
         },
     }
 
@@ -162,7 +180,7 @@ export default function ChannelView({
                 )
             }
         }
-    }, [channelId, controleur, canal])
+    }, [channelId, controleur, canal, onChannelDeleted])
 
     // Focus sur l'input quand le composant est monté
     useEffect(() => {
@@ -188,7 +206,6 @@ export default function ChannelView({
             },
         }
         controleur?.envoie(handler, postRequest)
-        setNewPostContent("")
     }
 
     const handleAddResponse = (postId: string, content: string) => {
@@ -248,14 +265,16 @@ export default function ChannelView({
                     </button>
                 </div>
 
-                {isChannelCreator && onEditChannel && (
-                    <button
-                        className={styles.settingsButton}
-                        onClick={onEditChannel}
-                    >
-                        <Settings size={14} />
-                    </button>
-                )}
+                <div>
+                    {isChannelCreator && onEditChannel && (
+                        <button
+                            className={styles.settingsButton}
+                            onClick={onEditChannel}
+                        >
+                            <Settings size={14} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {showMembers && (
@@ -274,7 +293,10 @@ export default function ChannelView({
                                     {member.picture ? (
                                         <img
                                             src={
-                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
+                                                    member.picture ||
+                                                    "/placeholder.svg"
+                                                }` ||
                                                 "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                             }
                                             alt={`${member.firstname} ${member.lastname}`}

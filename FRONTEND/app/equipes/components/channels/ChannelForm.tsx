@@ -14,6 +14,7 @@ import {
     Search,
     Plus,
     Trash2,
+    AlertCircle,
 } from "lucide-react"
 import type { Team } from "@/types/Team"
 
@@ -49,6 +50,7 @@ export default function ChannelForm({
     const [isEditing, setIsEditing] = useState(false)
     const [isLoadingMembers, setIsLoadingMembers] = useState(false)
     const [channelMembers, setChannelMembers] = useState<any[]>([])
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const nomDInstance = "ChannelForm"
     const verbose = false
@@ -56,12 +58,14 @@ export default function ChannelForm({
     const listeMessageEmis = [
         "channel_create_request",
         "channel_update_request",
+        "channel_delete_request",
         "team_members_request",
         "channel_members_request",
     ]
     const listeMessageRecus = [
         "channel_create_response",
         "channel_update_response",
+        "channel_delete_response",
         "team_members_response",
         "channel_members_response",
     ]
@@ -76,10 +80,24 @@ export default function ChannelForm({
             if (!channelToEdit.isPublic) {
                 loadChannelMembers(channelToEdit.id)
             }
+        } else {
+            // Réinitialiser les valeurs si on crée un nouveau canal
+            setName("")
+            setIsPublic(true)
+            setIsEditing(false)
+            setSelectedMembers([])
         }
 
         // Charger tous les membres de l'équipe
         loadTeamMembers()
+
+        return () => {
+            controleur?.desincription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            )
+        }
     }, [channelToEdit, team.id])
 
     useEffect(() => {
@@ -127,6 +145,20 @@ export default function ChannelForm({
                     setError(
                         msg.channel_update_response.error ||
                             "Erreur lors de la mise à jour du canal"
+                    )
+                }
+            }
+
+            if (msg.channel_delete_response) {
+                setIsDeleting(false)
+
+                if (msg.channel_delete_response.etat) {
+                    // Ajouter une propriété deleted pour indiquer que le canal a été supprimé
+                    onChannelCreated({ ...channelToEdit, deleted: true })
+                } else {
+                    setError(
+                        msg.channel_delete_response.error ||
+                            "Erreur lors de la suppression du canal"
                     )
                 }
             }
@@ -251,6 +283,20 @@ export default function ChannelForm({
         }
     }
 
+    const handleDeleteChannel = () => {
+        if (!controleur || !canal || !channelToEdit) return
+
+        setIsDeleting(true)
+        setError("")
+
+        const request = {
+            channel_delete_request: {
+                channelId: channelToEdit.id,
+            },
+        }
+        controleur.envoie(handler, request)
+    }
+
     const handleCancel = () => {
         controleur?.desincription(handler, listeMessageEmis, listeMessageRecus)
         onCancel()
@@ -294,6 +340,13 @@ export default function ChannelForm({
                     <X size={20} />
                 </button>
             </div>
+
+            {error && (
+                <div className={styles.error}>
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
@@ -406,7 +459,10 @@ export default function ChannelForm({
                                                     {member.picture ? (
                                                         <img
                                                             src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
+                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
+                                                                    member.picture ||
+                                                                    "/placeholder.svg"
+                                                                }` ||
                                                                 "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                                             }
                                                             alt={`${member.firstname} ${member.lastname}`}
@@ -488,7 +544,10 @@ export default function ChannelForm({
                                                     {user.picture ? (
                                                         <img
                                                             src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}` ||
+                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
+                                                                    user.picture ||
+                                                                    "/placeholder.svg"
+                                                                }` ||
                                                                 "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
                                                             }
                                                             alt={`${user.firstname} ${user.lastname}`}
@@ -536,9 +595,16 @@ export default function ChannelForm({
                     </div>
                 )}
 
-                {error && <div className={styles.error}>{error}</div>}
-
                 <div className={styles.formActions}>
+                    {isEditing && (
+                        <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteChannel()}
+                        >
+                            Supprimer le canal
+                        </button>
+                    )}
                     <button
                         type="button"
                         className={styles.cancelButton}
