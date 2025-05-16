@@ -4,6 +4,7 @@ import ChannelPost from "../models/channelPost.js"
 import ChannelPostResponse from "../models/channelPostResponse.js"
 import User from "../models/user.js"
 import SocketIdentificationService from "./SocketIdentification.js"
+import TeamMember from "../models/teamMember.js" // Ajout de l'import TeamMember
 
 class ChannelsService {
     controleur
@@ -228,8 +229,24 @@ class ChannelsService {
 
             await creatorMember.save()
 
-            // Add additional members if provided and channel is private
-            if (!isPublic && members && members.length > 0) {
+            if (isPublic) {
+                // Utiliser TeamMember pour récupérer les userIds de la team
+                const teamMembers = await TeamMember.find({ teamId })
+                const userIds = teamMembers
+                    .map((tm) => tm.userId.toString())
+                    .filter((id) => id !== userInfo._id.toString())
+
+                const memberPromises = userIds.map((userId) => {
+                    const member = new ChannelMember({
+                        channelId: channel._id,
+                        userId,
+                        role: "member",
+                        joinedAt: new Date(),
+                    })
+                    return member.save()
+                })
+                await Promise.all(memberPromises)
+            } else if (!isPublic && members && members.length > 0) {
                 const memberPromises = members.map((userId) => {
                     if (userId !== userInfo._id.toString()) {
                         const member = new ChannelMember({

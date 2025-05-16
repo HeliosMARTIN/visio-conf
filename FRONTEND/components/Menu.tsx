@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import styles from "./Menu.module.css";
-import { useAppContext } from "@/context/AppContext";
+import { useState } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import styles from "./Menu.module.css"
+import { useAppContext } from "@/context/AppContext"
+import ProfilPopUp from "../components/ProfilPopUp"
 import { UserRoundCog } from "lucide-react";
 
 export default function Menu({ children }: { children: React.ReactNode }) {
@@ -115,24 +116,14 @@ export default function Menu({ children }: { children: React.ReactNode }) {
               )}
           </nav>
 
-          <div className={styles.profileContainer}>
-            <Link href="/profil" className={styles.menuItem}>
-              <Image
-                className={styles.profileImage}
-                src={
-                  currentUser?.picture
-                    ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
-                    : `https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png`
-                }
-                alt="profil"
-                width={40}
-                height={40}
-                priority
-                unoptimized
-              />
-              <span
-                className={`${styles.menuItemText} ${
-                  collapsed ? styles.hidden : ""
+                    <div className={styles.profileContainer}>
+                        <ProfilPopUp/> 
+                    </div>
+                </div>
+            </div>
+            <div
+                className={`${styles.contentContainer} ${
+                    !collapsed ? styles.contentExpanded : ""
                 }`}
               >
                 {currentUser?.firstname} {currentUser?.lastname}

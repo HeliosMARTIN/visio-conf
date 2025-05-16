@@ -120,8 +120,8 @@ export const AppContextProvider = ({
                 })
             }
         }
-    }, [currentUser, pathname])
 
+    }, [currentUser, pathname])
     return (
         <AppContext.Provider
             value={{

@@ -31,7 +31,7 @@ const usersToInsert = [
         desc: "Chef de département MMI à l'université de Toulon. Également professeur de développement web.",
         status: "active",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
     },
     {
         uuid: uuidv4(),
@@ -43,7 +43,7 @@ const usersToInsert = [
         desc: "Professeur de design graphique à l'université de Toulon.",
         status: "active",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
     },
     {
         uuid: uuidv4(),
@@ -55,7 +55,7 @@ const usersToInsert = [
         desc: "Responsable technique du département informatique. Expert en réseaux et systèmes.",
         status: "active",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
     },
     {
         uuid: uuidv4(),
@@ -66,7 +66,7 @@ const usersToInsert = [
         job: "Étudiant",
         desc: "Étudiant en Master 2 à l'université de Toulon. Développeur web full-stack.",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
         status: "active",
     },
     {
@@ -78,7 +78,7 @@ const usersToInsert = [
         job: "Professeur",
         desc: "Professeur de communication à l'université de Toulon.",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
         status: "active",
     },
     {
@@ -90,7 +90,7 @@ const usersToInsert = [
         job: "Étudiant",
         desc: "Étudiant en Licence 3 à l'université de Toulon. Spécialité développement mobile.",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
         status: "active",
     },
     {
@@ -102,7 +102,7 @@ const usersToInsert = [
         job: "Assistante Administrative",
         desc: "Assistante administrative du département MMI. Gestion des plannings et des inscriptions.",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
         status: "active",
     },
     {
@@ -114,7 +114,7 @@ const usersToInsert = [
         job: "Technicien",
         desc: "Technicien audiovisuel à l'université de Toulon. Responsable du matériel de tournage.",
         password:
-            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17",
+            "f4f263e439cf40925e6a412387a9472a6773c2580212a4fb50d224d3a817de17", // Mot de passe : 'mdp'
         status: "active",
     },
 ]

@@ -12,5 +12,6 @@ export interface User {
   date_create: string;
   roles: string[];
   job : string,
+  disturb_status: string,
   last_connection: string;
 }
