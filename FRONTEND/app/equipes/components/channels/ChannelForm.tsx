@@ -15,6 +15,8 @@ import {
     Plus,
     Trash2,
     AlertCircle,
+    CheckSquare,
+    Square,
 } from "lucide-react"
 import type { Team } from "@/types/Team"
 
@@ -127,6 +129,7 @@ export default function ChannelForm({
                 setIsLoading(false)
 
                 if (msg.channel_create_response.etat) {
+                    // Passer le canal créé et fermer le formulaire
                     onChannelCreated(msg.channel_create_response.channel)
                 } else {
                     setError(
@@ -140,6 +143,7 @@ export default function ChannelForm({
                 setIsLoading(false)
 
                 if (msg.channel_update_response.etat) {
+                    // Passer le canal mis à jour et fermer le formulaire
                     onChannelCreated(msg.channel_update_response.channel)
                 } else {
                     setError(
@@ -153,7 +157,7 @@ export default function ChannelForm({
                 setIsDeleting(false)
 
                 if (msg.channel_delete_response.etat) {
-                    // Pass the deleted channel with a deleted flag
+                    // Passer le canal supprimé et fermer le formulaire
                     onChannelCreated({
                         ...channelToEdit,
                         deleted: true,
@@ -321,6 +325,27 @@ export default function ChannelForm({
             setSelectedMembers([...selectedMembers, user])
         }
     }
+
+    const handleSelectAllMembers = () => {
+        // Get all available members (filtered members that are not already selected)
+        const availableMembers = filteredMembers.filter(
+            (user) => !selectedMembers.some((member) => member.id === user.id)
+        )
+
+        if (availableMembers.length > 0) {
+            // Select all available members
+            setSelectedMembers([...selectedMembers, ...availableMembers])
+        } else {
+            // If all are selected, unselect all
+            setSelectedMembers([])
+        }
+    }
+
+    const areAllMembersSelected =
+        filteredMembers.length > 0 &&
+        filteredMembers.every((user) =>
+            selectedMembers.some((member) => member.id === user.id)
+        )
 
     return (
         <div className={styles.container}>
@@ -515,9 +540,30 @@ export default function ChannelForm({
                             )}
 
                             <div className={styles.usersList}>
-                                <h4 className={styles.usersListTitle}>
-                                    Ajouter des membres
-                                </h4>
+                                <div className={styles.usersListHeader}>
+                                    <h4 className={styles.usersListTitle}>
+                                        Ajouter des membres
+                                    </h4>
+                                    {filteredMembers.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className={styles.selectAllButton}
+                                            onClick={handleSelectAllMembers}
+                                        >
+                                            {areAllMembersSelected ? (
+                                                <>
+                                                    <CheckSquare size={16} />
+                                                    Désélectionner tout
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Square size={16} />
+                                                    Sélectionner tout
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                                 {isLoadingMembers ? (
                                     <div className={styles.loadingUsers}>
                                         Chargement des membres...

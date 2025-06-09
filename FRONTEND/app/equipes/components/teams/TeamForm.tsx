@@ -3,7 +3,16 @@ import { useState, useEffect } from "react"
 import type React from "react"
 import styles from "./TeamForm.module.css"
 import { useAppContext } from "@/context/AppContext"
-import { Users, X, Search, Plus, Trash2, AlertCircle } from "lucide-react"
+import {
+    Users,
+    X,
+    Search,
+    Plus,
+    Trash2,
+    AlertCircle,
+    CheckSquare,
+    Square,
+} from "lucide-react"
 import type { Team, TeamMember } from "@/types/Team"
 import type { User } from "@/types/User"
 
@@ -106,6 +115,7 @@ export default function TeamForm({
                 setIsLoading(false)
 
                 if (msg.team_create_response.etat) {
+                    // Passer l'équipe créée et fermer le formulaire
                     onTeamCreated(msg.team_create_response.team)
                 } else {
                     setError(
@@ -119,6 +129,7 @@ export default function TeamForm({
                 setIsLoading(false)
 
                 if (msg.team_update_response.etat) {
+                    // Passer l'équipe mise à jour et fermer le formulaire
                     onTeamCreated(msg.team_update_response.team)
                 } else {
                     setError(
@@ -132,7 +143,12 @@ export default function TeamForm({
                 setIsDeleting(false)
 
                 if (msg.team_delete_response.etat) {
-                    onTeamCreated({ ...teamToEdit, deleted: true } as Team)
+                    // Passer l'équipe supprimée et fermer le formulaire
+                    onTeamCreated({
+                        ...teamToEdit,
+                        deleted: true,
+                        id: teamToEdit?.id,
+                    } as Team)
                 } else {
                     setError(
                         msg.team_delete_response.error ||
@@ -343,6 +359,27 @@ export default function TeamForm({
             setSelectedMembers([...selectedMembers, user])
         }
     }
+
+    const handleSelectAllMembers = () => {
+        // Get all available members (filtered members that are not already selected)
+        const availableMembers = filteredUsers.filter(
+            (user) => !selectedMembers.some((member) => member.id === user.id)
+        )
+
+        if (availableMembers.length > 0) {
+            // Select all available members
+            setSelectedMembers([...selectedMembers, ...availableMembers])
+        } else {
+            // If all are selected, unselect all
+            setSelectedMembers([])
+        }
+    }
+
+    const areAllMembersSelected =
+        filteredUsers.length > 0 &&
+        filteredUsers.every((user) =>
+            selectedMembers.some((member) => member.id === user.id)
+        )
 
     const isUserAdmin = teamMembers.some(
         (member) => member.userId === currentUser?.id && member.role === "admin"
@@ -581,11 +618,32 @@ export default function TeamForm({
                         )}
 
                         <div className={styles.usersList}>
-                            <h4 className={styles.usersListTitle}>
-                                {isEditing
-                                    ? "Ajouter des membres"
-                                    : "Utilisateurs disponibles"}
-                            </h4>
+                            <div className={styles.usersListHeader}>
+                                <h4 className={styles.usersListTitle}>
+                                    {isEditing
+                                        ? "Ajouter des membres"
+                                        : "Utilisateurs disponibles"}
+                                </h4>
+                                {!isEditing && filteredUsers.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className={styles.selectAllButton}
+                                        onClick={handleSelectAllMembers}
+                                    >
+                                        {areAllMembersSelected ? (
+                                            <>
+                                                <CheckSquare size={16} />
+                                                Désélectionner tout
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Square size={16} />
+                                                Sélectionner tout
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                             {isLoadingUsers ? (
                                 <div className={styles.loadingUsers}>
                                     Chargement des utilisateurs...

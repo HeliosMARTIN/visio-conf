@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import styles from "./page.module.css"
 import TeamsList from "./components/teams/TeamsList"
 import ChannelView from "./components/channels/ChannelView"
@@ -8,36 +8,40 @@ import ChannelForm from "./components/channels/ChannelForm"
 import TeamForm from "./components/teams/TeamForm"
 import ChannelTabs from "./components/channels/ChannelTabs"
 import { useChannelManager } from "./hooks/useChannelManager"
+import { useTeamManager } from "./hooks/useTeamManager"
 import type { Team } from "@/types/Team"
 import { useAppContext } from "@/context/AppContext"
 
 export default function EquipesPage() {
     const { controleur, canal, currentUser } = useAppContext()
-    const [teams, setTeams] = useState<Team[]>([])
-    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-    const [showTeamForm, setShowTeamForm] = useState(false)
     const [isLoadingTeams, setIsLoadingTeams] = useState(true)
     const [isLoadingChannels, setIsLoadingChannels] = useState(false)
-    const [isAdmin, setIsAdmin] = useState(false)
-    const [teamToEdit, setTeamToEdit] = useState<Team | null>(null)
+
+    // Use the team manager hook
+    const teamManager = useTeamManager({
+        initialTeams: [],
+        onTeamsChange: (newTeams) => {
+            console.log("Teams updated:", newTeams.length)
+        },
+        onTeamSelected: (team) => {
+            console.log("Team selected:", team?.name || "none")
+            // Reset channels when team changes
+            if (team) {
+                loadTeamChannels(team.id)
+            } else {
+                channelManager.updateChannelsFromResponse([])
+            }
+        },
+        onTeamDeleted: () => {
+            // Close any open forms when a team is deleted
+            channelManager.handleCancelChannelForm()
+        },
+    })
 
     // Use the channel manager hook
-    const {
-        channels,
-        selectedChannel,
-        showChannelForm,
-        channelToEdit,
-        handleChannelSelect,
-        handleCreateChannel,
-        handleEditChannel,
-        handleChannelCreated,
-        handleChannelDeleted,
-        handleCancelChannelForm,
-        updateChannelsFromResponse,
-    } = useChannelManager({
+    const channelManager = useChannelManager({
         initialChannels: [],
         onChannelsChange: (newChannels) => {
-            // Optional: Handle channels change if needed
             console.log("Channels updated:", newChannels.length)
         },
     })
@@ -56,9 +60,9 @@ export default function EquipesPage() {
         "channel_members_response",
     ]
 
-    const handler = {
-        nomDInstance,
-        traitementMessage: (msg: any) => {
+    // WebSocket message handler
+    const handleWebSocketMessage = useCallback(
+        (msg: any) => {
             if (verbose || controleur?.verboseall)
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
@@ -67,31 +71,16 @@ export default function EquipesPage() {
 
             if (msg.teams_list_response) {
                 if (msg.teams_list_response.etat) {
-                    setTeams(msg.teams_list_response.teams || [])
+                    const teamsFromResponse =
+                        msg.teams_list_response.teams || []
+                    teamManager.updateTeamsFromResponse(teamsFromResponse)
                     setIsLoadingTeams(false)
-
-                    // Si aucune équipe n'est sélectionnée et qu'il y a des équipes, sélectionner la première équipe où l'utilisateur est membre
-                    if (
-                        !selectedTeam &&
-                        msg.teams_list_response.teams &&
-                        msg.teams_list_response.teams.length > 0
-                    ) {
-                        const memberTeams =
-                            msg.teams_list_response.teams.filter(
-                                (team: any) => team.role
-                            )
-
-                        if (memberTeams.length > 0) {
-                            const firstTeam = memberTeams[0]
-                            setSelectedTeam(firstTeam)
-                            loadTeamChannels(firstTeam.id)
-                        }
-                    }
                 } else {
                     console.error(
                         "Erreur lors de la récupération des équipes:",
                         msg.teams_list_response.error
                     )
+                    setIsLoadingTeams(false)
                 }
             }
 
@@ -99,7 +88,9 @@ export default function EquipesPage() {
                 if (msg.channels_list_response.etat) {
                     const channelsFromResponse =
                         msg.channels_list_response.channels || []
-                    updateChannelsFromResponse(channelsFromResponse)
+                    channelManager.updateChannelsFromResponse(
+                        channelsFromResponse
+                    )
                     setIsLoadingChannels(false)
                 } else {
                     console.error(
@@ -110,6 +101,12 @@ export default function EquipesPage() {
                 }
             }
         },
+        [teamManager, channelManager]
+    )
+
+    const handler = {
+        nomDInstance,
+        traitementMessage: handleWebSocketMessage,
     }
 
     useEffect(() => {
@@ -119,8 +116,6 @@ export default function EquipesPage() {
             // Récupérer la liste des équipes
             const teamsRequest = { teams_list_request: {} }
             controleur.envoie(handler, teamsRequest)
-
-            setIsAdmin(currentUser.roles?.includes("Administrateur") || false)
         }
 
         return () => {
@@ -134,116 +129,97 @@ export default function EquipesPage() {
         }
     }, [controleur, canal, currentUser])
 
-    const loadTeamChannels = (teamId: string) => {
+    const loadTeamChannels = useCallback(
+        (teamId: string) => {
+            if (controleur && canal) {
+                setIsLoadingChannels(true)
+                const channelsRequest = { channels_list_request: { teamId } }
+                controleur.envoie(handler, channelsRequest)
+            }
+        },
+        [controleur, canal]
+    )
+
+    // Reload teams when a team is created/updated/deleted
+    const reloadTeams = useCallback(() => {
         if (controleur && canal) {
-            setIsLoadingChannels(true)
-            const channelsRequest = { channels_list_request: { teamId } }
-            controleur.envoie(handler, channelsRequest)
-        }
-    }
-
-    const handleTeamSelect = (team: Team) => {
-        // Vérifier si l'utilisateur est membre de l'équipe
-        if (!team.role) {
-            // Si l'utilisateur n'est pas membre, lui montrer un message
-            alert(
-                "Vous n'êtes pas membre de cette équipe. Contactez un administrateur pour y être ajouté."
-            )
-            return
-        }
-
-        setSelectedTeam(team)
-        setShowTeamForm(false)
-        loadTeamChannels(team.id)
-    }
-
-    const handleTeamCreated = (newTeam: Team) => {
-        // Si l'équipe a été supprimée
-        if (newTeam.deleted) {
-            // Recharger la liste des équipes
             const teamsRequest = { teams_list_request: {} }
-            controleur?.envoie(handler, teamsRequest)
-
-            // Réinitialiser la sélection
-            setSelectedTeam(null)
-            setShowTeamForm(false)
-            return
+            controleur.envoie(handler, teamsRequest)
         }
+    }, [controleur, canal])
 
-        // Recharger la liste des équipes
-        const teamsRequest = { teams_list_request: {} }
-        controleur?.envoie(handler, teamsRequest)
-
-        // Sélectionner automatiquement la nouvelle équipe
-        setSelectedTeam(newTeam)
-        setShowTeamForm(false)
-        loadTeamChannels(newTeam.id)
-    }
-
-    const handleCancelTeamForm = () => {
-        setShowTeamForm(false)
-        setTeamToEdit(null)
-    }
+    const handleTeamCreatedWrapper = useCallback(
+        (team: any) => {
+            // D'abord utiliser le gestionnaire d'équipes
+            teamManager.handleTeamCreated(team)
+            
+            // Puis recharger les équipes avec un délai pour éviter les conflits
+            setTimeout(() => {
+                reloadTeams()
+            }, 100)
+        },
+        [teamManager, reloadTeams]
+    )
 
     return (
         <div className={styles.container}>
             <div className={styles.sidebar}>
                 <TeamsList
-                    teams={teams}
-                    selectedTeam={selectedTeam}
-                    onSelectTeam={handleTeamSelect}
-                    onCreateTeam={() => {
-                        setTeamToEdit(null)
-                        setShowTeamForm(true)
-                    }}
-                    onEditTeam={(team) => {
-                        setTeamToEdit(team)
-                        setShowTeamForm(true)
-                    }}
-                    onManageMembers={(team) => {
-                        setTeamToEdit(team)
-                        setShowTeamForm(true)
-                    }}
+                    teams={teamManager.teams}
+                    selectedTeam={teamManager.selectedTeam}
+                    onSelectTeam={teamManager.handleTeamSelect}
+                    onCreateTeam={teamManager.handleCreateTeam}
+                    onEditTeam={teamManager.handleEditTeam}
+                    onManageMembers={teamManager.handleManageMembers}
                     isLoading={isLoadingTeams}
                 />
             </div>
 
             <div className={styles.content}>
-                {showTeamForm ? (
+                {teamManager.showTeamForm ? (
                     <div className={styles.formOverlay}>
                         <TeamForm
-                            onTeamCreated={handleTeamCreated}
-                            onCancel={handleCancelTeamForm}
-                            teamToEdit={teamToEdit}
+                            onTeamCreated={handleTeamCreatedWrapper}
+                            onCancel={teamManager.handleCancelTeamForm}
+                            teamToEdit={teamManager.teamToEdit}
                         />
                     </div>
-                ) : showChannelForm && selectedTeam ? (
+                ) : channelManager.showChannelForm &&
+                  teamManager.selectedTeam ? (
                     <div className={styles.formOverlay}>
                         <ChannelForm
-                            onChannelCreated={handleChannelCreated}
-                            onCancel={handleCancelChannelForm}
-                            channelToEdit={channelToEdit}
-                            team={selectedTeam}
+                            onChannelCreated={
+                                channelManager.handleChannelCreated
+                            }
+                            onCancel={channelManager.handleCancelChannelForm}
+                            channelToEdit={channelManager.channelToEdit}
+                            team={teamManager.selectedTeam}
                         />
                     </div>
-                ) : selectedTeam ? (
+                ) : teamManager.selectedTeam ? (
                     <div className={styles.teamContent}>
                         <ChannelTabs
-                            channels={channels}
-                            selectedChannel={selectedChannel}
-                            onSelectChannel={handleChannelSelect}
-                            onCreateChannel={handleCreateChannel}
-                            onChannelDeleted={handleChannelDeleted}
+                            channels={channelManager.channels}
+                            selectedChannel={channelManager.selectedChannel}
+                            onSelectChannel={channelManager.handleChannelSelect}
+                            onCreateChannel={channelManager.handleCreateChannel}
+                            onChannelDeleted={
+                                channelManager.handleChannelDeleted
+                            }
                         />
 
-                        {selectedChannel ? (
+                        {channelManager.selectedChannel ? (
                             <ChannelView
-                                channel={selectedChannel}
+                                channel={channelManager.selectedChannel}
                                 userId={currentUser?.id || ""}
-                                onEditChannel={() => handleEditChannel()}
+                                onEditChannel={() =>
+                                    channelManager.handleEditChannel()
+                                }
                                 onChannelDeleted={() =>
-                                    selectedChannel.id &&
-                                    handleChannelDeleted(selectedChannel.id)
+                                    channelManager.selectedChannel?.id &&
+                                    channelManager.handleChannelDeleted(
+                                        channelManager.selectedChannel.id
+                                    )
                                 }
                             />
                         ) : (
@@ -265,10 +241,7 @@ export default function EquipesPage() {
                         </p>
                         <button
                             className={styles.createTeamButton}
-                            onClick={() => {
-                                setTeamToEdit(null)
-                                setShowTeamForm(true)
-                            }}
+                            onClick={teamManager.handleCreateTeam}
                         >
                             Créer une équipe
                         </button>

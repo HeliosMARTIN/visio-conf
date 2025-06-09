@@ -76,30 +76,27 @@ export const useChannelManager = ({
     const handleChannelCreated = useCallback(
         (channel: any) => {
             if (channel.deleted) {
-                // Handle channel deletion
                 handleChannelDeleted(channel.id)
-            } else {
-                // Handle channel creation/update
-                setChannels((prevChannels) => {
-                    const existingIndex = prevChannels.findIndex(
-                        (c) => c.id === channel.id
-                    )
-                    let newChannels: Channel[]
-
-                    if (existingIndex >= 0) {
-                        // Update existing channel
-                        newChannels = [...prevChannels]
-                        newChannels[existingIndex] = channel
-                    } else {
-                        // Add new channel
-                        newChannels = [...prevChannels, channel]
-                    }
-
-                    onChannelsChange?.(newChannels)
-                    return newChannels
-                })
-                setSelectedChannel(channel)
+                return
             }
+
+            setChannels((prevChannels) => {
+                const existingIndex = prevChannels.findIndex(
+                    (c) => c.id === channel.id
+                )
+                const newChannels =
+                    existingIndex >= 0
+                        ? prevChannels.map((c, i) =>
+                              i === existingIndex ? channel : c
+                          )
+                        : [...prevChannels, channel]
+
+                onChannelsChange?.(newChannels)
+                return newChannels
+            })
+
+            // Toujours sélectionner le canal créé/modifié
+            setSelectedChannel(channel)
             setShowChannelForm(false)
             setChannelToEdit(null)
         },
@@ -114,16 +111,18 @@ export const useChannelManager = ({
                     (c) => c.id !== deletedChannelId
                 )
 
-                // If the deleted channel was selected, select another one
+                // Auto-select another channel if deleted one was selected
                 if (selectedChannel?.id === deletedChannelId) {
-                    const newSelectedChannel =
+                    setSelectedChannel(
                         updatedChannels.length > 0 ? updatedChannels[0] : null
-                    setSelectedChannel(newSelectedChannel)
+                    )
                 }
 
                 onChannelsChange?.(updatedChannels)
                 return updatedChannels
             })
+
+            // Toujours fermer le formulaire après suppression
             setShowChannelForm(false)
             setChannelToEdit(null)
         },
@@ -132,6 +131,7 @@ export const useChannelManager = ({
 
     // Handle canceling channel form
     const handleCancelChannelForm = useCallback(() => {
+        // Toujours fermer le formulaire lors de l'annulation
         setShowChannelForm(false)
         setChannelToEdit(null)
     }, [])
