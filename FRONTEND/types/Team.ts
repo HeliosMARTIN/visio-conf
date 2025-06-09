@@ -19,3 +19,9 @@ export interface TeamMember {
     lastname?: string
     picture?: string
 }
+
+export interface AllTeam{
+    _id: string
+    name: string
+    numberOfParticipants: number
+}

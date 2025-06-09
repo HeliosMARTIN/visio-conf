@@ -18,6 +18,7 @@ class TeamsService {
         "team_members_response",
         "team_add_member_response",
         "team_remove_member_response",
+        "all_teams_response"
     ]
     listeDesMessagesRecus = [
         "teams_list_request",
@@ -29,6 +30,7 @@ class TeamsService {
         "team_members_request",
         "team_add_member_request",
         "team_remove_member_request",
+        "all_teams_request"
     ]
 
     constructor(c, nom) {
@@ -92,6 +94,10 @@ class TeamsService {
 
         if (mesg.team_remove_member_request) {
             await this.handleTeamRemoveMember(mesg)
+        }
+
+        if(mesg.all_teams_request){
+            await this.getAllTeams(mesg);
         }
     }
 
@@ -829,6 +835,49 @@ class TeamsService {
         } catch (error) {
             const message = {
                 team_remove_member_response: {
+                    etat: false,
+                    error: error.message,
+                },
+                id: [mesg.id],
+            }
+            this.controleur.envoie(this, message)
+        }
+    }
+
+    async getAllTeams(mesg){
+        try {
+            const teams = await Team.aggregate([
+            {
+                $lookup: {
+                from: 'teammembers',
+                localField: '_id',
+                foreignField: 'teamId',
+                as: 'members'
+                }
+            },
+            {
+                $project: {
+                _id: 1,
+                name: 1,
+                numberOfParticipants: { $size: '$members' }
+                }
+            }
+            ]);
+
+            console.log(teams);
+
+            const message = {
+                all_teams_response: {
+                    etat: true,
+                    teams
+                },
+                id: [mesg.id],
+            }
+
+            this.controleur.envoie(this, message)
+        } catch (error) {
+            const message = {
+                all_teams_response: {
                     etat: false,
                     error: error.message,
                 },

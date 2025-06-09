@@ -9,10 +9,11 @@ import { Role } from "@/types/Role";
 import TeamListDisplay from "./TeamListDisplay";
 // import addUpdateTeam from "./addUpdateTeam";
 import CustomSnackBar from "../../SnackBar";
+import { AllTeam } from "@/types/Team";
 
 export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
     const [regex, setRegex] = useState<string>("");
-    const [teamList, setTeamList] = useState<Role[]>();
+    const [teamList, setTeamList] = useState<AllTeam[]>();
     const [selectedTeam, setSelectedTeam] = useState<any>();
     const [rows, setRows] = useState<any>();
 
@@ -27,21 +28,21 @@ export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
     const verbose = false
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = [
-        "teams_list_request", 
+        "all_teams_request", 
     ]
     const listeMessageRecus = [
-        "teams_list_response",
+        "all_teams_response",
     ]
 
     const handler = {
             nomDInstance,
             traitementMessage: (msg: {
-                teams_list_response?: any,
+                all_teams_response?: any,
             }) => {
                 if (verbose || controleur?.verboseall)
                     console.log(`INFO: (${nomDInstance}) - traitementMessage - `,msg)
-                if (msg.teams_list_response) {
-                    setTeamList(msg.teams_list_response)
+                if (msg.all_teams_response) {
+                    setTeamList(msg.all_teams_response.teams)
                 }
             },
         }
@@ -59,23 +60,19 @@ export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
 
     useEffect(() => {
         controleur.envoie(handler, {
-            "teams_list_request" : 1
+            "all_teams_request" : 1
         })
     }, [openDelete, openDuplicate, addUpdateTeam])
 
     useEffect(() => {
         setRows([]);
         const newRows : any = [];
-        teamList?.map((role, index) => {
-            if((role.role_label.toLowerCase()).includes(regex)){
-                newRows.push({
-                    id : role._id,
-                    name : role.role_label,
-                    perm : role.role_permissions,
-                    nbPerm : role.role_permissions.length,
-                    action : ""
-                })
-            }
+        teamList?.map((team, index) => {
+            newRows.push({
+                id: team._id,
+                name: team.name,
+                nbMembers: team.numberOfParticipants
+            })
         })
         setRows(newRows);
     }, [teamList, regex])
@@ -149,31 +146,17 @@ export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
     ];
 
     const handleDeleteRole = () => {
-        controleur.envoie(handler, {
-            "delete_role_request" : {
-                role_id : selectedTeam.id
-            }
-        })
+        
     }
 
     const handleDuplicateRole = () => {
-        var i = 2;
-        while(teamList?.find(role => role.role_label === selectedTeam.name + ` (${i})`)){
-            i++;
-        }
-        controleur.envoie(handler, {
-            "create_role_request" : {
-                name : selectedTeam.name + ` (${i})`,
-                perms: selectedTeam.perm,
-                action : "duplicate"
-            }
-        })
+        
     }
       
     if(!addUpdateTeam){
         return (
             <>
-            {userPerms.includes("admin_demande_liste_roles") ? (
+            {userPerms.includes("admin_demande_liste_equipes") ? (
                     <TeamListDisplay 
                         setAddUpdateTeam={setAddUpdateTeam}
                         regex={regex}
