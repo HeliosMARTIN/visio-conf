@@ -1,7 +1,7 @@
 "use client"
 import { useRef, useEffect, useState } from "react"
 import styles from "./ChannelTabs.module.css"
-import { HashIcon, Lock, Plus } from "lucide-react"
+import { HashIcon, Lock, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
 
@@ -21,13 +21,58 @@ export default function ChannelTabs({
     onChannelDeleted,
 }: ChannelTabsProps) {
     const tabsContainerRef = useRef<HTMLDivElement>(null)
-    const [showLeftNav, setShowLeftNav] = useState(false)
-    const [showRightNav, setShowRightNav] = useState(false)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
 
     // Trier les canaux par nom
     const sortedChannels = [...channels].sort((a, b) =>
         a.name.localeCompare(b.name)
     )
+
+    // Check scroll capabilities
+    const updateScrollButtons = () => {
+        if (tabsContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } =
+                tabsContainerRef.current
+            setCanScrollLeft(scrollLeft > 0)
+            setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
+        }
+    }
+
+    // Scroll functions
+    const scrollLeft = () => {
+        if (tabsContainerRef.current) {
+            tabsContainerRef.current.scrollBy({
+                left: -200,
+                behavior: "smooth",
+            })
+        }
+    }
+
+    const scrollRight = () => {
+        if (tabsContainerRef.current) {
+            tabsContainerRef.current.scrollBy({ left: 200, behavior: "smooth" })
+        }
+    }
+
+    // Update scroll buttons on mount and when channels change
+    useEffect(() => {
+        updateScrollButtons()
+
+        const container = tabsContainerRef.current
+        if (container) {
+            container.addEventListener("scroll", updateScrollButtons)
+            return () =>
+                container.removeEventListener("scroll", updateScrollButtons)
+        }
+    }, [sortedChannels])
+
+    // Handle window resize
+    useEffect(() => {
+        const handleResize = () => updateScrollButtons()
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
 
     // Faire défiler jusqu'au canal sélectionné
     useEffect(() => {
@@ -47,7 +92,7 @@ export default function ChannelTabs({
                     selectedTab.scrollIntoView({
                         behavior: "smooth",
                         block: "nearest",
-                        inline: "nearest",
+                        inline: "center",
                     })
                 }
             }
@@ -56,7 +101,24 @@ export default function ChannelTabs({
 
     return (
         <div className={styles.container}>
-            <div className={styles.tabsContainer} ref={tabsContainerRef}>
+            {/* Left navigation button */}
+            {canScrollLeft && (
+                <div className={styles.navigationButtons}>
+                    <button
+                        className={styles.navButton}
+                        onClick={scrollLeft}
+                        aria-label="Faire défiler vers la gauche"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                </div>
+            )}
+
+            <div
+                className={styles.tabsContainer}
+                ref={tabsContainerRef}
+                onScroll={updateScrollButtons}
+            >
                 {sortedChannels.map((channel) => (
                     <div
                         key={channel.id}
@@ -79,6 +141,20 @@ export default function ChannelTabs({
                     </div>
                 ))}
             </div>
+
+            {/* Right navigation button */}
+            {canScrollRight && (
+                <div className={styles.navigationButtons}>
+                    <button
+                        className={styles.navButton}
+                        onClick={scrollRight}
+                        aria-label="Faire défiler vers la droite"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
+
             <div className={styles.tabsAddWrapper}>
                 <button className={styles.addTab} onClick={onCreateChannel}>
                     <Plus size={16} />
