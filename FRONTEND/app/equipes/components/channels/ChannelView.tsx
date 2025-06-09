@@ -17,7 +17,7 @@ interface ChannelViewProps {
     channel: Channel
     userId: string
     onEditChannel: () => void
-    onChannelDeleted?: () => void // Ajout de la prop pour la suppression du canal
+    onChannelDeleted?: () => void
 }
 
 export default function ChannelView({
@@ -145,6 +145,7 @@ export default function ChannelView({
             if (msg.channel_delete_response) {
                 if (msg.channel_delete_response.etat) {
                     console.log("Canal supprimé avec succès.")
+                    // Call the callback to notify parent component
                     if (onChannelDeleted) {
                         onChannelDeleted()
                     }

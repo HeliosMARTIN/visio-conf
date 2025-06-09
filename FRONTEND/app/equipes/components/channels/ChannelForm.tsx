@@ -153,8 +153,12 @@ export default function ChannelForm({
                 setIsDeleting(false)
 
                 if (msg.channel_delete_response.etat) {
-                    // Ajouter une propriété deleted pour indiquer que le canal a été supprimé
-                    onChannelCreated({ ...channelToEdit, deleted: true })
+                    // Pass the deleted channel with a deleted flag
+                    onChannelCreated({
+                        ...channelToEdit,
+                        deleted: true,
+                        id: channelToEdit.id,
+                    })
                 } else {
                     setError(
                         msg.channel_delete_response.error ||

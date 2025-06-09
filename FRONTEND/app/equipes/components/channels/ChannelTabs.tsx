@@ -1,7 +1,7 @@
 "use client"
 import { useRef, useEffect, useState } from "react"
 import styles from "./ChannelTabs.module.css"
-import { HashIcon, Lock, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { HashIcon, Lock, Plus } from "lucide-react"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
 
@@ -10,6 +10,7 @@ interface ChannelTabsProps {
     selectedChannel: Channel | null
     onSelectChannel: (channel: Channel) => void
     onCreateChannel: () => void
+    onChannelDeleted?: (deletedChannelId: string) => void
 }
 
 export default function ChannelTabs({
@@ -17,6 +18,7 @@ export default function ChannelTabs({
     selectedChannel,
     onSelectChannel,
     onCreateChannel,
+    onChannelDeleted,
 }: ChannelTabsProps) {
     const tabsContainerRef = useRef<HTMLDivElement>(null)
     const [showLeftNav, setShowLeftNav] = useState(false)

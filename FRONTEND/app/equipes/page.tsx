@@ -7,7 +7,7 @@ import ChannelView from "./components/channels/ChannelView"
 import ChannelForm from "./components/channels/ChannelForm"
 import TeamForm from "./components/teams/TeamForm"
 import ChannelTabs from "./components/channels/ChannelTabs"
-import type { Channel } from "@/types/Channel"
+import { useChannelManager } from "./hooks/useChannelManager"
 import type { Team } from "@/types/Team"
 import { useAppContext } from "@/context/AppContext"
 
@@ -15,15 +15,32 @@ export default function EquipesPage() {
     const { controleur, canal, currentUser } = useAppContext()
     const [teams, setTeams] = useState<Team[]>([])
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
-    const [channels, setChannels] = useState<Channel[]>([])
-    const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
-    const [showChannelForm, setShowChannelForm] = useState(false)
     const [showTeamForm, setShowTeamForm] = useState(false)
     const [isLoadingTeams, setIsLoadingTeams] = useState(true)
     const [isLoadingChannels, setIsLoadingChannels] = useState(false)
     const [isAdmin, setIsAdmin] = useState(false)
-    const [channelToEdit, setChannelToEdit] = useState<Channel | null>(null)
     const [teamToEdit, setTeamToEdit] = useState<Team | null>(null)
+
+    // Use the channel manager hook
+    const {
+        channels,
+        selectedChannel,
+        showChannelForm,
+        channelToEdit,
+        handleChannelSelect,
+        handleCreateChannel,
+        handleEditChannel,
+        handleChannelCreated,
+        handleChannelDeleted,
+        handleCancelChannelForm,
+        updateChannelsFromResponse,
+    } = useChannelManager({
+        initialChannels: [],
+        onChannelsChange: (newChannels) => {
+            // Optional: Handle channels change if needed
+            console.log("Channels updated:", newChannels.length)
+        },
+    })
 
     const nomDInstance = "EquipesPage"
     const verbose = false
@@ -80,24 +97,16 @@ export default function EquipesPage() {
 
             if (msg.channels_list_response) {
                 if (msg.channels_list_response.etat) {
-                    setChannels(msg.channels_list_response.channels || [])
+                    const channelsFromResponse =
+                        msg.channels_list_response.channels || []
+                    updateChannelsFromResponse(channelsFromResponse)
                     setIsLoadingChannels(false)
-
-                    // Si aucun canal n'est sélectionné et qu'il y a des canaux, sélectionner le premier
-                    if (
-                        !selectedChannel &&
-                        msg.channels_list_response.channels &&
-                        msg.channels_list_response.channels.length > 0
-                    ) {
-                        setSelectedChannel(
-                            msg.channels_list_response.channels[0]
-                        )
-                    }
                 } else {
                     console.error(
                         "Erreur lors de la récupération des canaux:",
                         msg.channels_list_response.error
                     )
+                    setIsLoadingChannels(false)
                 }
             }
         },
@@ -144,46 +153,8 @@ export default function EquipesPage() {
         }
 
         setSelectedTeam(team)
-        setSelectedChannel(null)
-        setShowChannelForm(false)
         setShowTeamForm(false)
         loadTeamChannels(team.id)
-    }
-
-    const handleChannelSelect = (channel: Channel) => {
-        setSelectedChannel(channel)
-        setShowChannelForm(false)
-        setShowTeamForm(false)
-    }
-
-    const handleCreateTeam = () => {
-        setTeamToEdit(null)
-        setShowTeamForm(true)
-        setShowChannelForm(false)
-    }
-
-    const handleEditTeam = (team: Team) => {
-        setTeamToEdit(team)
-        setShowTeamForm(true)
-        setShowChannelForm(false)
-    }
-
-    const handleManageTeamMembers = (team: Team) => {
-        setTeamToEdit(team)
-        setShowTeamForm(true)
-        setShowChannelForm(false)
-    }
-
-    const handleCreateChannel = () => {
-        setChannelToEdit(null)
-        setShowChannelForm(true)
-        setShowTeamForm(false)
-    }
-
-    const handleEditChannel = (channel: Channel) => {
-        setChannelToEdit(channel)
-        setShowChannelForm(true)
-        setShowTeamForm(false)
     }
 
     const handleTeamCreated = (newTeam: Team) => {
@@ -195,7 +166,6 @@ export default function EquipesPage() {
 
             // Réinitialiser la sélection
             setSelectedTeam(null)
-            setSelectedChannel(null)
             setShowTeamForm(false)
             return
         }
@@ -210,34 +180,10 @@ export default function EquipesPage() {
         loadTeamChannels(newTeam.id)
     }
 
-    const handleChannelCreated = (newChannel: Channel) => {
-        if (channelToEdit) {
-            // Mise à jour d'un canal existant
-            setChannels((prevChannels) =>
-                prevChannels.map((c) =>
-                    c.id === newChannel.id ? newChannel : c
-                )
-            )
-            setChannelToEdit(null)
-        } else {
-            // Nouveau canal créé
-            setChannels((prevChannels) => [...prevChannels, newChannel])
-        }
-        setSelectedChannel(newChannel)
-        setShowChannelForm(false)
-    }
-
     const handleCancelTeamForm = () => {
         setShowTeamForm(false)
         setTeamToEdit(null)
     }
-
-    const handleCancelChannelForm = () => {
-        setShowChannelForm(false)
-        setChannelToEdit(null)
-    }
-
-    const isTeamAdmin = selectedTeam?.role === "admin" || isAdmin
 
     return (
         <div className={styles.container}>
@@ -246,9 +192,18 @@ export default function EquipesPage() {
                     teams={teams}
                     selectedTeam={selectedTeam}
                     onSelectTeam={handleTeamSelect}
-                    onCreateTeam={handleCreateTeam}
-                    onEditTeam={handleEditTeam}
-                    onManageMembers={handleManageTeamMembers}
+                    onCreateTeam={() => {
+                        setTeamToEdit(null)
+                        setShowTeamForm(true)
+                    }}
+                    onEditTeam={(team) => {
+                        setTeamToEdit(team)
+                        setShowTeamForm(true)
+                    }}
+                    onManageMembers={(team) => {
+                        setTeamToEdit(team)
+                        setShowTeamForm(true)
+                    }}
                     isLoading={isLoadingTeams}
                 />
             </div>
@@ -278,14 +233,17 @@ export default function EquipesPage() {
                             selectedChannel={selectedChannel}
                             onSelectChannel={handleChannelSelect}
                             onCreateChannel={handleCreateChannel}
+                            onChannelDeleted={handleChannelDeleted}
                         />
 
                         {selectedChannel ? (
                             <ChannelView
                                 channel={selectedChannel}
                                 userId={currentUser?.id || ""}
-                                onEditChannel={() =>
-                                    handleEditChannel(selectedChannel)
+                                onEditChannel={() => handleEditChannel()}
+                                onChannelDeleted={() =>
+                                    selectedChannel.id &&
+                                    handleChannelDeleted(selectedChannel.id)
                                 }
                             />
                         ) : (
@@ -307,7 +265,10 @@ export default function EquipesPage() {
                         </p>
                         <button
                             className={styles.createTeamButton}
-                            onClick={handleCreateTeam}
+                            onClick={() => {
+                                setTeamToEdit(null)
+                                setShowTeamForm(true)
+                            }}
                         >
                             Créer une équipe
                         </button>
