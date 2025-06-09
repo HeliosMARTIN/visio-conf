@@ -863,9 +863,7 @@ class TeamsService {
                 }
             }
             ]);
-
-            console.log(teams);
-
+            
             const message = {
                 all_teams_response: {
                     etat: true,

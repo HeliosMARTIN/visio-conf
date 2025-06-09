@@ -10,6 +10,7 @@ import TeamListDisplay from "./TeamListDisplay";
 // import addUpdateTeam from "./addUpdateTeam";
 import CustomSnackBar from "../../SnackBar";
 import { AllTeam } from "@/types/Team";
+import AddUpdateTeam from "./AddUpdateTeam";
 
 export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
     const [regex, setRegex] = useState<string>("");
@@ -105,18 +106,6 @@ export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
             renderCell: (params : any) => (
                 <div className={styles.rowIcons}>
                     <div 
-                        style={{backgroundColor: userPerms.includes("admin_dupliquer_role") ? "#223A6A" : "gray"}} 
-                        className={styles.iconContainer}
-                        onClick={() => {
-                            if(userPerms.includes("admin_dupliquer_equipe")){
-                                setSelectedTeam(params.row); 
-                                setOpenDuplicate(true);
-                            }
-                        }}
-                    >
-                        <Copy size={22} color="white" />
-                    </div>
-                    <div 
                         style={{backgroundColor: userPerms.includes("admin_modifier_role") ? "#223A6A" : "gray"}} 
                         className={styles.iconContainer}
                         onClick={() => {
@@ -188,11 +177,11 @@ export default function HomeTeamGestion ({userPerms} : {userPerms : string[]}) {
         )
     }
     else{
-        // return (
-        //     <AddUpdateTeam
-        //         roleId={selectedTeam?.id}
-        //         setAddUpdateTeam={setAddUpdateTeam}
-        //     />
-        // )
+        return (
+            <AddUpdateTeam
+                teamId={selectedTeam?.id}
+                setAddUpdateTeam={setAddUpdateTeam}
+            />
+        )
     }
 }
