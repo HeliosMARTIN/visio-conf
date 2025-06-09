@@ -12,7 +12,7 @@ import Cookies from "js-cookie"
 export default function Home() {
     const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
-    const [tab, setTab] = useState<string>("");
+    const [tab, setTab] = useState<string>("")
     const pathname = usePathname()
 
     const nomDInstance = "HomePage"
@@ -163,16 +163,8 @@ export default function Home() {
         }
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB threshold
-
     const handleUpload = () => {
         if (selectedFile && controleur) {
-            if (selectedFile.size > MAX_FILE_SIZE) {
-                alert(
-                    "File is too large to upload over WebSocket. Please select a smaller file."
-                )
-                return
-            }
             // Save file to ref so it remains available in the handler
             pendingFileRef.current = selectedFile
             // Clear selectedFile in state and reset the file input display
@@ -199,10 +191,9 @@ export default function Home() {
         router.push("/discussion")
     }
 
-    if(tab==="admin"){
+    if (tab === "admin") {
         return <HomeAdmin user={currentUser} />
-    }
-    else{
+    } else {
         return (
             <div className={styles.page}>
                 <main className={styles.main}>
