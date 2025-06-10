@@ -11,13 +11,13 @@ import CanalSocketio from "./canalsocketio.js"
 import Controleur from "./controleur.js"
 import UsersService from "./services/Users.js"
 import MessagesService from "./services/Messages.js"
-import AwsS3Service from "./services/AwsS3Service.js"
 import RolesService from "./services/Roles.js"
 import PermsService from "./services/Perms.js"
 import SocketIdentificationService from "./services/SocketIdentification.js"
-import FileService from "./services/FileService.js"
+import LocalFileService from "./services/LocalFileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
+import fileRoutes from "./routes/files.js"
 
 dotenv.config()
 
@@ -55,6 +55,9 @@ app.use(cors())
 app.use(express.static(path.join(__dirname, "public")))
 app.use(express.json())
 
+// File upload routes
+app.use("/api/files", fileRoutes)
+
 var verbose = process.env.VERBOSE === "true"
 var controleur = new Controleur()
 controleur.verboseall = verbose
@@ -65,8 +68,7 @@ new MessagesService(controleur, "MessagesService")
 new RolesService(controleur, "RolesService")
 new PermsService(controleur, "PermsService")
 new CanalSocketio(io, controleur, "canalsocketio")
-new AwsS3Service(controleur, "AwsS3Service")
-new FileService(controleur, "FileService")
+new LocalFileService(controleur, "LocalFileService") // New local file service
 new ChannelsService(controleur, "ChannelService")
 new TeamsService(controleur, "TeamsService")
 

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import type React from "react"
 import styles from "./TeamForm.module.css"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 import {
     Users,
     X,
@@ -464,6 +465,7 @@ export default function TeamForm({
                                 </div>
                             ) : (
                                 <div className={styles.membersList}>
+                                    {" "}
                                     {teamMembers.map((member) => (
                                         <div
                                             key={member.userId}
@@ -474,10 +476,9 @@ export default function TeamForm({
                                             >
                                                 {member.picture ? (
                                                     <img
-                                                        src={
-                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                        }
+                                                        src={getProfilePictureUrl(
+                                                            member.picture
+                                                        )}
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
                                                 ) : (
@@ -564,6 +565,7 @@ export default function TeamForm({
                                     {selectedMembers.length})
                                 </h4>
                                 <div className={styles.membersList}>
+                                    {" "}
                                     {selectedMembers.map((member) => (
                                         <div
                                             key={member.id}
@@ -574,10 +576,9 @@ export default function TeamForm({
                                             >
                                                 {member.picture ? (
                                                     <img
-                                                        src={
-                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                        }
+                                                        src={getProfilePictureUrl(
+                                                            member.picture
+                                                        )}
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
                                                 ) : (
@@ -658,13 +659,13 @@ export default function TeamForm({
                                         key={user.id}
                                         className={styles.userItem}
                                     >
+                                        {" "}
                                         <div className={styles.memberAvatar}>
                                             {user.picture ? (
                                                 <img
-                                                    src={
-                                                        `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}` ||
-                                                        "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                    }
+                                                    src={getProfilePictureUrl(
+                                                        user.picture
+                                                    )}
                                                     alt={`${user.firstname} ${user.lastname}`}
                                                 />
                                             ) : (

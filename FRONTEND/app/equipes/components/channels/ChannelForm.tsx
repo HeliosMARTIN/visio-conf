@@ -4,6 +4,7 @@ import type React from "react"
 
 import styles from "./ChannelForm.module.css"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 import {
     HashIcon,
     Lock,
@@ -485,15 +486,12 @@ export default function ChannelForm({
                                                         styles.memberAvatar
                                                     }
                                                 >
+                                                    {" "}
                                                     {member.picture ? (
                                                         <img
-                                                            src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
-                                                                    member.picture ||
-                                                                    "/placeholder.svg"
-                                                                }` ||
-                                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                            }
+                                                            src={getProfilePictureUrl(
+                                                                member.picture
+                                                            )}
                                                             alt={`${member.firstname} ${member.lastname}`}
                                                         />
                                                     ) : (
@@ -591,15 +589,12 @@ export default function ChannelForm({
                                                         styles.memberAvatar
                                                     }
                                                 >
+                                                    {" "}
                                                     {user.picture ? (
                                                         <img
-                                                            src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
-                                                                    user.picture ||
-                                                                    "/placeholder.svg"
-                                                                }` ||
-                                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                            }
+                                                            src={getProfilePictureUrl(
+                                                                user.picture
+                                                            )}
                                                             alt={`${user.firstname} ${user.lastname}`}
                                                         />
                                                     ) : (

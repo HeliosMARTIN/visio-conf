@@ -73,5 +73,65 @@ export function getMimeTypeFromExtension(extension: string): string {
 }
 
 export function getLink(currentUser: { id: string }, fileName: string): string {
-    return `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser.id}/${fileName}`
+    // For local file storage, we'll use the view endpoint
+    // Note: This will require the file ID, so we might need to update this approach
+    return `${getApiUrl()}/files/view/${fileName}` // Temporary - needs file ID
+}
+
+export function getDownloadLink(fileId: string): string {
+    return `${getApiUrl()}/files/download/${fileId}`
+}
+
+export function getViewLink(fileId: string): string {
+    return `${getApiUrl()}/files/view/${fileId}`
+}
+
+// Get API base URL from environment
+export function getApiUrl(): string {
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3220"
+}
+
+// Get file storage URL from environment
+export function getFileStorageUrl(): string {
+    return (
+        process.env.NEXT_PUBLIC_FILE_STORAGE_URL || `${getApiUrl()}/api/files`
+    )
+}
+
+// Get profile pictures URL from environment
+export function getProfilePicturesUrl(): string {
+    return (
+        process.env.NEXT_PUBLIC_PROFILE_PICTURES_URL ||
+        `${getApiUrl()}/api/files/profile`
+    )
+}
+
+// Clean and build profile picture URL - fixes double slash issue
+export function getProfilePictureUrl(picture?: string): string {
+    const baseUrl = getProfilePicturesUrl()
+
+    if (!picture) {
+        return `${baseUrl}/default_profile_picture.png`
+    }
+
+    // Clean the picture path to avoid double slashes
+    let cleanPicture = picture
+
+    // Remove leading slash if present
+    if (cleanPicture.startsWith("/")) {
+        cleanPicture = cleanPicture.substring(1)
+    }
+
+    // Remove "uploads/" prefix if present (handles old S3 paths or incorrect paths)
+    if (cleanPicture.startsWith("uploads/")) {
+        cleanPicture = cleanPicture.substring("uploads/".length)
+    }
+
+    // Remove "profile-pictures/" prefix if present
+    if (cleanPicture.startsWith("profile-pictures/")) {
+        cleanPicture = cleanPicture.substring("profile-pictures/".length)
+    }
+
+    // Build final URL
+    return `${baseUrl}/${cleanPicture}`
 }

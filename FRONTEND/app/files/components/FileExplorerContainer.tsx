@@ -7,6 +7,8 @@ import {
     getFileExtension,
     getMimeTypeFromExtension,
 } from "../../../utils/fileHelpers"
+import { localFileUploadService } from "../../../services/LocalFileUploadService"
+import Cookies from "js-cookie"
 import styles from "../page.module.css"
 
 export default function FileExplorerContainer() {
@@ -18,7 +20,6 @@ export default function FileExplorerContainer() {
     const listeMessageEmis = [
         "files_list_request",
         "folders_list_request",
-        "file_upload_request",
         "file_delete_request",
         "file_rename_request",
         "file_move_request",
@@ -29,7 +30,6 @@ export default function FileExplorerContainer() {
     const listeMessageRecus = [
         "files_list_response",
         "folders_list_response",
-        "file_upload_response",
         "file_delete_response",
         "file_rename_response",
         "file_move_response",
@@ -64,50 +64,8 @@ export default function FileExplorerContainer() {
                 } else {
                     setFiles(msg.files_list_response.files || [])
                 }
-            }
-
-            // Handle file upload response
-            if (msg.file_upload_response) {
-                if (
-                    msg.file_upload_response.etat &&
-                    pendingFileRef.current &&
-                    msg.file_upload_response.signedUrl
-                ) {
-                    // Upload the file to the signed URL
-                    fetch(msg.file_upload_response.signedUrl, {
-                        method: "PUT",
-                        mode: "cors",
-                        body: pendingFileRef.current,
-                        headers: {
-                            "Content-Type": pendingFileRef.current.type,
-                        },
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                // Refresh the file list
-                                fetchFilesList(
-                                    currentPath[currentPath.length - 1]
-                                )
-                                pendingFileRef.current = null
-                            } else {
-                                setError(
-                                    "Échec du téléversement: " +
-                                        response.statusText
-                                )
-                            }
-                        })
-                        .catch((error) => {
-                            setError(
-                                "Erreur de téléversement: " + error.message
-                            )
-                        })
-                } else if (!msg.file_upload_response.etat) {
-                    setError(
-                        "Échec du téléversement: " +
-                            msg.file_upload_response.error
-                    )
-                }
-            }
+            } // File upload is now handled directly via HTTP, no need for upload response handling
+            // The upload happens immediately in handleUploadFile
 
             // Handle file delete response
             if (msg.file_delete_response) {
@@ -231,28 +189,34 @@ export default function FileExplorerContainer() {
         }
     }
 
-    const handleUploadFile = (file: File) => {
+    const handleUploadFile = async (file: File) => {
         try {
-            // Save file to ref so it remains available in the handler
-            pendingFileRef.current = file
+            setError("") // Clear any previous errors
 
-            const extension = getFileExtension(file.name)
-            const mimeType = file.type || getMimeTypeFromExtension(extension)
-
-            const T = {
-                file_upload_request: {
-                    userId: currentUser?.id,
-                    name: file.name,
-                    size: file.size,
-                    mimeType,
-                    extension,
-                    parentId:
-                        currentPath.length > 0
-                            ? currentPath[currentPath.length - 1]
-                            : undefined,
-                },
+            // Get authentication token from cookies
+            const token = Cookies.get("token")
+            if (!token) {
+                setError("Authentication required. Please log in again.")
+                return
             }
-            controleur?.envoie(handler, T)
+
+            const parentId =
+                currentPath.length > 0
+                    ? currentPath[currentPath.length - 1]
+                    : undefined
+
+            const result = await localFileUploadService.uploadFile(
+                file,
+                parentId,
+                token
+            )
+
+            if (result.success) {
+                // Refresh the file list to show the new file
+                fetchFilesList(currentPath[currentPath.length - 1])
+            } else {
+                setError(result.error || "Upload failed")
+            }
         } catch (err) {
             setError("Échec du téléversement du fichier. Veuillez réessayer.")
         }

@@ -12,6 +12,7 @@ import {
 import PostItem from "./PostItem"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface ChannelViewProps {
     channel: Channel
@@ -290,16 +291,13 @@ export default function ChannelView({
                                 key={member.id || `member-${member.userId}`}
                                 className={styles.memberItem}
                             >
+                                {" "}
                                 <div className={styles.memberAvatar}>
                                     {member.picture ? (
                                         <img
-                                            src={
-                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${
-                                                    member.picture ||
-                                                    "/placeholder.svg"
-                                                }` ||
-                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                            }
+                                            src={getProfilePictureUrl(
+                                                member.picture
+                                            )}
                                             alt={`${member.firstname} ${member.lastname}`}
                                         />
                                     ) : (

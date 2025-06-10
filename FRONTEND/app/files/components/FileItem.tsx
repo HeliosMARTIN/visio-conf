@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 
@@ -24,6 +23,7 @@ import {
 } from "lucide-react"
 import { formatFileSize, formatDate, getLink } from "../../../utils/fileHelpers"
 import { useAppContext } from "@/context/AppContext"
+import Cookies from "js-cookie"
 
 interface FileItemProps {
     file: FileItemType
@@ -65,33 +65,37 @@ export default function FileItem({
         } else {
             document.removeEventListener("mousedown", handleClickOutside)
         }
-
         return () => {
             document.removeEventListener("mousedown", handleClickOutside)
         }
     }, [showMenu])
-
     const downloadFile = async (file: FileItemType) => {
         if (!currentUser) {
-            console.error(
-                "No current user available to generate the file link."
-            )
+            console.error("No current user available to download the file.")
             return
         }
 
         try {
-            const response = await fetch(getLink(currentUser, file.name))
+            // Use cookie for authentication
+            const response = await fetch(
+                `http://localhost:3220/api/files/download/${file.id}`,
+                {
+                    credentials: "include", // Include cookies
+                }
+            )
+
             if (!response.ok) {
                 throw new Error("Failed to fetch the file")
             }
+
             const blob = await response.blob()
             const link = document.createElement("a")
             link.href = URL.createObjectURL(blob)
-            link.download = file.name // Set the file name for download
+            link.download = file.name
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
-            URL.revokeObjectURL(link.href) // Clean up the object URL
+            URL.revokeObjectURL(link.href)
         } catch (error) {
             console.error("Error downloading the file:", error)
         }
@@ -232,10 +236,11 @@ export default function FileItem({
                 variants={iconVariants}
                 style={{ color: getIconColor() }}
             >
+                {" "}
                 {shouldShowThumbnail ? (
                     <img
                         src={
-                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser?.id}/${file.name}` ||
+                            `http://localhost:3220/api/files/view/${file.id}` ||
                             "/placeholder.svg"
                         }
                         alt={file.name}

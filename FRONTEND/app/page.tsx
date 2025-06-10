@@ -172,16 +172,15 @@ export default function Home() {
             if (fileInputRef.current) {
                 fileInputRef.current.value = ""
             }
-            // Send only file name and type; backend (AwsS3Service) generates a signed URL.
-            const uploadMessage = {
-                upload_request: {
-                    media: {
-                        name: selectedFile.name,
-                        fileType: selectedFile.type,
-                    },
-                },
-            }
-            controleur.envoie(handler, uploadMessage)
+            // const uploadMessage = {
+            //     upload_request: {
+            //         media: {
+            //             name: selectedFile.name,
+            //             fileType: selectedFile.type,
+            //         },
+            //     },
+            // }
+            // controleur.envoie(handler, uploadMessage)
         } else {
             alert("Please select a file first")
         }
