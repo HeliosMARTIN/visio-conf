@@ -23,9 +23,11 @@ services:
     depends_on:
       - mongodb
     ports:
-      - "3001:3001"
+      - "3220:3220"
     networks:
       - app_network
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/visioconf
     volumes:
       - ./BACKEND:/app
       - /app/node_modules
@@ -46,6 +48,7 @@ services:
     volumes:
       - ./FRONTEND:/app
       - /app/node_modules
+      - /app/.next
 
 # Définition des volumes
 volumes:
