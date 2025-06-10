@@ -28,7 +28,20 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const port = process.env.PORT || 3220
 const server = createServer(app)
-const io = new Server(server, { cors: { origin: "*" } })
+
+// Configuration CORS pour les credentials
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}
+
+app.use(cors(corsOptions))
+
+const io = new Server(server, {
+    cors: corsOptions,
+})
 
 io.on("connection", (socket) => {
     socket.on("authenticate", async (token) => {
@@ -51,7 +64,6 @@ io.on("connection", (socket) => {
 server.listen(port, () => {
     console.log(`Visioconf app listening on port ${port}`)
 })
-app.use(cors())
 app.use(express.static(path.join(__dirname, "public")))
 app.use(express.json())
 
