@@ -18,6 +18,8 @@ import SocketIdentificationService from "./services/SocketIdentification.js"
 import FileService from "./services/FileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
+// Ajouter l'import de initDb.js en haut du fichier avec les autres imports
+import initDb from "./initDb.js"
 
 dotenv.config()
 
@@ -31,25 +33,20 @@ const server = createServer(app)
 const io = new Server(server, { cors: { origin: "*" } })
 
 io.on("connection", (socket) => {
-    socket.on("authenticate", async (token) => {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET)
-            const userId = decoded.userId
-            await SocketIdentificationService.updateUserSocket(
-                userId,
-                socket.id
-            )
-            console.log(
-                `Socket updated for user ${userId} with socket id ${socket.id}`
-            )
-        } catch (err) {
-            console.error("Authentication failed:", err.message)
-        }
-    })
+  socket.on("authenticate", async (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const userId = decoded.userId
+      await SocketIdentificationService.updateUserSocket(userId, socket.id)
+      console.log(`Socket updated for user ${userId} with socket id ${socket.id}`)
+    } catch (err) {
+      console.error("Authentication failed:", err.message)
+    }
+  })
 })
 
 server.listen(port, () => {
-    console.log(`Visioconf app listening on port ${port}`)
+  console.log(`Visioconf app listening on port ${port}`)
 })
 app.use(cors())
 app.use(express.static(path.join(__dirname, "public")))
@@ -72,9 +69,25 @@ new TeamsService(controleur, "TeamsService")
 
 main().catch((err) => console.error("Error during startup:", err))
 
+// Modifier la fonction main() pour inclure l'option d'initialisation de la base de données
 async function main() {
-    await mongoose.connect(process.env.MONGO_URI, {
-        user: process.env.MONGO_USER,
-        pass: process.env.MONGO_PASSWORD,
-    })
+  await mongoose.connect(process.env.MONGO_URI, {
+    user: process.env.MONGO_USER,
+    pass: process.env.MONGO_PASSWORD,
+  })
+
+  // Vérifier si l'initialisation de la base de données est demandée
+  if (process.env.INIT_DB === "true") {
+    console.log("Initialisation de la base de données...")
+    try {
+      const result = await initDb(mongoose)
+      if (result.success) {
+        console.log("Initialisation de la base de données réussie")
+      } else {
+        console.error("Échec de l'initialisation de la base de données:", result.error)
+      }
+    } catch (err) {
+      console.error("Erreur lors de l'initialisation de la base de données:", err)
+    }
+  }
 }
