@@ -206,8 +206,27 @@ export default function Home() {
   };
 
   // Statistiques
-  const getSentMessagesCount = () => {
-    return messages.filter((msg) => msg.message_status === "sent").length;
+  const getUnreadReceivedMessagesCount = () => {
+    if (!currentUser) return 0;
+    const unread = messages.filter((msg) => {
+      if (msg.message_status !== "sent") return false;
+      // Récupère l'id de l'expéditeur
+      let senderId = undefined;
+      if (typeof msg.message_sender === "string") {
+        senderId = msg.message_sender;
+      } else if (typeof msg.message_sender === "object" && msg.message_sender) {
+        senderId = msg.message_sender.id || msg.message_sender._id;
+      }
+      // On ne compte que les messages envoyés par quelqu'un d'autre
+      return senderId && senderId !== currentUser.id;
+    });
+    console.log(
+      "DEBUG unread messages:",
+      unread,
+      "currentUser.id:",
+      currentUser.id
+    );
+    return unread.length;
   };
 
   const getMissedCallsCount = () => {
@@ -341,7 +360,7 @@ export default function Home() {
                   <MessageSquare size={20} />
                 </div>
                 <h3>Messages non lus</h3>
-                <p>{getSentMessagesCount()}</p>
+                <p>{getUnreadReceivedMessagesCount()}</p>
               </motion.div>
 
               <motion.div
