@@ -59,8 +59,8 @@ export const ListeMessagesEmis = [
     "channel_post_response_create_request", // { postId: string, content: string }
     //---- TEAMS ----
     "teams_list_request", // No data
-    "team_create_request", // { name: string, description?: string }
-    "team_update_request", // { teamId: string, name?: string, description?: string }
+    "team_create_request", // { name: string, description?: string, picture?: string, members?: string[] }
+    "team_update_request", // { teamId: string, name?: string, description?: string, picture?: string }
     "team_delete_request", // { teamId: string }
     "team_join_request", // { teamId: string }
     "team_leave_request", // { teamId: string }

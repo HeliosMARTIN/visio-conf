@@ -40,6 +40,9 @@ uploads/files/*
 uploads/profile-pictures/*
 !uploads/profile-pictures/default_profile_picture.png
 !uploads/profile-pictures/.gitkeep
+uploads/team-pictures/*
+!uploads/team-pictures/default-team.png
+!uploads/team-pictures/.gitkeep
 
 # vercel
 .vercel

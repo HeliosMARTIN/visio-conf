@@ -135,3 +135,31 @@ export function getProfilePictureUrl(picture?: string): string {
     // Build final URL
     return `${baseUrl}/${cleanPicture}`
 }
+
+export function getTeamPictureUrl(picture?: string): string {
+    if (!picture) {
+        // Return null to indicate we should use the Users icon instead
+        return ""
+    }
+
+    const baseUrl = `${getApiUrl()}/api/files/team-pictures`
+    let cleanPicture = picture
+
+    // Clean up the picture path
+    if (cleanPicture.startsWith("/")) {
+        cleanPicture = cleanPicture.substring(1)
+    }
+
+    // Remove "uploads/" prefix if present
+    if (cleanPicture.startsWith("uploads/")) {
+        cleanPicture = cleanPicture.substring("uploads/".length)
+    }
+
+    // Remove "team-pictures/" prefix if present
+    if (cleanPicture.startsWith("team-pictures/")) {
+        cleanPicture = cleanPicture.substring("team-pictures/".length)
+    }
+
+    // Build final URL
+    return `${baseUrl}/${cleanPicture}`
+}

@@ -3,3 +3,6 @@
 
 # But keep the directory structure
 !.gitignore
+!.gitkeep
+!profile-pictures/.gitkeep
+!team-pictures/.gitkeep

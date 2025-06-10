@@ -412,4 +412,105 @@ router.get("/profile/:filename", (req, res) => {
     }
 })
 
+// Team picture upload endpoint
+router.post("/upload/team", authenticateToken, (req, res) => {
+    // Configure multer specifically for team pictures
+    const teamPictureStorage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            const teamPicturesDir = path.join(uploadsDir, "team-pictures")
+
+            // Ensure directory exists
+            if (!fs.existsSync(teamPicturesDir)) {
+                fs.mkdirSync(teamPicturesDir, { recursive: true })
+            }
+
+            cb(null, teamPicturesDir)
+        },
+        filename: function (req, file, cb) {
+            // Generate unique filename with timestamp and original extension
+            const extension = path.extname(file.originalname)
+            const uniqueName = `${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(7)}${extension}`
+            cb(null, uniqueName)
+        },
+    })
+
+    const teamUpload = multer({
+        storage: teamPictureStorage,
+        limits: {
+            fileSize: 5 * 1024 * 1024, // 5MB limit for team pictures
+        },
+        fileFilter: (req, file, cb) => {
+            // Only allow image files for team pictures
+            const allowedMimes = [
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+            ]
+
+            if (allowedMimes.includes(file.mimetype)) {
+                cb(null, true)
+            } else {
+                cb(
+                    new Error("Only image files are allowed for team pictures"),
+                    false
+                )
+            }
+        },
+    }).single("teamPicture")
+
+    teamUpload(req, res, async (err) => {
+        if (err) {
+            console.error("Team picture upload error:", err)
+            return res.status(400).json({ error: err.message })
+        }
+
+        try {
+            if (!req.file) {
+                return res
+                    .status(400)
+                    .json({ error: "No team picture uploaded" })
+            }
+
+            res.json({
+                success: true,
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                size: req.file.size,
+            })
+        } catch (error) {
+            console.error("Team picture upload error:", error)
+
+            // Clean up file if there was an error
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path)
+            }
+
+            res.status(500).json({ error: error.message })
+        }
+    })
+})
+
+// Team picture serve endpoint
+router.get("/team-pictures/:filename", (req, res) => {
+    try {
+        const filename = req.params.filename
+        const teamPicturesDir = path.join(uploadsDir, "team-pictures")
+        const filePath = path.join(teamPicturesDir, filename)
+
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: "Team picture not found" })
+        }
+
+        // Serve the team picture
+        res.sendFile(filePath)
+    } catch (error) {
+        console.error("Error serving team picture:", error)
+        res.status(500).json({ error: error.message })
+    }
+})
+
 export default router
