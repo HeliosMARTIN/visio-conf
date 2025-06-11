@@ -29,9 +29,30 @@ const app = express()
 const port = process.env.PORT || 3220
 const server = createServer(app)
 
-// Configuration CORS pour les credentials
+// Configuration CORS pour les credentials - Support des IPs et domaines
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+        // Autoriser les requêtes sans origin (applications mobiles, Postman, etc.)
+        if (!origin) return callback(null, true)
+
+        // Liste des origines autorisées
+        const allowedOrigins = [
+            process.env.FRONTEND_URL || "http://localhost:3000",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+
+        // Permettre toute adresse IP locale sur le port 3000
+        const ipPattern =
+            /^http:\/\/((192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.0\.0\.1)\d{1,3}\.\d{1,3}|localhost):3000$/
+
+        if (allowedOrigins.includes(origin) || ipPattern.test(origin)) {
+            callback(null, true)
+        } else {
+            console.log(`CORS: Origin ${origin} not allowed`)
+            callback(new Error("Not allowed by CORS"))
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
