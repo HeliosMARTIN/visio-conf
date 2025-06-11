@@ -76,7 +76,14 @@
   gap: 8px;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.userNameText {
+  flex: 1;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .userDetails {
@@ -119,7 +126,8 @@
   opacity: 1;
 }
 
-.userActions a {
+.userActions a,
+.actionButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,9 +138,13 @@
   color: #1e3664;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
 }
 
-.userActions a:hover {
+.userActions a:hover,
+.actionButton:hover {
   background-color: #1e3664;
   color: white;
   transform: scale(1.1);
