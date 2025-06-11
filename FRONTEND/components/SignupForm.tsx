@@ -1,16 +1,16 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import styles from "./SignupForm.module.css"
 import { useAppContext } from "@/context/AppContext"
 import { useRouter } from "next/navigation"
-import jwt from "jsonwebtoken"
-import { User } from "@/types/User"
 import { Eye, EyeOff } from "lucide-react" // Import des icônes
 import Cookies from "js-cookie"
 
 export default function SignupForm() {
-    const { controleur, canal, currentUser } = useAppContext()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
@@ -38,11 +38,23 @@ export default function SignupForm() {
                 } else {
                     const token = msg.signup_response.token
                     if (token) {
+                        // Configuration plus souple des cookies
                         Cookies.set("token", token, {
-                            secure: false,
-                            sameSite: "strict",
-                            expires: 7, // 7 days
-                        }) // Use cookies
+                            secure: window.location.protocol === "https:", // Secure uniquement en HTTPS
+                            sameSite: "lax", // Moins restrictif que "strict"
+                            expires: 7, // 7 jours
+                            path: "/", // Explicitement définir le chemin
+                        })
+
+                        // Stockage de secours dans localStorage
+                        try {
+                            localStorage.setItem("auth_token", token)
+                        } catch (e) {
+                            console.error(
+                                "Impossible de stocker le token dans localStorage",
+                                e
+                            )
+                        }
                     }
                     router.push("/")
                 }

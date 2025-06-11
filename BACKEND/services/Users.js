@@ -245,7 +245,7 @@ class UsersService {
         try {
             const users = await User.find(
                 {},
-                "uuid firstname lastname email picture status roles is_online phone job desc"
+                "uuid uuid firstname lastname email picture status roles is_online phone job desc disturb_status"
             )
             const formattedUsers = users.map((user) => ({
                 id: user.uuid, // Use UUID as primary identifier
@@ -259,6 +259,7 @@ class UsersService {
                 phone: user.phone,
                 job: user.job,
                 desc: user.desc,
+                disturb_status: user.disturb_status,
             }))
             const message = {
                 users_list_response: {
@@ -307,6 +308,8 @@ class UsersService {
                 email: user.email,
                 picture: user.picture,
                 phone: user.phone,
+                disturb_status: user.disturb_status,
+                date_create: user.date_create || user.createdAt || null,
             }
             const message = {
                 update_user_response: {
@@ -343,7 +346,7 @@ class UsersService {
             ) {
                 user = await User.findById(
                     userId,
-                    "uuid firstname lastname email picture phone roles"
+                    "uuid firstname lastname email picture phone roles disturb_status date_create"
                 ).populate("roles", "role_label")
             }
 
@@ -354,7 +357,6 @@ class UsersService {
                     "uuid firstname lastname email picture phone roles"
                 ).populate("roles", "role_label")
             }
-
             if (user) {
                 const userInfo = {
                     id: user.uuid, // Always return UUID as primary ID for frontend
@@ -365,7 +367,9 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
+                    disturb_status: user.disturb_status,
                     roles: user.roles.map((role) => role.role_label),
+                    date_create: user.date_create || user.createdAt || null,
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },

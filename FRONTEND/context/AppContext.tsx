@@ -1,15 +1,10 @@
 "use client"
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    useRef,
-} from "react"
+import type React from "react"
+import { createContext, useContext, useEffect, useState, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
-import { User } from "@/types/User"
+import type { User } from "@/types/User"
 import jwt from "jsonwebtoken"
 import Cookies from "js-cookie"
 
@@ -77,28 +72,69 @@ export const AppContextProvider = ({
         },
     }
 
+    // Fonction de déconnexion centralisée
+    const logout = () => {
+        // Supprimer le token des cookies
+        Cookies.remove("token", { path: "/" })
+
+        // Supprimer le token du localStorage
+        try {
+            localStorage.removeItem("auth_token")
+        } catch (e) {
+            console.error(
+                "Erreur lors de la suppression du token du localStorage:",
+                e
+            )
+        }
+
+        // Déconnecter le socket si nécessaire
+        if (canalRef.current?.socket) {
+            canalRef.current.socket.emit("logout")
+            canalRef.current.socket.disconnect()
+        }
+
+        // Réinitialiser l'état utilisateur
+        setCurrentUser(null)
+
+        // Rediriger vers la page de login
+        router.push("/login")
+    }
+
     useEffect(() => {
         controleurRef.current?.inscription(
             handler,
             listeMessageEmis,
             listeMessageRecus
         )
+        return () => {
+            controleurRef.current?.desincription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            )
+        }
     }, [])
 
     useEffect(() => {
-        if (
-            !Cookies.get("token") &&
-            pathname !== "/login" &&
-            pathname !== "/signup"
-        ) {
+        // Vérifier à la fois les cookies et localStorage
+        const tokenFromCookie = Cookies.get("token")
+        const tokenFromStorage = localStorage.getItem("auth_token")
+        const hasToken = tokenFromCookie || tokenFromStorage
+
+        // Si aucun token n'est trouvé et que l'utilisateur n'est pas sur une page publique
+        if (!hasToken && pathname !== "/login" && pathname !== "/signup") {
+            console.log("Aucun token trouvé, redirection vers login")
             setCurrentUser(null)
             router.push("/login")
         }
     }, [currentUser, pathname])
 
     useEffect(() => {
-        if (!currentUser && Cookies.get("token")) {
-            const token = Cookies.get("token")
+        if (!currentUser) {
+            // Récupérer le token depuis les cookies ou localStorage
+            const token =
+                Cookies.get("token") || localStorage.getItem("auth_token")
+
             if (token) {
                 const decoded = jwt.decode(token) as any
                 const { userId } = decoded

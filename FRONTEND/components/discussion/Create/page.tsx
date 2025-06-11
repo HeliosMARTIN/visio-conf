@@ -5,6 +5,7 @@ import { useAppContext } from "@/context/AppContext"
 import { X, CirclePlus, Send } from "lucide-react"
 import { User } from "@/types/User"
 import { getProfilePictureUrl } from "@/utils/fileHelpers"
+import { generateUUID } from "@/utils/uuid"
 
 interface CreateDiscussionProps {
     onDiscussionCreated: () => void
@@ -87,18 +88,20 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                     otherUserEmail: otherUserIds,
                     text: message,
                     discussion_creator: currentUserId,
-                    discussion_uuid: crypto.randomUUID(),
+                    discussion_uuid: generateUUID(),
                     message_content: message,
-                    message_uuid: crypto.randomUUID(),
+                    message_uuid: generateUUID(),
                     message_date_create: new Date().toISOString(),
                 },
             }
 
             controleur.envoie(handler, message_request)
 
+            onDiscussionCreated()
             setMessage("")
             setSelectedUsers([])
         } catch (error) {
+            console.error("Erreur lors de la création de la discussion:", error)
             setError("Erreur lors de la création de la discussion")
         } finally {
             setIsCreating(false)

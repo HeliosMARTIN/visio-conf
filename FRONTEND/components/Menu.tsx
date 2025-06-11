@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import styles from "./Menu.module.css"
 import { useAppContext } from "@/context/AppContext"
+import ProfilPopUp from "../components/ProfilPopUp"
 import { UserRoundCog } from "lucide-react"
 import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
@@ -130,33 +131,8 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                                 </Link>
                             )}
                     </nav>
-
                     <div className={styles.profileContainer}>
-                        {" "}
-                        <Link href="/profil" className={styles.menuItem}>
-                            <Image
-                                className={styles.profileImage}
-                                src={
-                                    currentUser?.picture
-                                        ? getProfilePictureUrl(
-                                              currentUser.picture
-                                          )
-                                        : getProfilePictureUrl()
-                                }
-                                alt="profil"
-                                width={40}
-                                height={40}
-                                priority
-                                unoptimized
-                            />
-                            <span
-                                className={`${styles.menuItemText} ${
-                                    collapsed ? styles.hidden : ""
-                                }`}
-                            >
-                                {currentUser?.firstname} {currentUser?.lastname}
-                            </span>
-                        </Link>
+                        {currentUser && <ProfilPopUp user={currentUser} />}
                     </div>
                 </div>
             </div>

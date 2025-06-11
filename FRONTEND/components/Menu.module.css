@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 .collapsed {
@@ -88,6 +89,9 @@
   display: flex;
   margin-top: auto;
   padding-top: 20px;
+  display: flex;
+  justify-content: left;
+  z-index: 1000;
 }
 
 .profileLink {

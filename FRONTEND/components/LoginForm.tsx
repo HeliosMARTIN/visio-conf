@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
@@ -8,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react"
 import Cookies from "js-cookie"
 
 export default function LoginForm() {
-    const { controleur, canal, currentUser } = useAppContext()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -40,11 +42,23 @@ export default function LoginForm() {
                     setLoginError("")
                     const token = msg.login_response.token
                     if (token) {
+                        // Configuration plus souple des cookies
                         Cookies.set("token", token, {
-                            secure: false,
-                            sameSite: "strict",
-                            expires: 7, // 7 days
-                        }) // Use cookies
+                            secure: window.location.protocol === "https:", // Secure uniquement en HTTPS
+                            sameSite: "lax", // Moins restrictif que "strict"
+                            expires: 7, // 7 jours
+                            path: "/", // Explicitement définir le chemin
+                        })
+
+                        // Stockage de secours dans localStorage
+                        try {
+                            localStorage.setItem("auth_token", token)
+                        } catch (e) {
+                            console.error(
+                                "Impossible de stocker le token dans localStorage",
+                                e
+                            )
+                        }
                     }
                     router.push("/")
                 }

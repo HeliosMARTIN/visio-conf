@@ -23,15 +23,23 @@ export default function ProfilPage() {
 
     const listeMessageRecus = ["update_user_response"]
 
-    // Fonction pour formater les dates avec gestion d'erreur
-    const formatDate = (dateValue: string | Date | undefined) => {
+    const formatDate = (dateValue: any) => {
         if (!dateValue) return "Non disponible"
-
         try {
-            // Convertir en Date si c'est une string
-            const dateObj =
-                typeof dateValue === "string" ? new Date(dateValue) : dateValue
-
+            let dateObj
+            if (
+                typeof dateValue === "string" ||
+                typeof dateValue === "number"
+            ) {
+                dateObj = new Date(dateValue)
+            } else if (dateValue instanceof Date) {
+                dateObj = dateValue
+            } else if (dateValue.$date) {
+                dateObj = new Date(dateValue.$date)
+            } else {
+                return "Format de date inconnu"
+            }
+            if (isNaN(dateObj.getTime())) return "Format de date invalide"
             return dateObj.toLocaleDateString("fr-FR", {
                 year: "numeric",
                 month: "long",
@@ -150,17 +158,9 @@ export default function ProfilPage() {
         }
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB threshold    // Upload du fichier avec le système local
     const uploadFile = async (file: File) => {
         if (!currentUser) {
             setUploadError("Utilisateur non connecté")
-            return
-        }
-
-        if (file.size > MAX_FILE_SIZE) {
-            setUploadError(
-                "Le fichier est trop volumineux. Veuillez sélectionner un fichier plus petit."
-            )
             return
         }
 
@@ -231,6 +231,8 @@ export default function ProfilPage() {
         currentUser.roles && Array.isArray(currentUser.roles)
             ? currentUser.roles.filter((role) => !!role && role !== "")
             : []
+
+    console.log("currentUser.date_create", currentUser.date_create)
 
     return (
         <div className={styles.page}>

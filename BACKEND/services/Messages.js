@@ -24,7 +24,42 @@ class MessagesService {
         "discuss_remove_message_request",
         "message_status_request",
     ]
+    controleur
+    verbose = false
+    listeDesMessagesEmis = [
+        "messages_get_response",
+        "message_send_response",
+        "discuss_list_response",
+        "users_search_response",
+        "discuss_remove_member_response",
+        "discuss_remove_message_response",
+        "message_status_response",
+    ]
+    listeDesMessagesRecus = [
+        "messages_get_request",
+        "message_send_request",
+        "discuss_list_request",
+        "users_search_request",
+        "discuss_remove_member_request",
+        "discuss_remove_message_request",
+        "message_status_request",
+    ]
 
+    constructor(c, nom) {
+        this.controleur = c
+        this.nomDInstance = nom
+        if (this.controleur.verboseall || this.verbose)
+            console.log(
+                "INFO (" +
+                    this.nomDInstance +
+                    "):  s'enregistre aupres du controleur"
+            )
+        this.controleur.inscription(
+            this,
+            this.listeDesMessagesEmis,
+            this.listeDesMessagesRecus
+        )
+    }
     constructor(c, nom) {
         this.controleur = c
         this.nomDInstance = nom
@@ -61,11 +96,53 @@ class MessagesService {
                     model: "User",
                     select: "firstname lastname picture socket_id uuid",
                 })
+    async traitementMessage(mesg) {
+        if (this.controleur.verboseall || this.verbose) {
+            console.log(
+                "INFO (" +
+                    this.nomDInstance +
+                    "): reçoit le message suivant à traiter"
+            )
+            console.log(mesg)
+        }
+        // CAS : DEMANDE DE LA LISTE DES MESSAGES D'UNE DISCUSSION
+        if (mesg.messages_get_request) {
+            try {
+                const { convId } = mesg.messages_get_request
+                const discussions = await Discussion.find({
+                    discussion_uuid: convId,
+                }).populate({
+                    path: "discussion_messages.message_sender",
+                    model: "User",
+                    select: "firstname lastname picture socket_id uuid",
+                })
 
                 const messages = discussions.flatMap(
                     (discussion) => discussion.discussion_messages
                 )
+                const messages = discussions.flatMap(
+                    (discussion) => discussion.discussion_messages
+                )
 
+                const message = {
+                    messages_get_response: {
+                        etat: true,
+                        messages: messages,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            } catch (error) {
+                const message = {
+                    messages_get_response: {
+                        etat: false,
+                        error: error.message,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        }
                 const message = {
                     messages_get_response: {
                         etat: true,
@@ -267,7 +344,7 @@ class MessagesService {
                 }).populate({
                     path: "discussion_members",
                     model: "User",
-                    select: "_id firstname lastname picture is_online",
+                    select: "_id uuid firstname lastname picture is_online",
                 })
 
                 const formattedDiscussions = discussions.map((discussion) => {
@@ -290,6 +367,7 @@ class MessagesService {
                         discussion_members: discussion.discussion_members.map(
                             (member) => ({
                                 _id: member._id.toString(),
+                                id: member.uuid,
                                 firstname: member.firstname,
                                 lastname: member.lastname,
                                 picture: member.picture,
