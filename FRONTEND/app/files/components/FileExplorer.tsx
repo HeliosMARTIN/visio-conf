@@ -28,7 +28,7 @@ import type { Team } from "../../../types/Team"
 
 interface FileExplorerProps {
     files: FileItem[]
-    currentPath: string[]
+    currentPath: { id?: string; name: string }[]
     isLoading: boolean
     onFetchFiles: (folderId?: string) => void
     onCreateFolder: (name: string) => void
@@ -37,6 +37,7 @@ interface FileExplorerProps {
     onRenameFile: (fileId: string, newName: string) => void
     onMoveFile: (fileId: string, newParentId: string) => void
     onNavigate: (folderId?: string) => void
+    onNavigateToPath?: (index: number) => void
     userTeams?: Team[]
     onShareToTeam?: (fileId: string, teamId: string) => void
     showUploadActions?: boolean
@@ -54,6 +55,7 @@ export default function FileExplorer({
     onRenameFile,
     onMoveFile,
     onNavigate,
+    onNavigateToPath,
     userTeams = [],
     onShareToTeam,
     showUploadActions = true,
@@ -73,20 +75,6 @@ export default function FileExplorer({
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const { currentUser } = useAppContext()
-
-    // Get folder names for breadcrumbs
-    const [folderNames, setFolderNames] = useState<Record<string, string>>({})
-
-    useEffect(() => {
-        // Update folder names from files
-        const newFolderNames: Record<string, string> = {}
-        files.forEach((file) => {
-            if (file.type === "folder") {
-                newFolderNames[file.id] = file.name
-            }
-        })
-        setFolderNames((prev) => ({ ...prev, ...newFolderNames }))
-    }, [files])
 
     useEffect(() => {
         let sorted = [...files]
@@ -225,29 +213,16 @@ export default function FileExplorer({
 
     const handleNavigateUp = () => {
         if (currentPath.length > 1) {
-            // Navigate to parent folder
-            const parentPath = [...currentPath]
-            parentPath.pop() // Remove current folder
-            const parentId = parentPath[parentPath.length - 1]
-            onNavigate(parentId)
+            // Navigate to parent folder using onNavigateToPath
+            onNavigateToPath?.(currentPath.length - 2)
         } else if (currentPath.length === 1) {
             // Navigate to root
-            onNavigate()
+            onNavigate?.()
         }
     }
 
     const handleNavigateHome = () => {
-        onNavigate()
-    }
-
-    const handleNavigateToBreadcrumb = (index: number) => {
-        if (index === -1) {
-            // Navigate to root
-            onNavigate()
-        } else {
-            // Navigate to the folder at the specified index
-            onNavigate(currentPath[index])
-        }
+        onNavigate?.()
     }
 
     return (
@@ -261,15 +236,13 @@ export default function FileExplorer({
                     >
                         <Home size={18} />
                     </button>
-
                     <button
                         className={styles.navButton}
                         onClick={handleNavigateUp}
                         disabled={currentPath.length === 0}
                     >
                         <ArrowLeft size={18} />
-                    </button>
-
+                    </button>{" "}
                     <div className={styles.breadcrumbs}>
                         {currentPath.length === 0 ? (
                             <span className={styles.breadcrumbItem}>
@@ -279,14 +252,12 @@ export default function FileExplorer({
                             <>
                                 <span
                                     className={`${styles.breadcrumbItem} ${styles.breadcrumbLink}`}
-                                    onClick={() =>
-                                        handleNavigateToBreadcrumb(-1)
-                                    }
+                                    onClick={() => onNavigateToPath?.(-1)}
                                 >
                                     Accueil
                                 </span>
-                                {currentPath.map((folderId, index) => (
-                                    <span key={folderId}>
+                                {currentPath.map((pathItem, index) => (
+                                    <span key={pathItem.id || index}>
                                         <span
                                             className={
                                                 styles.breadcrumbSeparator
@@ -307,13 +278,11 @@ export default function FileExplorer({
                                                     index <
                                                     currentPath.length - 1
                                                 ) {
-                                                    handleNavigateToBreadcrumb(
-                                                        index
-                                                    )
+                                                    onNavigateToPath?.(index)
                                                 }
                                             }}
                                         >
-                                            {folderNames[folderId] || "Folder"}
+                                            {pathItem.name}
                                         </span>
                                     </span>
                                 ))}
