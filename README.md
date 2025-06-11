@@ -77,12 +77,14 @@ cd visio-conf
 
 ### 3. Lancement du projet Docker
 
-```Construction du projet et démarrage
+```
 docker-compose build --no-cache
 docker-compose up -d
 ```
 
-```Fermeture du projet
+####  Fermeture du projet
+
+```
 docker-compose down
 ```
 
