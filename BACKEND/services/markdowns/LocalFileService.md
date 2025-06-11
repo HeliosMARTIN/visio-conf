@@ -51,29 +51,29 @@ Le service crée automatiquement les répertoires nécessaires et gère :
 
 ### Messages reçus
 
-| Message                 | Format                                                      | Émetteur                |
-| ----------------------- | ----------------------------------------------------------- | ----------------------- |
-| `files_list_request`    | `{ folderId?: string }`                                     | FileExplorer (frontend) |
-| `folders_list_request`  | `{ excludeFolderId?: string }`                              | FileExplorer (frontend) |
-| `file_delete_request`   | `{ fileId: string }`                                        | FileExplorer (frontend) |
-| `file_rename_request`   | `{ fileId: string, newName: string }`                       | FileExplorer (frontend) |
-| `file_move_request`     | `{ fileId: string, newParentId: string }`                   | FileExplorer (frontend) |
-| `file_share_request`    | `{ fileId: string, isPublic: boolean, userIds?: string[] }` | FileExplorer (frontend) |
-| `folder_create_request` | `{ name: string, parentId?: string }`                       | FileExplorer (frontend) |
-| `file_download_request` | `{ fileId: string }`                                        | FileExplorer (frontend) |
+| Message                      | Format                                    | Émetteur                |
+| ---------------------------- | ----------------------------------------- | ----------------------- |
+| `files_list_request`         | `{ folderId?: string }`                   | FileExplorer (frontend) |
+| `folders_list_request`       | `{ excludeFolderId?: string }`            | FileExplorer (frontend) |
+| `file_delete_request`        | `{ fileId: string }`                      | FileExplorer (frontend) |
+| `file_rename_request`        | `{ fileId: string, newName: string }`     | FileExplorer (frontend) |
+| `file_move_request`          | `{ fileId: string, newParentId: string }` | FileExplorer (frontend) |
+| `file_share_to_team_request` | `{ fileId: string, teamId: string }`      | FileExplorer (frontend) |
+| `folder_create_request`      | `{ name: string, parentId?: string }`     | FileExplorer (frontend) |
+| `file_download_request`      | `{ fileId: string }`                      | FileExplorer (frontend) |
 
 ### Messages émis
 
-| Message                  | Format                                                                                          | Récepteur    |
-| ------------------------ | ----------------------------------------------------------------------------------------------- | ------------ |
-| `files_list_response`    | `{ etat: boolean, files?: File[], error?: string }`                                             | FileExplorer |
-| `folders_list_response`  | `{ etat: boolean, folders?: Folder[], error?: string }`                                         | FileExplorer |
-| `file_delete_response`   | `{ etat: boolean, fileId?: string, error?: string }`                                            | FileExplorer |
-| `file_rename_response`   | `{ etat: boolean, error?: string }`                                                             | FileExplorer |
-| `file_move_response`     | `{ etat: boolean, fileId?: string, newParentId?: string, error?: string }`                      | FileExplorer |
-| `file_share_response`    | `{ etat: boolean, fileId?: string, error?: string }`                                            | FileExplorer |
-| `folder_create_response` | `{ etat: boolean, error?: string }`                                                             | FileExplorer |
-| `file_download_response` | `{ etat: boolean, downloadUrl?: string, fileName?: string, mimeType?: string, error?: string }` | FileExplorer |
+| Message                       | Format                                                                                          | Récepteur    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| `files_list_response`         | `{ etat: boolean, files?: File[], error?: string }`                                             | FileExplorer |
+| `folders_list_response`       | `{ etat: boolean, folders?: Folder[], error?: string }`                                         | FileExplorer |
+| `file_delete_response`        | `{ etat: boolean, fileId?: string, error?: string }`                                            | FileExplorer |
+| `file_rename_response`        | `{ etat: boolean, error?: string }`                                                             | FileExplorer |
+| `file_move_response`          | `{ etat: boolean, fileId?: string, newParentId?: string, error?: string }`                      | FileExplorer |
+| `file_share_to_team_response` | `{ etat: boolean, fileId?: string, teamId?: string, error?: string }`                           | FileExplorer |
+| `folder_create_response`      | `{ etat: boolean, error?: string }`                                                             | FileExplorer |
+| `file_download_response`      | `{ etat: boolean, downloadUrl?: string, fileName?: string, mimeType?: string, error?: string }` | FileExplorer |
 
 ## Méthodes
 
@@ -96,7 +96,7 @@ Méthode principale pour traiter les messages. Redirige vers la méthode appropr
 -   `file_delete_request` → suppression logique et physique d'un fichier ou dossier
 -   `file_rename_request` → renomme un fichier ou dossier (base de données et fichier physique)
 -   `file_move_request` → déplace un fichier ou dossier dans l'arborescence
--   `file_share_request` → partage un fichier ou dossier
+-   `file_share_to_team_request` → partage un fichier ou dossier avec une équipe
 -   `folder_create_request` → crée un nouveau dossier
 -   `file_download_request` → génère une URL de téléchargement locale
 

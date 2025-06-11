@@ -59,6 +59,26 @@ io.on("connection", (socket) => {
             console.error("Authentication failed:", err.message)
         }
     })
+
+    // Nettoyer automatiquement lors de la déconnexion
+    socket.on("disconnect", async () => {
+        try {
+            // Chercher l'utilisateur associé à ce socket
+            const userInfo =
+                await SocketIdentificationService.getUserInfoBySocketId(
+                    socket.id
+                )
+            if (userInfo && userInfo._id) {
+                SocketIdentificationService.userToSocket.delete(userInfo._id)
+                SocketIdentificationService.socketToUser.delete(socket.id)
+                console.log(
+                    `Socket association cleaned on disconnect for user ${userInfo._id}`
+                )
+            }
+        } catch (err) {
+            console.error("Disconnect cleanup failed:", err.message)
+        }
+    })
 })
 
 server.listen(port, () => {

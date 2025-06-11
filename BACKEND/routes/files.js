@@ -44,10 +44,9 @@ const authenticateToken = async (req, res, next) => {
     if (!token) {
         return res.status(401).json({ error: "Access token required" })
     }
-
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
-        const user = await User.findById(decoded.userId)
+        const user = await User.findById(decoded.userId) // Use ObjectId for internal auth
         if (!user) {
             return res.status(401).json({ error: "User not found" })
         }
@@ -179,14 +178,16 @@ router.post(
 router.get("/download/:fileId", authenticateToken, async (req, res) => {
     try {
         const { fileId } = req.params
-        const userId = req.user.uuid
-
-        // Find file in database
+        const userId = req.user.uuid // Find file in database - check if user owns it or if it's shared with them
         const file = await File.findOne({
             id: fileId,
-            ownerId: userId,
             type: "file",
             deleted: false,
+            $or: [
+                { ownerId: userId },
+                { sharedWith: { $in: [req.user._id.toString()] } },
+                { sharedWithTeams: { $exists: true, $ne: [] } },
+            ],
         })
 
         if (!file) {
@@ -226,12 +227,16 @@ router.get("/view/:fileId", authenticateToken, async (req, res) => {
         const { fileId } = req.params
         const userId = req.user.uuid
 
-        // Find file in database
+        // Find file in database - check if user owns it or if it's shared with them
         const file = await File.findOne({
             id: fileId,
-            ownerId: userId,
             type: "file",
             deleted: false,
+            $or: [
+                { ownerId: userId },
+                { sharedWith: { $in: [req.user._id.toString()] } },
+                { sharedWithTeams: { $exists: true, $ne: [] } },
+            ],
         })
 
         if (!file) {

@@ -3,6 +3,7 @@ import type React from "react"
 
 import { motion } from "framer-motion"
 import type { FileItem as FileItemType } from "../../../types/File"
+import type { Team } from "../../../types/Team"
 import styles from "./FileItem.module.css"
 import {
     File,
@@ -33,6 +34,9 @@ interface FileItemProps {
     onRename: (file: FileItemType) => void
     onMove: (file: FileItemType) => void
     onShare: (file: FileItemType) => void
+    userTeams?: Team[]
+    onShareToTeam?: (file: FileItemType) => void
+    isSharedView?: boolean
 }
 
 export default function FileItem({
@@ -43,6 +47,9 @@ export default function FileItem({
     onRename,
     onMove,
     onShare,
+    userTeams = [],
+    onShareToTeam,
+    isSharedView = false,
 }: FileItemProps) {
     const [isHovered, setIsHovered] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
@@ -190,7 +197,6 @@ export default function FileItem({
         e.stopPropagation() // Prevent triggering the file item's onClick
         setShowMenu(!showMenu)
     }
-
     const handleActionClick = (e: React.MouseEvent, action: string) => {
         e.stopPropagation() // Prevent triggering the file item's onClick
         setShowMenu(false)
@@ -216,6 +222,12 @@ export default function FileItem({
 
     const shouldShowThumbnail =
         file.type === "file" && file.mimeType?.startsWith("image/")
+    // Check if current user is the owner of the file
+    const isOwner = currentUser && file.ownerId === currentUser.uuid
+    // In shared view, disable all modify actions (rename/move) even for owner
+    const canModify = !isSharedView && isOwner
+    // Allow delete only for owner, regardless of view
+    const canDelete = isOwner
 
     return (
         <motion.div
@@ -239,18 +251,24 @@ export default function FileItem({
                 {" "}
                 {shouldShowThumbnail ? (
                     <img
-                        src={
-                            `http://localhost:3220/api/files/view/${file.id}` ||
-                            "/placeholder.svg"
-                        }
+                        src={`http://localhost:3220/api/files/view/${file.id}`}
                         alt={file.name}
                         className={styles.thumbnail}
+                        onError={(e) => {
+                            // Si l'image ne charge pas, remplacer par l'icône de fichier
+                            const target = e.target as HTMLImageElement
+                            target.style.display = "none"
+                            target.parentElement!.innerHTML = `
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                </svg>
+                            `
+                        }}
                     />
                 ) : (
                     getFileIcon()
                 )}
-            </motion.div>
-
+            </motion.div>{" "}
             <div className={styles.fileDetails}>
                 <motion.div
                     className={styles.fileName}
@@ -258,7 +276,36 @@ export default function FileItem({
                         color: isHovered ? "#1E3664" : "#1f2937",
                     }}
                 >
-                    {file.name}
+                    <div className={styles.fileNameContainer}>
+                        <span className={styles.fileNameText}>{file.name}</span>
+                        {/* Sharing indicators next to filename */}
+                        {file.shared && (
+                            <div className={styles.fileIndicators}>
+                                {file.sharedWithTeams &&
+                                    file.sharedWithTeams.length > 0 && (
+                                        <span
+                                            className={
+                                                styles.teamSharedIndicator
+                                            }
+                                            title="Partagé avec équipe(s)"
+                                        >
+                                            <Share2 size={12} />
+                                        </span>
+                                    )}
+                                {file.sharedWith &&
+                                    file.sharedWith.length > 0 && (
+                                        <span
+                                            className={
+                                                styles.publicSharedIndicator
+                                            }
+                                            title="Partagé publiquement"
+                                        >
+                                            <Share2 size={12} />
+                                        </span>
+                                    )}
+                            </div>
+                        )}
+                    </div>
                 </motion.div>
 
                 {viewMode === "list" && (
@@ -271,10 +318,15 @@ export default function FileItem({
                                 {formatFileSize(file.size)}
                             </div>
                         )}
+                        {isSharedView && file.owner && (
+                            <div className={styles.fileOwner}>
+                                Partagé par {file.owner.firstname}{" "}
+                                {file.owner.lastname}
+                            </div>
+                        )}
                     </>
                 )}
             </div>
-
             <motion.div
                 className={styles.fileActions}
                 initial={{ opacity: 0 }}
@@ -298,14 +350,15 @@ export default function FileItem({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <button
-                            className={styles.menuItem}
-                            onClick={(e) => handleActionClick(e, "rename")}
-                        >
-                            <Edit size={16} />
-                            <span>Renommer</span>
-                        </button>
-
+                        {canModify && (
+                            <button
+                                className={styles.menuItem}
+                                onClick={(e) => handleActionClick(e, "rename")}
+                            >
+                                <Edit size={16} />
+                                <span>Renommer</span>
+                            </button>
+                        )}
                         {file.type === "file" && (
                             <button
                                 className={styles.menuItem}
@@ -317,30 +370,33 @@ export default function FileItem({
                                 <span>Télécharger</span>
                             </button>
                         )}
-
-                        <button
-                            className={styles.menuItem}
-                            onClick={(e) => handleActionClick(e, "move")}
-                        >
-                            <Move size={16} />
-                            <span>Déplacer</span>
-                        </button>
-
-                        <button
-                            className={styles.menuItem}
-                            onClick={(e) => handleActionClick(e, "share")}
-                        >
-                            <Share2 size={16} />
-                            <span>Partager</span>
-                        </button>
-
-                        <button
-                            className={`${styles.menuItem} ${styles.deleteItem}`}
-                            onClick={(e) => handleActionClick(e, "delete")}
-                        >
-                            <Trash2 size={16} />
-                            <span>Supprimer</span>
-                        </button>
+                        {canModify && (
+                            <button
+                                className={styles.menuItem}
+                                onClick={(e) => handleActionClick(e, "move")}
+                            >
+                                <Move size={16} />
+                                <span>Déplacer</span>
+                            </button>
+                        )}{" "}
+                        {canModify && (
+                            <button
+                                className={styles.menuItem}
+                                onClick={(e) => handleActionClick(e, "share")}
+                            >
+                                <Share2 size={16} />
+                                <span>Partager</span>
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                className={`${styles.menuItem} ${styles.deleteItem}`}
+                                onClick={(e) => handleActionClick(e, "delete")}
+                            >
+                                <Trash2 size={16} />
+                                <span>Supprimer</span>
+                            </button>
+                        )}
                     </motion.div>
                 )}
             </motion.div>

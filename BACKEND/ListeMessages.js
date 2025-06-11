@@ -34,14 +34,14 @@ export const ListeMessagesEmis = [
     "perms_list_request", // No data=
     "user_perms_request", //{ userId : ObjectId}
     "update_perm_request", // { perm_id : ObjectId, newLabel : string}
-    "add_perm_request", // { newLabel : string, newUuid : string}=
-    //---- FILES ----
+    "add_perm_request", // { newLabel : string, newUuid : string}=    //---- FILES ----
     "files_list_request", // { folderId?: string }
-    "file_upload_request", // { name: string, size: number, mimeType: string, extension: string, parentId?: string }
     "file_delete_request", // { fileId: string }
     "file_rename_request", // { fileId: string, newName: string }
     "file_move_request", // { fileId: string, newParentId: string }
-    "file_share_request", // { fileId: string, teamId?: string }
+    "file_share_to_team_request", // { fileId: string, teamId: string }
+    "shared_files_list_request", // { teamId?: string }
+    "folders_list_request", // { ownerId?: string }
     "folder_create_request", // { name: string, parentId?: string }
     //---- CHANNELS ----
     "channels_list_request", // { teamId?: string }
@@ -106,14 +106,14 @@ export const ListeMessagesRecus = [
     "perms_list_response", // { perms?: Permission[]}
     "user_perms_response", // { perms : Permission[]}
     "update_perm_response", // { state : boolean }
-    "add_perm_response", // {message : string }=
-    //---- FILES ----
+    "add_perm_response", // {message : string }=    //---- FILES ----
     "files_list_response", // { etat: boolean, files?: File[], error?: string }
-    "file_upload_response", // { etat: boolean, error?: string, signedUrl?: string }
     "file_delete_response", // { etat: boolean, fileId?: string, error?: string }
     "file_rename_response", // { etat: boolean, error?: string }
     "file_move_response", // { etat: boolean,  error?: string }
-    "file_share_response", // { etat: boolean, fileId?: string, error?: string }
+    "file_share_to_team_response", // { etat: boolean, fileId?: string, teamId?: string, error?: string }
+    "shared_files_list_response", // { etat: boolean, files?: File[], teamId?: string, error?: string }
+    "folders_list_response", // { etat: boolean, folders?: File[], error?: string }
     "folder_create_response", // { etat: boolean, error?: string }
     //---- CHANNELS ----
     "channels_list_response", // { etat: boolean, channels?: Channel[], error?: string }

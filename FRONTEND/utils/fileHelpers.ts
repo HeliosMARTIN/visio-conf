@@ -17,11 +17,11 @@ export function formatDate(dateString: string): string {
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) {
-        return "Today"
+        return "Aujourd'hui"
     } else if (diffDays === 1) {
-        return "Yesterday"
+        return "Hier"
     } else if (diffDays < 7) {
-        return `${diffDays} days ago`
+        return `Il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`
     } else {
         return date.toLocaleDateString("fr-FR", {
             year: "numeric",
@@ -72,10 +72,8 @@ export function getMimeTypeFromExtension(extension: string): string {
     return mimeTypes[extension.toLowerCase()] || "application/octet-stream"
 }
 
-export function getLink(currentUser: { id: string }, fileName: string): string {
-    // For local file storage, we'll use the view endpoint
-    // Note: This will require the file ID, so we might need to update this approach
-    return `${getApiUrl()}/files/view/${fileName}` // Temporary - needs file ID
+export function getLink(fileId: string): string {
+    return `${getApiUrl()}/api/files/view/${fileId}`
 }
 
 export function getDownloadLink(fileId: string): string {

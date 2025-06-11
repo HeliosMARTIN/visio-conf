@@ -1,4 +1,6 @@
 import File from "../models/file.js"
+import User from "../models/user.js"
+import TeamMember from "../models/teamMember.js"
 import { v4 as uuidv4 } from "uuid"
 import SocketIdentificationService from "./SocketIdentification.js"
 import fs from "fs"
@@ -16,20 +18,22 @@ class LocalFileService {
         this.listeDesMessagesEmis = [
             "files_list_response",
             "folders_list_response",
+            "shared_files_list_response",
             "file_delete_response",
             "file_rename_response",
             "file_move_response",
-            "file_share_response",
+            "file_share_to_team_response",
             "folder_create_response",
             "file_download_response",
         ]
         this.listeDesMessagesRecus = [
             "files_list_request",
             "folders_list_request",
+            "shared_files_list_request",
             "file_delete_request",
             "file_rename_request",
             "file_move_request",
-            "file_share_request",
+            "file_share_to_team_request",
             "folder_create_request",
             "file_download_request",
         ]
@@ -111,6 +115,8 @@ class LocalFileService {
                     parentId: file.parentId,
                     ownerId: file.ownerId,
                     shared: file.shared,
+                    sharedWith: file.sharedWith,
+                    sharedWithTeams: file.sharedWithTeams || [],
                 }))
 
                 const message = {
@@ -289,17 +295,20 @@ class LocalFileService {
                 if (!file)
                     throw new Error(
                         "File not found or you don't have permission"
-                    )
-
-                // If it's a file, rename the physical file too
+                    ) // If it's a file, rename the physical file too
                 if (file.type === "file" && file.path) {
                     const oldPath = path.join(this.uploadsDir, file.path)
-                    const newPath = path.join(path.dirname(oldPath), newName)
+
+                    // Extract directory and create new path with new name
+                    const dir = path.dirname(oldPath)
+                    const newPath = path.join(dir, newName)
 
                     if (fs.existsSync(oldPath)) {
                         fs.renameSync(oldPath, newPath)
-                        // Update the path in database
-                        file.path = file.path.replace(file.name, newName)
+                        // Update the path in database - replace only the filename part
+                        const pathParts = file.path.split("/")
+                        pathParts[pathParts.length - 1] = newName
+                        file.path = pathParts.join("/")
                     }
                 }
 
@@ -350,13 +359,17 @@ class LocalFileService {
                 if (!file)
                     throw new Error(
                         "File not found or you don't have permission"
-                    )
+                    ) // Check if trying to move to the same parent
+                if (file.parentId === newParentId) {
+                    throw new Error("File is already in the target location")
+                }
 
                 if (newParentId) {
                     const parentFolder = await File.findOne({
                         id: newParentId,
                         type: "folder",
                         ownerId: userInfo.uuid,
+                        deleted: false,
                     })
 
                     if (!parentFolder)
@@ -364,6 +377,7 @@ class LocalFileService {
                             "Destination folder not found or you don't have permission"
                         )
 
+                    // Check for circular reference if moving a folder
                     if (file.type === "folder") {
                         const isCircular = await this.isCircularReference(
                             fileId,
@@ -402,8 +416,8 @@ class LocalFileService {
             }
         }
 
-        // Handle file share request
-        if (mesg.file_share_request) {
+        // Handle file share to team request
+        if (mesg.file_share_to_team_request) {
             try {
                 const socketId = mesg.id
                 if (!socketId) throw new Error("Sender socket id not available")
@@ -415,8 +429,7 @@ class LocalFileService {
                 if (!userInfo)
                     throw new Error("User not found based on socket id")
 
-                const { fileId, isPublic, userIds } = mesg.file_share_request
-
+                const { fileId, teamId } = mesg.file_share_to_team_request // Find the file
                 const file = await File.findOne({
                     id: fileId,
                     ownerId: userInfo.uuid,
@@ -427,19 +440,34 @@ class LocalFileService {
                         "File not found or you don't have permission"
                     )
 
-                file.shared = isPublic
+                // Verify user is member of the team
+                const teamMember = await TeamMember.findOne({
+                    teamId,
+                    userId: userInfo._id,
+                })
 
-                if (userIds && Array.isArray(userIds)) {
-                    file.sharedWith = userIds
+                if (!teamMember)
+                    throw new Error("You are not a member of this team")
+
+                // Initialize sharedWithTeams if it doesn't exist
+                if (!file.sharedWithTeams) {
+                    file.sharedWithTeams = []
                 }
 
+                // Add team to shared teams if not already there
+                if (!file.sharedWithTeams.includes(teamId)) {
+                    file.sharedWithTeams.push(teamId)
+                }
+
+                file.shared = true
                 file.updatedAt = new Date()
                 await file.save()
 
                 const message = {
-                    file_share_response: {
+                    file_share_to_team_response: {
                         etat: true,
                         fileId,
+                        teamId,
                     },
                     id: [mesg.id],
                 }
@@ -447,7 +475,116 @@ class LocalFileService {
                 this.controleur.envoie(this, message)
             } catch (error) {
                 const message = {
-                    file_share_response: {
+                    file_share_to_team_response: {
+                        etat: false,
+                        error: error.message,
+                    },
+                    id: [mesg.id],
+                }
+                this.controleur.envoie(this, message)
+            }
+        } // Handle shared files list request
+        if (mesg.shared_files_list_request) {
+            try {
+                const socketId = mesg.id
+                if (!socketId) throw new Error("Sender socket id not available")
+
+                const userInfo =
+                    await SocketIdentificationService.getUserInfoBySocketId(
+                        socketId
+                    )
+                if (!userInfo)
+                    throw new Error("User not found based on socket id")
+
+                const { teamId } = mesg.shared_files_list_request
+
+                let query = {
+                    deleted: false,
+                    $or: [
+                        { sharedWith: { $in: [userInfo._id.toString()] } },
+                        { sharedWithTeams: { $exists: true, $ne: [] } },
+                    ],
+                }
+
+                // If teamId is provided, filter by files shared with specific team
+                if (teamId) {
+                    // Verify user is member of the team
+                    const teamMember = await TeamMember.findOne({
+                        teamId,
+                        userId: userInfo._id,
+                    })
+
+                    if (!teamMember)
+                        throw new Error("You are not a member of this team")
+
+                    // Find files shared with this specific team
+                    query = {
+                        deleted: false,
+                        sharedWithTeams: { $in: [teamId] },
+                    }
+                } else {
+                    // If no teamId, find files shared with user or any team user belongs to
+                    const userTeamMemberships = await TeamMember.find({
+                        userId: userInfo._id,
+                    })
+                    const userTeamIds = userTeamMemberships.map(
+                        (tm) => tm.teamId
+                    )
+
+                    query = {
+                        deleted: false,
+                        $or: [
+                            { sharedWith: { $in: [userInfo._id.toString()] } },
+                            { sharedWithTeams: { $in: userTeamIds } },
+                        ],
+                    }
+                }
+
+                // Get shared files
+                const files = await File.find(query).sort({ updatedAt: -1 }) // Get owner information for each file
+                const formattedFiles = await Promise.all(
+                    files.map(async (file) => {
+                        const owner = await User.findOne({
+                            uuid: file.ownerId,
+                        }).select("firstname lastname picture")
+                        return {
+                            id: file.id,
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            mimeType: file.mimeType,
+                            extension: file.extension,
+                            createdAt: file.createdAt,
+                            updatedAt: file.updatedAt,
+                            parentId: file.parentId,
+                            ownerId: file.ownerId,
+                            shared: file.shared,
+                            sharedWith: file.sharedWith,
+                            sharedWithTeams: file.sharedWithTeams || [],
+                            owner: owner
+                                ? {
+                                      firstname: owner.firstname,
+                                      lastname: owner.lastname,
+                                      picture: owner.picture,
+                                  }
+                                : null,
+                        }
+                    })
+                )
+
+                const message = {
+                    shared_files_list_response: {
+                        etat: true,
+                        files: formattedFiles,
+                        teamId: teamId || null,
+                    },
+                    id: [mesg.id],
+                }
+
+                this.controleur.envoie(this, message)
+            } catch (error) {
+                const message = {
+                    shared_files_list_response: {
                         etat: false,
                         error: error.message,
                     },
@@ -515,9 +652,7 @@ class LocalFileService {
                 }
                 this.controleur.envoie(this, message)
             }
-        }
-
-        // Handle file download request
+        } // Handle file download request
         if (mesg.file_download_request) {
             try {
                 const socketId = mesg.id
@@ -532,11 +667,16 @@ class LocalFileService {
 
                 const { fileId } = mesg.file_download_request
 
+                // Check if user owns the file or if it's shared with them
                 const file = await File.findOne({
                     id: fileId,
-                    ownerId: userInfo.uuid,
                     type: "file",
                     deleted: false,
+                    $or: [
+                        { ownerId: userInfo.uuid },
+                        { sharedWith: { $in: [userInfo._id.toString()] } },
+                        { sharedWithTeams: { $exists: true, $ne: [] } },
+                    ],
                 })
 
                 if (!file)

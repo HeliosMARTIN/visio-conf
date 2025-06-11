@@ -1,3 +1,5 @@
+import type { Team } from "./Team"
+
 export interface FileItem {
     id: string
     name: string
@@ -10,7 +12,14 @@ export interface FileItem {
     parentId?: string | null
     ownerId: string
     shared?: boolean
+    sharedWith?: string[]
+    sharedWithTeams?: string[] // Array of team IDs the file is shared with
     thumbnail?: string
+    owner?: {
+        firstname: string
+        lastname: string
+        picture?: string
+    }
 }
 
 export interface FileListResponse {
@@ -52,6 +61,28 @@ export interface FolderCreateResponse {
     folderId?: string
     folderName?: string
     error?: string
+}
+
+export interface SharedFilesListResponse {
+    etat: boolean
+    files?: FileItem[]
+    teamId?: string | null
+    error?: string
+}
+
+export interface FileShareToTeamResponse {
+    etat: boolean
+    fileId?: string
+    teamId?: string
+    error?: string
+}
+
+export interface ShareToTeamModalProps {
+    isOpen: boolean
+    file: FileItem | null
+    userTeams: Team[]
+    onShareToTeam: (fileId: string, teamId: string) => void
+    onCloseModal: () => void
 }
 
 export type ViewMode = "grid" | "list"
