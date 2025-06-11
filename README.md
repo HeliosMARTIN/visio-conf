@@ -60,6 +60,42 @@ cd ../FRONTEND
 npm install
 ```
 
+
+## ⚙️ Installation & Démarrage via Docker
+
+### 1. Prérequis
+
+-   Docker
+-   Docker Compose
+
+### 2. Cloner le projet
+
+```bash
+git clone https://github.com/HeliosMARTIN/visio-conf.git
+cd visio-conf
+```
+
+### 3. Lancement du projet Docker
+
+```
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+####  Fermeture du projet
+
+```
+docker-compose down
+```
+
+### 4. 🗃️ Initialisation de la base de données (optionnel)
+
+Si tu veux pré-remplir la base de données avec des exemples :
+
+```Dans le terminal du conteneur BACKEND
+node initDb.js
+```
+
 ---
 
 ## 🔐 Configuration des variables d’environnement
