@@ -45,20 +45,13 @@ class UsersService {
             this.listeDesMessagesRecus
         )
     }
-
     createToken = (user) => {
         return jwt.sign(
             {
-                firstname: user.firstname,
-                lastname: user.lastname,
-                email,
-                picture: user.picture,
-                userId: user._id,
-                desc: user.desc,
-                job: user.job,
+                userId: user._id, // Use MongoDB ObjectId for internal token identification
             },
             process.env.JWT_SECRET,
-            { expiresIn: "1d" }
+            { expiresIn: "7d" }
         )
     }
 
@@ -106,11 +99,15 @@ class UsersService {
             )
             if (!user) throw new Error("User not found")
 
+            // Utiliser SocketIdentificationService pour obtenir le socket id
+            const socketId = SocketIdentificationService.getUserSocketId(
+                user._id?.toString()
+            )
             const message = {
                 update_user_roles_response: {
                     userId: mesg.update_user_roles_request.user_id,
                 },
-                id: [mesg.id, user.socket_id],
+                id: [mesg.id, socketId].filter(Boolean),
             }
             this.controleur.envoie(this, message)
         }
@@ -185,17 +182,7 @@ class UsersService {
                 password: hashedPassword,
             })
             if (user) {
-                const token = jwt.sign(
-                    {
-                        firstname: user.firstname,
-                        lastname: user.lastname,
-                        email: user.email,
-                        picture: user.picture,
-                        userId: user._id,
-                    },
-                    process.env.JWT_SECRET,
-                    { expiresIn: "7d" }
-                )
+                const token = this.createToken(user) // Use simplified token creation
                 const message = {
                     login_response: { etat: true, token },
                     id: [mesg.id],
@@ -237,13 +224,7 @@ class UsersService {
                 picture: "default_profile_picture.png",
             })
             await user.save()
-            const token = jwt.sign(
-                { userId: user._id },
-                process.env.JWT_SECRET,
-                {
-                    expiresIn: "7d",
-                }
-            )
+            const token = this.createToken(user) // Use simplified token creation
             const message = {
                 signup_response: { etat: true, token },
                 id: [mesg.id],
@@ -260,22 +241,22 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-
     async getUsersList(mesg) {
         try {
             const users = await User.find(
                 {},
-                "uuid firstname lastname email picture status roles is_online phone job desc password disturb_status"
-            )
+                "uuid firstname lastname email picture status roles is_online phone job desc disturb_status"
+            ).populate("roles", "role_label")
             const formattedUsers = users.map((user) => ({
-                _id: user._id,
-                id: user.uuid,
+                id: user.uuid, // Use UUID as primary identifier
                 firstname: user.firstname,
                 lastname: user.lastname,
                 email: user.email,
                 picture: user.picture,
                 status: user.status,
-                roles: user.roles,
+                roles: user.roles
+                    ? user.roles.map((role) => role.role_label)
+                    : [],
                 online: user.is_online,
                 phone: user.phone,
                 job: user.job,
@@ -289,10 +270,10 @@ class UsersService {
                 },
                 id: [mesg.id],
             }
-            this.controleur.envoie(this, message) // Fixed missing call to send the message
+            this.controleur.envoie(this, message)
         } catch (error) {
             const message = {
-                signup_response: {
+                users_list_response: {
                     etat: false,
                     error: error.message,
                 },
@@ -314,23 +295,30 @@ class UsersService {
                 await SocketIdentificationService.getUserInfoBySocketId(
                     socketId
                 )
-            if (!userInfo) throw new Error("User not found based on socket id")
-            // Update only the received fields
+            if (!userInfo) throw new Error("User not found based on socket id") // Update only the received fields
             const user = await User.findOneAndUpdate(
                 { _id: userInfo._id },
                 fieldsToUpdate,
                 { new: true }
-            )
+            ).populate("roles", "role_label")
             if (!user) throw new Error("User not found")
             const newUserInfo = {
-                id: user._id,
+                id: user.uuid, // Use UUID as primary ID for frontend consistency
+                uuid: user.uuid,
+                _id: user._id.toString(),
                 firstname: user.firstname,
                 lastname: user.lastname,
                 email: user.email,
                 picture: user.picture,
                 phone: user.phone,
+                job: user.job,
+                desc: user.desc,
                 disturb_status: user.disturb_status,
+                roles: user.roles
+                    ? user.roles.map((role) => role.role_label)
+                    : [],
                 date_create: user.date_create || user.createdAt || null,
+                last_connection: user.last_connection || null,
             }
             const message = {
                 update_user_response: {
@@ -352,25 +340,48 @@ class UsersService {
             this.controleur.envoie(this, message)
         }
     }
-
     async getUserInfo(mesg) {
         try {
             const { userId } = mesg.user_info_request
-            const user = await User.findById(
-                userId,
-                "firstname lastname email picture phone roles disturb_status date_create"
-            ).populate("roles", "role_label") // Populate the roles to get their names
+
+            // Try to find user by ObjectId first (most common case), then by UUID
+            let user = null // Check if userId looks like MongoDB ObjectId (24 hex characters)
+            if (
+                userId &&
+                userId.length === 24 &&
+                /^[0-9a-fA-F]{24}$/.test(userId)
+            ) {
+                user = await User.findById(
+                    userId,
+                    "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
+                ).populate("roles", "role_label")
+            }
+
+            // If not found by ObjectId, try UUID
+            if (!user) {
+                user = await User.findOne(
+                    { uuid: userId },
+                    "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
+                ).populate("roles", "role_label")
+            }
             if (user) {
                 const userInfo = {
-                    id: user._id,
+                    id: user.uuid, // Always return UUID as primary ID for frontend
+                    uuid: user.uuid, // Keep for compatibility
+                    _id: user._id.toString(), // Include ObjectId for internal use
                     firstname: user.firstname,
                     lastname: user.lastname,
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
+                    job: user.job,
+                    desc: user.desc,
                     disturb_status: user.disturb_status,
-                    roles: user.roles.map((role) => role.role_label),
+                    roles: user.roles
+                        ? user.roles.map((role) => role.role_label)
+                        : [],
                     date_create: user.date_create || user.createdAt || null,
+                    last_connection: user.last_connection || null,
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },

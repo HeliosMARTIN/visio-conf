@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import styles from "./PostItem.module.css"
 import { MessageCircle, ChevronDown, ChevronUp, Send } from "lucide-react"
 import PostResponseItem from "./PostResponseItem"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface PostItemProps {
     post: any
@@ -85,7 +86,7 @@ export default function PostItem({
     // Synchronise les réponses locales et le count avec les props à chaque changement
     useEffect(() => {
         setResponses(post.responses || [])
-        setResponseCount(post.responseCount++)
+        if (post.responses.length > 0) setResponseCount(post.responseCount++)
     }, [post.responses])
 
     return (
@@ -96,13 +97,11 @@ export default function PostItem({
         >
             <div className={styles.postHeader}>
                 <div className={styles.userInfo}>
+                    {" "}
                     <div className={styles.avatar}>
                         {post.authorAvatar ? (
                             <img
-                                src={
-                                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${post.authorAvatar}` ||
-                                    "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                }
+                                src={getProfilePictureUrl(post.authorAvatar)}
                                 alt={post.authorName}
                             />
                         ) : (

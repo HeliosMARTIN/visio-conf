@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import styles from "./ChannelMembers.module.css"
 import { Users, ChevronDown, ChevronUp, Crown, UserPlus } from "lucide-react"
 import type { ChannelMember } from "@/types/Channel"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface ChannelMembersProps {
     members: ChannelMember[]
@@ -64,17 +65,16 @@ export default function ChannelMembers({
                         <div className={styles.membersSection}>
                             <h4 className={styles.sectionTitle}>
                                 Administrateurs
-                            </h4>
+                            </h4>{" "}
                             {admins.map((member) => (
                                 <div
                                     key={member.id}
                                     className={styles.memberItem}
                                 >
                                     <img
-                                        src={
-                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                        }
+                                        src={getProfilePictureUrl(
+                                            member.picture
+                                        )}
                                         alt={`${member.firstname} ${member.lastname}`}
                                     />
                                     <div className={styles.memberInfo}>

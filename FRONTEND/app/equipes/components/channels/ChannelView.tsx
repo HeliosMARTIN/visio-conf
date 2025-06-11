@@ -12,17 +12,20 @@ import {
 import PostItem from "./PostItem"
 import type { Channel } from "@/types/Channel"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface ChannelViewProps {
     channel: Channel
     userId: string
-    onEditChannel?: () => void
+    onEditChannel: () => void
+    onChannelDeleted?: () => void
 }
 
 export default function ChannelView({
     channel,
     userId,
     onEditChannel,
+    onChannelDeleted,
 }: ChannelViewProps) {
     const { controleur, canal } = useAppContext()
     const [posts, setPosts] = useState<any[]>([])
@@ -44,12 +47,14 @@ export default function ChannelView({
         "channel_members_request",
         "channel_post_create_request",
         "channel_post_response_create_request",
+        "channel_delete_request",
     ]
     const listeMessageRecus = [
         "channel_posts_response",
         "channel_members_response",
         "channel_post_create_response",
         "channel_post_response_create_response",
+        "channel_delete_response",
     ]
 
     // Assurons-nous que nous utilisons l'ID correct
@@ -137,6 +142,21 @@ export default function ChannelView({
                     )
                 }
             }
+
+            if (msg.channel_delete_response) {
+                if (msg.channel_delete_response.etat) {
+                    console.log("Canal supprimé avec succès.")
+                    // Call the callback to notify parent component
+                    if (onChannelDeleted) {
+                        onChannelDeleted()
+                    }
+                } else {
+                    console.error(
+                        "Erreur lors de la suppression du canal:",
+                        msg.channel_delete_response.error
+                    )
+                }
+            }
         },
     }
 
@@ -162,7 +182,7 @@ export default function ChannelView({
                 )
             }
         }
-    }, [channelId, controleur, canal])
+    }, [channelId, controleur, canal, onChannelDeleted])
 
     // Focus sur l'input quand le composant est monté
     useEffect(() => {
@@ -210,6 +230,7 @@ export default function ChannelView({
     }
 
     const isChannelCreator = channel.createdBy === userId
+
     const canPostMessage = isChannelCreator // Seul le créateur peut créer des posts
 
     return (
@@ -247,14 +268,16 @@ export default function ChannelView({
                     </button>
                 </div>
 
-                {isChannelCreator && onEditChannel && (
-                    <button
-                        className={styles.settingsButton}
-                        onClick={onEditChannel}
-                    >
-                        <Settings size={14} />
-                    </button>
-                )}
+                <div>
+                    {isChannelCreator && onEditChannel && (
+                        <button
+                            className={styles.settingsButton}
+                            onClick={onEditChannel}
+                        >
+                            <Settings size={14} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {showMembers && (
@@ -269,13 +292,13 @@ export default function ChannelView({
                                 key={member.id || `member-${member.userId}`}
                                 className={styles.memberItem}
                             >
+                                {" "}
                                 <div className={styles.memberAvatar}>
                                     {member.picture ? (
                                         <img
-                                            src={
-                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                            }
+                                            src={getProfilePictureUrl(
+                                                member.picture
+                                            )}
                                             alt={`${member.firstname} ${member.lastname}`}
                                         />
                                     ) : (

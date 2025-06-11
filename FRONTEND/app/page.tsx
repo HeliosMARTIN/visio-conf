@@ -105,92 +105,117 @@ export default function Home() {
     const handler = {
         nomDInstance,
         traitementMessage: (msg: any) => {
-            if (verbose || controleur?.verboseall) {
-                console.log(
-                    `INFO: (${nomDInstance}) - traitementMessage - `,
-                    msg
-                )
-            }
-
-            if (msg.users_list_response) {
-                setIsLoading(false)
-                if (!msg.users_list_response.etat) {
-                    setError(
-                        `Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`
+            try {
+                if (verbose || controleur?.verboseall) {
+                    console.log(
+                        `INFO: (${nomDInstance}) - traitementMessage - `,
+                        msg
                     )
-                } else {
-                    const usersList = msg.users_list_response.users || []
-                    setUsers(usersList)
-
-                    // Mettre à jour les contacts si on a déjà les discussions
-                    if (currentUser && discussions.length > 0) {
-                        const contactsWithDiscussions =
-                            getContactsFromDiscussions(usersList)
-                        setFilteredUsers(contactsWithDiscussions)
-                    }
-                }
-            }
-            if (msg.discuss_list_response) {
-                setDiscussions(msg.discuss_list_response.messages || [])
-
-                // Mettre à jour les contacts après avoir reçu les discussions
-                if (users.length > 0) {
-                    const contactsWithDiscussions =
-                        getContactsFromDiscussions(users)
-                    setFilteredUsers(contactsWithDiscussions)
                 }
 
-                // Pour chaque discussion, récupère les messages récents pour construire les contacts
-                ;(msg.discuss_list_response.messages || []).forEach(
-                    (discussion: any) => {
-                        if (
-                            discussion.discussion_members &&
-                            discussion.discussion_members.length === 2
-                        ) {
-                            controleur.envoie(handler, {
-                                messages_get_request: {
-                                    convId: discussion.discussion_uuid,
-                                },
-                            })
+                if (msg.users_list_response) {
+                    setIsLoading(false)
+                    if (!msg.users_list_response.etat) {
+                        setError(
+                            `Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`
+                        )
+                    } else {
+                        const usersList = msg.users_list_response.users || []
+                        setUsers(usersList) // Mettre à jour les contacts si on a déjà les discussions
+                        if (currentUser && discussions.length > 0) {
+                            const contactsWithDiscussions =
+                                getContactsFromDiscussions(usersList)
+                            setFilteredUsers(contactsWithDiscussions)
                         }
                     }
-                )
-            }
-
-            if (msg.messages_get_response) {
-                // Fusionne les messages de toutes les discussions privées, sans doublons
-                setMessages((prev) => {
-                    const newMsgs = msg.messages_get_response.messages || []
-                    const allMsgs = [...prev, ...newMsgs]
-                    // Dédoublonnage par message_uuid si présent
-                    const unique = allMsgs.filter(
-                        (msg, idx, arr) =>
-                            arr.findIndex(
-                                (m) => m.message_uuid === msg.message_uuid
-                            ) === idx
-                    )
-                    return unique
-                })
-            }
-
-            if (msg.calls_get_response) {
-                if (!msg.calls_get_response.etat) {
-                    console.error(
-                        `Erreur lors de la récupération des appels: ${msg.calls_get_response.error}`
-                    )
-                } else {
-                    setCalls(msg.calls_get_response.calls || [])
                 }
+                if (msg.discuss_list_response) {
+                    if (!msg.discuss_list_response.etat) {
+                        setError(
+                            `Erreur lors de la récupération des discussions: ${msg.discuss_list_response.error}`
+                        )
+                        setIsLoading(false)
+                        return
+                    }
+
+                    setDiscussions(msg.discuss_list_response.messages || [])
+
+                    // Mettre à jour les contacts après avoir reçu les discussions
+                    if (users.length > 0) {
+                        const contactsWithDiscussions =
+                            getContactsFromDiscussions(users)
+                        setFilteredUsers(contactsWithDiscussions)
+                    }
+
+                    // Pour chaque discussion, récupère les messages récents pour construire les contacts
+                    ;(msg.discuss_list_response.messages || []).forEach(
+                        (discussion: any) => {
+                            if (
+                                discussion.discussion_members &&
+                                discussion.discussion_members.length === 2
+                            ) {
+                                controleur.envoie(handler, {
+                                    messages_get_request: {
+                                        convId: discussion.discussion_uuid,
+                                    },
+                                })
+                            }
+                        }
+                    )
+                }
+
+                if (msg.messages_get_response) {
+                    // Fusionne les messages de toutes les discussions privées, sans doublons
+                    setMessages((prev) => {
+                        const newMsgs = msg.messages_get_response.messages || []
+                        const allMsgs = [...prev, ...newMsgs]
+                        // Dédoublonnage par message_uuid si présent
+                        const unique = allMsgs.filter(
+                            (msg, idx, arr) =>
+                                arr.findIndex(
+                                    (m) => m.message_uuid === msg.message_uuid
+                                ) === idx
+                        )
+                        return unique
+                    })
+                }
+
+                if (msg.calls_get_response) {
+                    if (!msg.calls_get_response.etat) {
+                        console.error(
+                            `Erreur lors de la récupération des appels: ${msg.calls_get_response.error}`
+                        )
+                    } else {
+                        setCalls(msg.calls_get_response.calls || [])
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur dans le traitement du message:", error)
+                setIsLoading(false)
             }
         },
-    }
-
-    // Récupération des données
+    } // Récupération des données - simplifié
     const fetchData = () => {
-        if (controleur && currentUser) {
+        if (!controleur || !currentUser) {
+            return
+        }
+
+        if (canal?.socket?.connected) {
             controleur.envoie(handler, { users_list_request: {} })
             controleur.envoie(handler, { calls_get_request: {} })
             controleur.envoie(handler, { discuss_list_request: currentUser.id })
+        } else {
+            setTimeout(() => {
+                if (canal?.socket?.connected) {
+                    controleur.envoie(handler, { users_list_request: {} })
+                    controleur.envoie(handler, { calls_get_request: {} })
+                    controleur.envoie(handler, {
+                        discuss_list_request: currentUser.id,
+                    })
+                } else {
+                    setIsLoading(false)
+                }
+            }, 1000)
         }
     }
     // Fonction de recherche parmi les contacts
@@ -255,8 +280,7 @@ export default function Home() {
             (user) =>
                 user.status === "online" && user.email !== currentUser?.email
         ).length
-    }
-    // Activités récentes basées sur les vraies discussions
+    } // Activités récentes basées sur les vraies discussions
     const getRecentActivities = () => {
         if (!discussions.length || !users.length || !currentUser) return []
 
@@ -266,14 +290,26 @@ export default function Home() {
                 if (!lastMsg) return null
 
                 // Ne pas afficher les messages envoyés par l'utilisateur courant
-                if (lastMsg.message_sender === currentUser.id) return null
+                // Comparer avec l'UUID (currentUser.id) et l'ObjectId (lastMsg.message_sender)
+                if (
+                    lastMsg.message_sender === currentUser.id ||
+                    lastMsg.message_sender === currentUser._id
+                )
+                    return null
 
                 // Trouver l'expéditeur dans les membres OU dans la liste users
                 const sender = (discussion.discussion_members &&
                     discussion.discussion_members.find(
-                        (m: any) => m._id === lastMsg.message_sender
+                        (m: any) =>
+                            m._id === lastMsg.message_sender ||
+                            m.id === lastMsg.message_sender ||
+                            m.uuid === lastMsg.message_sender
                     )) ||
-                    users.find((u) => u.id === lastMsg.message_sender) || {
+                    users.find(
+                        (u) =>
+                            u.id === lastMsg.message_sender ||
+                            u._id === lastMsg.message_sender
+                    ) || {
                         firstname: "Inconnu",
                         lastname: "",
                         picture: "",
@@ -304,22 +340,17 @@ export default function Home() {
             .slice(0, 10)
 
         return activities
-    }
-
-    // Fonctions de navigation pour les actions rapides
+    } // Fonctions de navigation pour les actions rapides
     const handleNewDiscussion = () => {
         router.push("/discussion")
     }
 
     const handleStartCall = () => {
         router.push("/discussion")
-    }
-
-    // Effet pour l'inscription/désinscription au contrôleur
+    } // Effet pour l'inscription/désinscription au contrôleur
     useEffect(() => {
-        if (controleur && canal && currentUser) {
+        if (controleur && canal) {
             controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
-            fetchData()
             return () => {
                 controleur.desincription(
                     handler,
@@ -328,14 +359,36 @@ export default function Home() {
                 )
             }
         }
-    }, [pathname, controleur, canal, currentUser]) // Mettre à jour les contacts lorsque les utilisateurs, discussions ou currentUser changent
+    }, [controleur, canal]) // Effet principal - fetch des données dès que currentUser est disponible
+    useEffect(() => {
+        if (currentUser && controleur) {
+            setIsLoading(true)
+            fetchData()
 
+            // Timeout de sécurité
+            const timeout = setTimeout(() => {
+                setIsLoading(false)
+            }, 15000)
+
+            return () => clearTimeout(timeout)
+        } else if (!currentUser) {
+            // Réinitialiser les données si pas d'utilisateur
+            setUsers([])
+            setDiscussions([])
+            setMessages([])
+            setCalls([])
+            setFilteredUsers([])
+            setIsLoading(true)
+        }
+    }, [currentUser?.id, controleur])
+
+    // Effet pour mettre à jour les contacts quand les données arrivent
     useEffect(() => {
         if (currentUser && users.length > 0 && discussions.length > 0) {
             const contacts = getContactsFromDiscussions(users)
             setFilteredUsers(contacts)
         }
-    }, [users, currentUser, discussions])
+    }, [users, discussions, currentUser])
 
     // Affichage du chargement
     if (isLoading)

@@ -1,6 +1,7 @@
 "use client"
 import { motion, AnimatePresence } from "framer-motion"
 import type { FileItem as FileItemType, ViewMode } from "../../../types/File"
+import type { Team } from "../../../types/Team"
 import FileItem from "./FileItem"
 import { FileListSkeleton } from "./FileSkeleton"
 import styles from "./FileList.module.css"
@@ -14,6 +15,9 @@ interface FileListProps {
     onRenameFile: (file: FileItemType) => void
     onMoveFile: (file: FileItemType) => void
     onShareFile: (file: FileItemType) => void
+    userTeams?: Team[]
+    onShareToTeam?: (file: FileItemType) => void
+    isSharedView?: boolean
 }
 
 export default function FileList({
@@ -25,6 +29,9 @@ export default function FileList({
     onRenameFile,
     onMoveFile,
     onShareFile,
+    userTeams = [],
+    onShareToTeam,
+    isSharedView = false,
 }: FileListProps) {
     if (isLoading) {
         return <FileListSkeleton viewMode={viewMode} />
@@ -57,6 +64,9 @@ export default function FileList({
                             onRename={onRenameFile}
                             onMove={onMoveFile}
                             onShare={onShareFile}
+                            userTeams={userTeams}
+                            onShareToTeam={onShareToTeam}
+                            isSharedView={isSharedView}
                         />
                     </motion.div>
                 ))}
