@@ -102,6 +102,7 @@
 }
 
 .membersPanel {
+  overflow: hidden;
   padding: 16px;
   background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
@@ -135,12 +136,11 @@
 }
 
 .membersList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
   gap: 12px;
-  max-height: 250px; /* Hauteur fixe */
-  overflow-y: auto;
-  padding-right: 8px; /* Espace pour la barre de défilement */
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0px 8px 8px 0px; 
 }
 
 .memberItem {

@@ -57,6 +57,12 @@ const FileSchema = new Schema({
             description: "UUIDs of users this file/folder is shared with",
         },
     ],
+    sharedWithTeams: [
+        {
+            type: String,
+            description: "IDs of teams this file/folder is shared with",
+        },
+    ],
     path: {
         type: String,
         required: function () {

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import styles from "./LoginForm.module.css"
 import { useRouter } from "next/navigation"
@@ -8,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react"
 import Cookies from "js-cookie"
 
 export default function LoginForm() {
-    const { controleur, currentUser } = useAppContext()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -40,11 +42,23 @@ export default function LoginForm() {
                     setLoginError("")
                     const token = msg.login_response.token
                     if (token) {
+                        // Configuration plus souple des cookies
                         Cookies.set("token", token, {
-                            secure: false,
-                            sameSite: "strict",
-                            expires: 7, // 7 days
-                        }) // Use cookies
+                            secure: window.location.protocol === "https:", // Secure uniquement en HTTPS
+                            sameSite: "lax", // Moins restrictif que "strict"
+                            expires: 7, // 7 jours
+                            path: "/", // Explicitement définir le chemin
+                        })
+
+                        // Stockage de secours dans localStorage
+                        try {
+                            localStorage.setItem("auth_token", token)
+                        } catch (e) {
+                            console.error(
+                                "Impossible de stocker le token dans localStorage",
+                                e
+                            )
+                        }
                     }
                     router.push("/")
                 }
@@ -78,13 +92,44 @@ export default function LoginForm() {
         e.preventDefault()
         setLoading(true)
         setError("")
+
         try {
+            // S'assurer que le socket est connecté avant d'envoyer la requête
+            if (!canal?.socket?.connected) {
+                console.log("Socket not connected, attempting to connect...")
+                canal?.socket?.connect()
+
+                // Attendre que la connexion soit établie
+                await new Promise<void>((resolve, reject) => {
+                    let attempts = 0
+                    const maxAttempts = 30 // 3 secondes
+
+                    const checkConnection = () => {
+                        attempts++
+                        if (canal?.socket?.connected) {
+                            resolve()
+                        } else if (attempts >= maxAttempts) {
+                            reject(
+                                new Error(
+                                    "Impossible de se connecter au serveur"
+                                )
+                            )
+                        } else {
+                            setTimeout(checkConnection, 100)
+                        }
+                    }
+
+                    checkConnection()
+                })
+            }
+
             let T = {
                 login_request: { email, password },
             }
             controleur?.envoie(handler, T)
         } catch (err) {
             setError("La connexion a échoué. Veuillez réessayer.")
+            console.error("Login error:", err)
         } finally {
             setLoading(false)
         }

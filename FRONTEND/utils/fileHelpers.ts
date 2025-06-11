@@ -17,11 +17,11 @@ export function formatDate(dateString: string): string {
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) {
-        return "Today"
+        return "Aujourd'hui"
     } else if (diffDays === 1) {
-        return "Yesterday"
+        return "Hier"
     } else if (diffDays < 7) {
-        return `${diffDays} days ago`
+        return `Il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`
     } else {
         return date.toLocaleDateString("fr-FR", {
             year: "numeric",
@@ -72,6 +72,92 @@ export function getMimeTypeFromExtension(extension: string): string {
     return mimeTypes[extension.toLowerCase()] || "application/octet-stream"
 }
 
-export function getLink(currentUser: { id: string }, fileName: string): string {
-    return `https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/${currentUser.id}/${fileName}`
+export function getLink(fileId: string): string {
+    return `${getApiUrl()}/api/files/view/${fileId}`
+}
+
+export function getDownloadLink(fileId: string): string {
+    return `${getApiUrl()}/files/download/${fileId}`
+}
+
+export function getViewLink(fileId: string): string {
+    return `${getApiUrl()}/files/view/${fileId}`
+}
+
+// Get API base URL from environment
+export function getApiUrl(): string {
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3220"
+}
+
+// Get file storage URL from environment
+export function getFileStorageUrl(): string {
+    return (
+        process.env.NEXT_PUBLIC_FILE_STORAGE_URL || `${getApiUrl()}/api/files`
+    )
+}
+
+// Get profile pictures URL from environment
+export function getProfilePicturesUrl(): string {
+    return (
+        process.env.NEXT_PUBLIC_PROFILE_PICTURES_URL ||
+        `${getApiUrl()}/api/files/profile`
+    )
+}
+
+// Clean and build profile picture URL - fixes double slash issue
+export function getProfilePictureUrl(picture?: string): string {
+    const baseUrl = getProfilePicturesUrl()
+
+    if (!picture) {
+        return `${baseUrl}/default_profile_picture.png`
+    }
+
+    // Clean the picture path to avoid double slashes
+    let cleanPicture = picture
+
+    // Remove leading slash if present
+    if (cleanPicture.startsWith("/")) {
+        cleanPicture = cleanPicture.substring(1)
+    }
+
+    // Remove "uploads/" prefix if present (handles old S3 paths or incorrect paths)
+    if (cleanPicture.startsWith("uploads/")) {
+        cleanPicture = cleanPicture.substring("uploads/".length)
+    }
+
+    // Remove "profile-pictures/" prefix if present
+    if (cleanPicture.startsWith("profile-pictures/")) {
+        cleanPicture = cleanPicture.substring("profile-pictures/".length)
+    }
+
+    // Build final URL
+    return `${baseUrl}/${cleanPicture}`
+}
+
+export function getTeamPictureUrl(picture?: string): string {
+    if (!picture) {
+        // Return null to indicate we should use the Users icon instead
+        return ""
+    }
+
+    const baseUrl = `${getApiUrl()}/api/files/team-pictures`
+    let cleanPicture = picture
+
+    // Clean up the picture path
+    if (cleanPicture.startsWith("/")) {
+        cleanPicture = cleanPicture.substring(1)
+    }
+
+    // Remove "uploads/" prefix if present
+    if (cleanPicture.startsWith("uploads/")) {
+        cleanPicture = cleanPicture.substring("uploads/".length)
+    }
+
+    // Remove "team-pictures/" prefix if present
+    if (cleanPicture.startsWith("team-pictures/")) {
+        cleanPicture = cleanPicture.substring("team-pictures/".length)
+    }
+
+    // Build final URL
+    return `${baseUrl}/${cleanPicture}`
 }

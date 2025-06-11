@@ -599,19 +599,17 @@ class ChannelsService {
                 if (!isMember) {
                     throw new Error("Vous n'avez pas accès à ce canal")
                 }
-            }
-
-            // Get all members with user information
+            } // Get all members with user information
             const members = await ChannelMember.find({ channelId }).populate(
                 "userId",
-                "firstname lastname picture"
+                "firstname lastname picture uuid"
             )
 
             const formattedMembers = members.map((member) => ({
                 _id: member._id,
                 id: member._id,
                 channelId: member.channelId,
-                userId: member.userId._id,
+                userId: member.userId.uuid, // Use UUID instead of ObjectId
                 firstname: member.userId.firstname,
                 lastname: member.userId.lastname,
                 picture: member.userId.picture,
@@ -968,13 +966,15 @@ class ChannelsService {
             const channelMembers = await ChannelMember.find({ channelId })
             const userIds = channelMembers.map((m) => m.userId.toString())
 
-            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
-            const users = await User.find({
-                _id: { $in: userIds },
-                socket_id: { $ne: null },
-            }).select("socket_id")
-
-            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+            // Utiliser SocketIdentificationService pour obtenir les socket ids connectés
+            const socketIdPromises = userIds.map(async (userId) => {
+                const socketId =
+                    SocketIdentificationService.getUserSocketId(userId)
+                return socketId
+            })
+            const socketIds = (await Promise.all(socketIdPromises)).filter(
+                Boolean
+            )
 
             // Réponse à tous les membres connectés du channel
             const responseMessage = {
@@ -1078,13 +1078,15 @@ class ChannelsService {
             })
             const userIds = channelMembers.map((m) => m.userId.toString())
 
-            // Récupérer tous les users connectés (ayant un socket_id non null) parmi ces userIds
-            const users = await User.find({
-                _id: { $in: userIds },
-                socket_id: { $ne: null },
-            }).select("socket_id")
-
-            const socketIds = users.map((u) => u.socket_id).filter(Boolean)
+            // Utiliser SocketIdentificationService pour obtenir les socket ids connectés
+            const socketIdPromises = userIds.map(async (userId) => {
+                const socketId =
+                    await SocketIdentificationService.getUserSocketId(userId)
+                return socketId
+            })
+            const socketIds = (await Promise.all(socketIdPromises)).filter(
+                Boolean
+            )
 
             // Réponse à tous les membres connectés du channel
             const responseMessage = {

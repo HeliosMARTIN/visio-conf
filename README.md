@@ -60,6 +60,42 @@ cd ../FRONTEND
 npm install
 ```
 
+
+## ⚙️ Installation & Démarrage via Docker
+
+### 1. Prérequis
+
+-   Docker
+-   Docker Compose
+
+### 2. Cloner le projet
+
+```bash
+git clone https://github.com/HeliosMARTIN/visio-conf.git
+cd visio-conf
+```
+
+### 3. Lancement du projet Docker
+
+```
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+####  Fermeture du projet
+
+```
+docker-compose down
+```
+
+### 4. 🗃️ Initialisation de la base de données (optionnel)
+
+Si tu veux pré-remplir la base de données avec des exemples :
+
+```Dans le terminal du conteneur BACKEND
+node initDb.js
+```
+
 ---
 
 ## 🔐 Configuration des variables d’environnement
@@ -74,6 +110,38 @@ Si tu veux pré-remplir la base de données avec des exemples :
 cd BACKEND
 node initDb.js
 ```
+
+---
+
+## 🧹 Nettoyage des fichiers uploadés (optionnel)
+
+Le projet inclut un script de nettoyage pour supprimer tous les fichiers uploadés par les utilisateurs (photos de profil, fichiers partagés, etc.) tout en préservant la structure nécessaire au bon fonctionnement de l'application.
+
+### Utilisation
+
+```bash
+cd BACKEND
+
+# Nettoyage des fichiers uploadés
+npm run clear-uploads
+
+# Ou directement avec Node.js
+node clearUploads.js
+```
+
+### Ce qui est nettoyé
+
+-   📁 **Fichiers utilisateurs** dans `uploads/files/`
+-   🖼️ **Photos de profil personnalisées** dans `uploads/profile-pictures/`
+-   👥 **Photos d'équipe** dans `uploads/team-pictures/`
+
+### Ce qui est préservé
+
+-   📄 Fichiers de configuration (README.md, .gitkeep, .gitignore)
+-   🖼️ Image de profil par défaut (`default_profile_picture.png`)
+-   📁 Structure des dossiers
+
+> 💡 **Conseil** : Après un nettoyage complet, il peut être recommandé de relancer `node initDb.js` pour réinitialiser les données de test si nécessaire.
 
 ---
 

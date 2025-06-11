@@ -1,16 +1,16 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import styles from "./SignupForm.module.css"
 import { useAppContext } from "@/context/AppContext"
 import { useRouter } from "next/navigation"
-import jwt from "jsonwebtoken"
-import { User } from "@/types/User"
 import { Eye, EyeOff } from "lucide-react" // Import des icônes
 import Cookies from "js-cookie"
 
 export default function SignupForm() {
-    const { controleur, currentUser } = useAppContext()
+    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
     const router = useRouter()
     // Messages
     const listeMessageEmis = ["signup_request"]
@@ -38,11 +38,23 @@ export default function SignupForm() {
                 } else {
                     const token = msg.signup_response.token
                     if (token) {
+                        // Configuration plus souple des cookies
                         Cookies.set("token", token, {
-                            secure: false,
-                            sameSite: "strict",
-                            expires: 7, // 7 days
-                        }) // Use cookies
+                            secure: window.location.protocol === "https:", // Secure uniquement en HTTPS
+                            sameSite: "lax", // Moins restrictif que "strict"
+                            expires: 7, // 7 jours
+                            path: "/", // Explicitement définir le chemin
+                        })
+
+                        // Stockage de secours dans localStorage
+                        try {
+                            localStorage.setItem("auth_token", token)
+                        } catch (e) {
+                            console.error(
+                                "Impossible de stocker le token dans localStorage",
+                                e
+                            )
+                        }
                     }
                     router.push("/")
                 }
@@ -82,7 +94,37 @@ export default function SignupForm() {
         e.preventDefault()
         setLoading(true)
         setError("")
+
         try {
+            // S'assurer que le socket est connecté avant d'envoyer la requête
+            if (!canal?.socket?.connected) {
+                console.log("Socket not connected, attempting to connect...")
+                canal?.socket?.connect()
+
+                // Attendre que la connexion soit établie
+                await new Promise<void>((resolve, reject) => {
+                    let attempts = 0
+                    const maxAttempts = 30 // 3 secondes
+
+                    const checkConnection = () => {
+                        attempts++
+                        if (canal?.socket?.connected) {
+                            resolve()
+                        } else if (attempts >= maxAttempts) {
+                            reject(
+                                new Error(
+                                    "Impossible de se connecter au serveur"
+                                )
+                            )
+                        } else {
+                            setTimeout(checkConnection, 100)
+                        }
+                    }
+
+                    checkConnection()
+                })
+            }
+
             let T = {
                 signup_request: {
                     email,
@@ -97,6 +139,7 @@ export default function SignupForm() {
             controleur?.envoie(handler, T)
         } catch (err) {
             setError("Signup failed. Please try again.")
+            console.error("Signup error:", err)
         } finally {
             setLoading(false)
         }

@@ -768,17 +768,24 @@ const initializeChannelPosts = async (channels, users) => {
             memberUserIds.includes(u._id.toString())
         )
 
-        if (eligibleUsers.length === 0) continue
+        // Trouver le propriétaire du channel (createdBy)
+        const owner = users.find(
+            (u) => u._id.toString() === channel.createdBy.toString()
+        )
+        if (!owner) continue
 
-        // 2 posts par channel
+        // Les autres membres (pour les réponses)
+        const responders = eligibleUsers.filter(
+            (u) => u._id.toString() !== owner._id.toString()
+        )
+        if (eligibleUsers.length === 0 || responders.length === 0) continue
+
+        // 2 posts par channel, tous du propriétaire
         for (let i = 0; i < 2; i++) {
-            const author =
-                eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)]
-
             const postData = {
                 channelId: channel._id,
                 content: `Message ${i + 1} dans le canal ${channel.name}`,
-                authorId: author._id,
+                authorId: owner._id,
                 createdAt: new Date(Date.now() - (2 - i) * 86400000),
                 updatedAt: new Date(Date.now() - (2 - i) * 86400000),
             }
@@ -787,9 +794,9 @@ const initializeChannelPosts = async (channels, users) => {
             await newPost.save()
             insertedPosts.push(newPost)
 
-            // 1 réponse par post
+            // 1 réponse par post, jamais du propriétaire
             const responder =
-                eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)]
+                responders[Math.floor(Math.random() * responders.length)]
             const responseData = {
                 postId: newPost._id,
                 content: `Réponse à "${postData.content}"`,

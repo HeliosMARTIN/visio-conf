@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import styles from "./PostResponseItem.module.css"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface PostResponseItemProps {
     response: any
@@ -54,13 +55,13 @@ export default function PostResponseItem({
         >
             <div className={styles.responseHeader}>
                 <div className={styles.userInfo}>
+                    {" "}
                     <div className={styles.avatar}>
                         {response.authorAvatar ? (
                             <img
-                                src={
-                                    `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${response.authorAvatar}` ||
-                                    "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                }
+                                src={getProfilePictureUrl(
+                                    response.authorAvatar
+                                )}
                                 alt={response.authorName}
                             />
                         ) : (

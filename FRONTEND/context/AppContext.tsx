@@ -1,15 +1,10 @@
 "use client"
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    useRef,
-} from "react"
+import type React from "react"
+import { createContext, useContext, useEffect, useState, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Controleur from "@/controllers/controleur"
 import CanalSocketio from "@/controllers/canalsocketio"
-import { User } from "@/types/User"
+import type { User } from "@/types/User"
 import jwt from "jsonwebtoken"
 import Cookies from "js-cookie"
 
@@ -18,6 +13,7 @@ interface AppContextType {
     canal: CanalSocketio
     currentUser: User | null
     setCurrentUser: (user: User | null) => void
+    logout: () => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -49,6 +45,7 @@ export const AppContextProvider = ({
     const verbose = false
     const listeMessageEmis = ["user_info_request"]
     const listeMessageRecus = ["user_info_response"]
+    
     const handler = {
         nomDInstance,
         traitementMessage: (msg: {
@@ -76,51 +73,91 @@ export const AppContextProvider = ({
         },
     }
 
+    // Inscription au contrôleur
     useEffect(() => {
         controleurRef.current?.inscription(
             handler,
             listeMessageEmis,
             listeMessageRecus
         )
+        return () => {
+            controleurRef.current?.desincription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            )
+        }
     }, [])
 
+    // Redirection si pas de token
     useEffect(() => {
-        if (
-            !Cookies.get("token") &&
-            pathname !== "/login" &&
-            pathname !== "/signup"
-        ) {
+        const tokenFromCookie = Cookies.get("token")
+        const tokenFromStorage = localStorage.getItem("auth_token")
+        const hasToken = tokenFromCookie || tokenFromStorage
+
+        if (!hasToken && pathname !== "/login" && pathname !== "/signup") {
             setCurrentUser(null)
             router.push("/login")
         }
     }, [currentUser, pathname])
 
+    // Récupération des infos utilisateur
     useEffect(() => {
-        if (!currentUser && Cookies.get("token")) {
-            const token = Cookies.get("token")
-            if (token) {
-                const { userId } = jwt.decode(token) as any
-                const waitForCanalInit = () =>
-                    new Promise<void>((resolve) => {
-                        const interval = setInterval(() => {
-                            if (
-                                canalRef.current?.listeDesMessagesRecus?.length
-                            ) {
-                                clearInterval(interval)
-                                resolve()
-                            }
-                        }, 100)
-                    })
+        if (!currentUser) {
+            const token = Cookies.get("token") || localStorage.getItem("auth_token")
 
-                waitForCanalInit().then(() => {
-                    controleurRef.current?.envoie(handler, {
-                        user_info_request: { userId },
-                    })
-                    canalRef.current?.socket.emit("authenticate", token)
-                })
+            if (token) {
+                const decoded = jwt.decode(token) as any
+                const { userId } = decoded
+
+                // Fonction simple pour attendre la connexion et envoyer la requête
+                const sendUserInfoRequest = () => {
+                    if (canalRef.current?.socket?.connected && controleurRef.current) {
+                        try {
+                            controleurRef.current.envoie(handler, {
+                                user_info_request: { userId },
+                            })
+                            
+                            // Authentifier le socket
+                            canalRef.current.socket.emit("authenticate", token)
+                        } catch (error) {
+                            console.error("Erreur lors de l'envoi de user_info_request:", error)
+                        }
+                    } else {
+                        // Réessayer dans 200ms
+                        setTimeout(sendUserInfoRequest, 200)
+                    }
+                }
+
+                // Démarrer la tentative
+                sendUserInfoRequest()
             }
         }
     }, [currentUser, pathname])
+
+    // Connexion socket pour login/signup
+    useEffect(() => {
+        if (pathname === "/login" || pathname === "/signup") {
+            if (canalRef.current?.socket && !canalRef.current.socket.connected) {
+                canalRef.current.socket.connect()
+            }
+        }
+    }, [pathname])
+
+    const logout = () => {
+        // Déconnecter le socket
+        if (canalRef.current?.socket?.connected) {
+            canalRef.current.socket.disconnect()
+        }
+
+        // Nettoyer les données
+        Cookies.remove("token")
+        localStorage.removeItem("auth_token")
+        setCurrentUser(null)
+
+        // Rediriger
+        router.push("/login")
+    }
 
     return (
         <AppContext.Provider
@@ -129,6 +166,7 @@ export const AppContextProvider = ({
                 canal: canalRef.current,
                 currentUser,
                 setCurrentUser,
+                logout,
             }}
         >
             {children}
