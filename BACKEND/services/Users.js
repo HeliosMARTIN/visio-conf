@@ -246,7 +246,7 @@ class UsersService {
             const users = await User.find(
                 {},
                 "uuid firstname lastname email picture status roles is_online phone job desc disturb_status"
-            )
+            ).populate("roles", "role_label")
             const formattedUsers = users.map((user) => ({
                 id: user.uuid, // Use UUID as primary identifier
                 firstname: user.firstname,
@@ -254,7 +254,9 @@ class UsersService {
                 email: user.email,
                 picture: user.picture,
                 status: user.status,
-                roles: user.roles,
+                roles: user.roles
+                    ? user.roles.map((role) => role.role_label)
+                    : [],
                 online: user.is_online,
                 phone: user.phone,
                 job: user.job,
@@ -293,23 +295,30 @@ class UsersService {
                 await SocketIdentificationService.getUserInfoBySocketId(
                     socketId
                 )
-            if (!userInfo) throw new Error("User not found based on socket id")
-            // Update only the received fields
+            if (!userInfo) throw new Error("User not found based on socket id") // Update only the received fields
             const user = await User.findOneAndUpdate(
                 { _id: userInfo._id },
                 fieldsToUpdate,
                 { new: true }
-            )
+            ).populate("roles", "role_label")
             if (!user) throw new Error("User not found")
             const newUserInfo = {
-                id: user._id,
+                id: user.uuid, // Use UUID as primary ID for frontend consistency
+                uuid: user.uuid,
+                _id: user._id.toString(),
                 firstname: user.firstname,
                 lastname: user.lastname,
                 email: user.email,
                 picture: user.picture,
                 phone: user.phone,
+                job: user.job,
+                desc: user.desc,
                 disturb_status: user.disturb_status,
+                roles: user.roles
+                    ? user.roles.map((role) => role.role_label)
+                    : [],
                 date_create: user.date_create || user.createdAt || null,
+                last_connection: user.last_connection || null,
             }
             const message = {
                 update_user_response: {
@@ -336,9 +345,7 @@ class UsersService {
             const { userId } = mesg.user_info_request
 
             // Try to find user by ObjectId first (most common case), then by UUID
-            let user = null
-
-            // Check if userId looks like MongoDB ObjectId (24 hex characters)
+            let user = null // Check if userId looks like MongoDB ObjectId (24 hex characters)
             if (
                 userId &&
                 userId.length === 24 &&
@@ -346,7 +353,7 @@ class UsersService {
             ) {
                 user = await User.findById(
                     userId,
-                    "uuid firstname lastname email picture phone roles disturb_status date_create"
+                    "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
                 ).populate("roles", "role_label")
             }
 
@@ -354,7 +361,7 @@ class UsersService {
             if (!user) {
                 user = await User.findOne(
                     { uuid: userId },
-                    "uuid firstname lastname email picture phone roles"
+                    "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
                 ).populate("roles", "role_label")
             }
             if (user) {
@@ -367,9 +374,14 @@ class UsersService {
                     email: user.email,
                     picture: user.picture,
                     phone: user.phone,
+                    job: user.job,
+                    desc: user.desc,
                     disturb_status: user.disturb_status,
-                    roles: user.roles.map((role) => role.role_label),
+                    roles: user.roles
+                        ? user.roles.map((role) => role.role_label)
+                        : [],
                     date_create: user.date_create || user.createdAt || null,
+                    last_connection: user.last_connection || null,
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },
