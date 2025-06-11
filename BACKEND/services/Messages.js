@@ -24,26 +24,6 @@ class MessagesService {
         "discuss_remove_message_request",
         "message_status_request",
     ]
-    controleur
-    verbose = false
-    listeDesMessagesEmis = [
-        "messages_get_response",
-        "message_send_response",
-        "discuss_list_response",
-        "users_search_response",
-        "discuss_remove_member_response",
-        "discuss_remove_message_response",
-        "message_status_response",
-    ]
-    listeDesMessagesRecus = [
-        "messages_get_request",
-        "message_send_request",
-        "discuss_list_request",
-        "users_search_request",
-        "discuss_remove_member_request",
-        "discuss_remove_message_request",
-        "message_status_request",
-    ]
 
     constructor(c, nom) {
         this.controleur = c
@@ -60,23 +40,7 @@ class MessagesService {
             this.listeDesMessagesRecus
         )
     }
-    constructor(c, nom) {
-        this.controleur = c
-        this.nomDInstance = nom
-        if (this.controleur.verboseall || this.verbose)
-            console.log(
-                "INFO (" +
-                    this.nomDInstance +
-                    "):  s'enregistre aupres du controleur"
-            )
-        this.controleur.inscription(
-            this,
-            this.listeDesMessagesEmis,
-            this.listeDesMessagesRecus
-        )
-    }
 
-   
     async traitementMessage(mesg) {
         if (this.controleur.verboseall || this.verbose) {
             console.log(
@@ -98,30 +62,10 @@ class MessagesService {
                     select: "firstname lastname picture socket_id uuid",
                 })
 
-                
                 const messages = discussions.flatMap(
                     (discussion) => discussion.discussion_messages
                 )
 
-                const message = {
-                    messages_get_response: {
-                        etat: true,
-                        messages: messages,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            } catch (error) {
-                const message = {
-                    messages_get_response: {
-                        etat: false,
-                        error: error.message,
-                    },
-                    id: [mesg.id],
-                }
-                this.controleur.envoie(this, message)
-            }
-        }
                 const message = {
                     messages_get_response: {
                         etat: true,
@@ -318,8 +262,33 @@ class MessagesService {
         if (mesg.discuss_list_request) {
             try {
                 const userId = mesg.discuss_list_request
+
+                // D'abord, trouver l'utilisateur pour obtenir son ObjectId
+                let user = null
+
+                // Essayer d'abord avec ObjectId (si c'est un ObjectId MongoDB)
+                if (
+                    userId &&
+                    userId.length === 24 &&
+                    /^[0-9a-fA-F]{24}$/.test(userId)
+                ) {
+                    user = await User.findById(userId)
+                }
+
+                // Si pas trouvé, essayer avec UUID
+                if (!user) {
+                    user = await User.findOne({ uuid: userId })
+                }
+
+                if (!user) {
+                    throw new Error(
+                        `Utilisateur non trouvé avec l'ID: ${userId}`
+                    )
+                }
+
+                // Maintenant utiliser l'ObjectId pour chercher les discussions
                 const discussions = await Discussion.find({
-                    discussion_members: userId,
+                    discussion_members: user._id,
                 }).populate({
                     path: "discussion_members",
                     model: "User",
@@ -374,6 +343,7 @@ class MessagesService {
                 }
                 this.controleur.envoie(this, message)
             } catch (error) {
+                console.error("Erreur dans discuss_list_request:", error)
                 const message = {
                     discuss_list_response: {
                         etat: false,
@@ -457,7 +427,7 @@ class MessagesService {
                 this.controleur.envoie(this, message)
             } catch (error) {
                 const message = {
-                    users_search_response: {
+                    discuss_remove_member_response: {
                         etat: false,
                         error: error.message,
                     },
@@ -487,11 +457,10 @@ class MessagesService {
                     },
                     id: [mesg.id],
                 }
-
                 this.controleur.envoie(this, message)
             } catch (error) {
                 const message = {
-                    users_search_response: {
+                    discuss_remove_message_response: {
                         etat: false,
                         error: error.message,
                     },
@@ -525,7 +494,7 @@ class MessagesService {
                     model: "User",
                     select: "socket_id",
                 })
-                if (conv == nul) throw new Error("Discussion non trouvée")
+                if (conv == null) throw new Error("Discussion non trouvée")
 
                 // Extraire tous les socket_id des membres
                 const socketIds = conv.discussion_members
@@ -551,5 +520,7 @@ class MessagesService {
                 this.controleur.envoie(this, message)
             }
         }
-        
+    }
+}
+
 export default MessagesService

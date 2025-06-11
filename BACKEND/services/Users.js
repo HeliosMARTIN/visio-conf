@@ -245,7 +245,7 @@ class UsersService {
         try {
             const users = await User.find(
                 {},
-                "uuid uuid firstname lastname email picture status roles is_online phone job desc disturb_status"
+                "uuid firstname lastname email picture status roles is_online phone job desc disturb_status"
             )
             const formattedUsers = users.map((user) => ({
                 id: user.uuid, // Use UUID as primary identifier
