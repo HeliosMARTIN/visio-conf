@@ -60,7 +60,7 @@ export default function LoginForm() {
                             );
                         }
                     }
-                    router.push("/");
+                    router.push("/home");
                 }
             }
         },
@@ -68,7 +68,7 @@ export default function LoginForm() {
 
     useEffect(() => {
         if (currentUser) {
-            router.push("/");
+            router.push("/home");
         } else if (controleur) {
             controleur.inscription(
                 handler,

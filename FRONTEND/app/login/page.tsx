@@ -18,7 +18,7 @@ export default function LoginPage() {
         const token = Cookies.get("token") // Use cookies instead of localStorage
         if (token) {
             if (currentUser) {
-                router.push("/")
+                router.push("/home")
             }
         }
     }, [])
