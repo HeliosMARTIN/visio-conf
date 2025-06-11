@@ -11,8 +11,8 @@ services:
     ports:
       - "27017:27017"
     networks:
-      - app_network
-
+      - app_network    
+      
   # Service Backend
   backend:
     build:
