@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "clear-uploads": "node clearUploads.js"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
