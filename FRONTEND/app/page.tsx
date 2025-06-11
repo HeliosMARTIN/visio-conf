@@ -10,7 +10,8 @@ import HomeAdmin from "../components/admin/HomeAdmin"
 import Cookies from "js-cookie"
 
 export default function Home() {
-    const { controleur, canal, currentUser, setCurrentUser } = useAppContext()
+    const { controleur, canal, currentUser, setCurrentUser, logout } =
+        useAppContext()
     const router = useRouter()
     const [tab, setTab] = useState<string>("")
     const pathname = usePathname()
@@ -152,9 +153,7 @@ export default function Home() {
     }
 
     const handleLogout = () => {
-        Cookies.remove("token") // Remove token from cookies
-        setCurrentUser(null)
-        router.push("/login")
+        logout() // Utilise la fonction logout du contexte qui nettoie les sockets
     }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,16 +171,15 @@ export default function Home() {
             if (fileInputRef.current) {
                 fileInputRef.current.value = ""
             }
-            // Send only file name and type; backend (AwsS3Service) generates a signed URL.
-            const uploadMessage = {
-                upload_request: {
-                    media: {
-                        name: selectedFile.name,
-                        fileType: selectedFile.type,
-                    },
-                },
-            }
-            controleur.envoie(handler, uploadMessage)
+            // const uploadMessage = {
+            //     upload_request: {
+            //         media: {
+            //             name: selectedFile.name,
+            //             fileType: selectedFile.type,
+            //         },
+            //     },
+            // }
+            // controleur.envoie(handler, uploadMessage)
         } else {
             alert("Please select a file first")
         }

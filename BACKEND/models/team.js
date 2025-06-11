@@ -10,6 +10,11 @@ const teamSchema = new Schema({
         type: String,
         default: "",
     },
+    picture: {
+        type: String,
+        default: null,
+        description: "Filename of the team picture stored",
+    },
     createdBy: {
         type: Schema.Types.ObjectId,
         ref: "User",

@@ -8,7 +8,7 @@ import { Eye, EyeOff } from "lucide-react"
 import Cookies from "js-cookie"
 
 export default function LoginForm() {
-    const { controleur, currentUser } = useAppContext()
+    const { controleur, canal, currentUser } = useAppContext()
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
@@ -78,13 +78,44 @@ export default function LoginForm() {
         e.preventDefault()
         setLoading(true)
         setError("")
+
         try {
+            // S'assurer que le socket est connecté avant d'envoyer la requête
+            if (!canal?.socket?.connected) {
+                console.log("Socket not connected, attempting to connect...")
+                canal?.socket?.connect()
+
+                // Attendre que la connexion soit établie
+                await new Promise<void>((resolve, reject) => {
+                    let attempts = 0
+                    const maxAttempts = 30 // 3 secondes
+
+                    const checkConnection = () => {
+                        attempts++
+                        if (canal?.socket?.connected) {
+                            resolve()
+                        } else if (attempts >= maxAttempts) {
+                            reject(
+                                new Error(
+                                    "Impossible de se connecter au serveur"
+                                )
+                            )
+                        } else {
+                            setTimeout(checkConnection, 100)
+                        }
+                    }
+
+                    checkConnection()
+                })
+            }
+
             let T = {
                 login_request: { email, password },
             }
             controleur?.envoie(handler, T)
         } catch (err) {
             setError("La connexion a échoué. Veuillez réessayer.")
+            console.error("Login error:", err)
         } finally {
             setLoading(false)
         }

@@ -21,9 +21,10 @@ import CreateFolderModal from "./CreateFolderModal"
 import RenameModal from "./RenameModal"
 import DeleteModal from "./DeleteModal"
 import MoveFileModal from "./MoveFileModal"
-import ShareModal from "./ShareModal"
+import TeamShareModal from "./TeamShareModal"
 import { useAppContext } from "@/context/AppContext"
 import { getLink } from "../../../utils/fileHelpers"
+import type { Team } from "../../../types/Team"
 
 interface FileExplorerProps {
     files: FileItem[]
@@ -35,8 +36,11 @@ interface FileExplorerProps {
     onDeleteFile: (fileId: string) => void
     onRenameFile: (fileId: string, newName: string) => void
     onMoveFile: (fileId: string, newParentId: string) => void
-    onShareFile: (fileId: string, isPublic: boolean) => void
     onNavigate: (folderId?: string) => void
+    userTeams?: Team[]
+    onShareToTeam?: (fileId: string, teamId: string) => void
+    showUploadActions?: boolean
+    isSharedView?: boolean
 }
 
 export default function FileExplorer({
@@ -49,8 +53,11 @@ export default function FileExplorer({
     onDeleteFile,
     onRenameFile,
     onMoveFile,
-    onShareFile,
     onNavigate,
+    userTeams = [],
+    onShareToTeam,
+    showUploadActions = true,
+    isSharedView = false,
 }: FileExplorerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("grid")
     const [sortBy, setSortBy] = useState<SortBy>("name")
@@ -61,7 +68,7 @@ export default function FileExplorer({
     const [showRenameModal, setShowRenameModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showMoveModal, setShowMoveModal] = useState(false)
-    const [showShareModal, setShowShareModal] = useState(false)
+    const [showTeamShareModal, setShowTeamShareModal] = useState(false)
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -137,14 +144,13 @@ export default function FileExplorer({
             setSortOrder("asc")
         }
     }
-
     const handleOpenFile = (file: FileItem) => {
         if (file.type === "folder") {
             onNavigate(file.id)
         } else {
-            // For image files, open the thumbnail or download
-            if (file.mimeType?.startsWith("image/") && currentUser) {
-                window.open(getLink(currentUser, file.name), "_blank")
+            // For image files, open in new tab for viewing
+            if (file.mimeType?.startsWith("image/")) {
+                window.open(getLink(file.id), "_blank")
             }
         }
     }
@@ -163,10 +169,14 @@ export default function FileExplorer({
         setSelectedFile(file)
         setShowMoveModal(true)
     }
-
     const handleShareFile = (file: FileItem) => {
         setSelectedFile(file)
-        setShowShareModal(true)
+        setShowTeamShareModal(true)
+    }
+
+    const handleShareToTeam = (file: FileItem) => {
+        setSelectedFile(file)
+        setShowTeamShareModal(true)
     }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,7 +203,6 @@ export default function FileExplorer({
             setSelectedFile(null)
         }
     }
-
     const handleConfirmRename = (fileId: string, newName: string) => {
         onRenameFile(fileId, newName)
         setShowRenameModal(false)
@@ -206,9 +215,11 @@ export default function FileExplorer({
         setSelectedFile(null)
     }
 
-    const handleConfirmShare = (fileId: string, isPublic: boolean) => {
-        onShareFile(fileId, isPublic)
-        setShowShareModal(false)
+    const handleConfirmShareToTeam = (fileId: string, teamId: string) => {
+        if (onShareToTeam) {
+            onShareToTeam(fileId, teamId)
+        }
+        setShowTeamShareModal(false)
         setSelectedFile(null)
     }
 
@@ -399,6 +410,7 @@ export default function FileExplorer({
             )}
 
             <div className={styles.fileListContainer}>
+                {" "}
                 <FileList
                     files={filteredFiles}
                     viewMode={viewMode}
@@ -408,29 +420,34 @@ export default function FileExplorer({
                     onRenameFile={handleRenameFile}
                     onMoveFile={handleMoveFile}
                     onShareFile={handleShareFile}
-                />
+                    userTeams={userTeams}
+                    onShareToTeam={handleShareToTeam}
+                    isSharedView={isSharedView}
+                />{" "}
             </div>
 
-            <div className={styles.actionBar}>
-                <button
-                    className={styles.actionButton}
-                    onClick={() => setShowCreateFolderModal(true)}
-                >
-                    <FolderPlus size={18} />
-                    <span>Nouveau Dossier</span>
-                </button>
+            {showUploadActions && (
+                <div className={styles.actionBar}>
+                    <button
+                        className={styles.actionButton}
+                        onClick={() => setShowCreateFolderModal(true)}
+                    >
+                        <FolderPlus size={18} />
+                        <span>Nouveau Dossier</span>
+                    </button>
 
-                <label className={styles.actionButton}>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        style={{ display: "none" }}
-                    />
-                    <Upload size={18} />
-                    <span>Téléverser</span>
-                </label>
-            </div>
+                    <label className={styles.actionButton}>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            style={{ display: "none" }}
+                        />
+                        <Upload size={18} />
+                        <span>Téléverser</span>
+                    </label>
+                </div>
+            )}
 
             {/* Modals */}
             <AnimatePresence>
@@ -441,7 +458,6 @@ export default function FileExplorer({
                         onCloseModal={() => setShowCreateFolderModal(false)}
                     />
                 )}
-
                 {showRenameModal && selectedFile && (
                     <RenameModal
                         isOpen={showRenameModal}
@@ -450,7 +466,6 @@ export default function FileExplorer({
                         onCloseModal={() => setShowRenameModal(false)}
                     />
                 )}
-
                 {showDeleteModal && selectedFile && (
                     <DeleteModal
                         isOpen={showDeleteModal}
@@ -459,7 +474,6 @@ export default function FileExplorer({
                         onCloseModal={() => setShowDeleteModal(false)}
                     />
                 )}
-
                 {showMoveModal && selectedFile && (
                     <MoveFileModal
                         isOpen={showMoveModal}
@@ -468,13 +482,13 @@ export default function FileExplorer({
                         onCloseModal={() => setShowMoveModal(false)}
                     />
                 )}
-
-                {showShareModal && selectedFile && (
-                    <ShareModal
-                        isOpen={showShareModal}
+                {showTeamShareModal && selectedFile && (
+                    <TeamShareModal
+                        isOpen={showTeamShareModal}
                         file={selectedFile}
-                        onShareFile={handleConfirmShare}
-                        onCloseModal={() => setShowShareModal(false)}
+                        userTeams={userTeams}
+                        onShareToTeam={handleConfirmShareToTeam}
+                        onCloseModal={() => setShowTeamShareModal(false)}
                     />
                 )}
             </AnimatePresence>

@@ -3,6 +3,8 @@ import { useState, useEffect } from "react"
 import type React from "react"
 import styles from "./TeamForm.module.css"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl, getTeamPictureUrl } from "@/utils/fileHelpers"
+import { TeamPictureUploadService } from "@/services/TeamPictureUploadService"
 import {
     Users,
     X,
@@ -12,6 +14,8 @@ import {
     AlertCircle,
     CheckSquare,
     Square,
+    Camera,
+    Upload,
 } from "lucide-react"
 import type { Team, TeamMember } from "@/types/Team"
 import type { User } from "@/types/User"
@@ -42,10 +46,12 @@ export default function TeamForm({
     const [isEditing, setIsEditing] = useState(false)
     const [successMessage, setSuccessMessage] = useState("")
     const [isDeleting, setIsDeleting] = useState(false)
+    const [teamPicture, setTeamPicture] = useState<string>("")
+    const [isUploadingPicture, setIsUploadingPicture] = useState(false)
+    const [picturePreview, setPicturePreview] = useState<string>("")
 
     const nomDInstance = "TeamForm"
     const verbose = false
-
     const listeMessageEmis = [
         "team_create_request",
         "team_update_request",
@@ -67,12 +73,11 @@ export default function TeamForm({
 
     useEffect(() => {
         // Charger tous les utilisateurs pour la sélection des membres
-        loadUsers()
-
-        // Si on est en mode édition, charger les détails de l'équipe
+        loadUsers() // Si on est en mode édition, charger les détails de l'équipe
         if (teamToEdit) {
             setName(teamToEdit.name || "")
             setDescription(teamToEdit.description || "")
+            setTeamPicture(teamToEdit.picture || "")
             setIsEditing(true)
             loadTeamMembers(teamToEdit.id)
         }
@@ -251,7 +256,6 @@ export default function TeamForm({
             )
             return
         }
-
         setIsLoading(true)
         setError("")
 
@@ -264,6 +268,7 @@ export default function TeamForm({
                     id: teamToEdit.id,
                     name,
                     description,
+                    picture: teamPicture,
                 },
             }
             controleur?.envoie(handler, updateRequest)
@@ -273,6 +278,7 @@ export default function TeamForm({
                 team_create_request: {
                     name,
                     description,
+                    picture: teamPicture,
                     members: selectedMembers.map((member) => member.id),
                 },
             }
@@ -387,6 +393,70 @@ export default function TeamForm({
     const isCreator = teamToEdit?.createdBy === currentUser?.id
     const canManageMembers = isUserAdmin || isCreator
 
+    const handleTeamPictureUpload = async (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            setError("Veuillez sélectionner un fichier image")
+            return
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            setError("L'image ne doit pas dépasser 5MB")
+            return
+        }
+
+        setIsUploadingPicture(true)
+        setError("")
+
+        try {
+            // Create preview
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                setPicturePreview(e.target?.result as string)
+            }
+            reader.readAsDataURL(file) // Upload the file
+            const result = await TeamPictureUploadService.uploadTeamPicture(
+                file
+            )
+
+            if (result.success && result.filename) {
+                setTeamPicture(result.filename)
+                setSuccessMessage(
+                    "Image uploadée avec succès. Cliquez sur 'Mettre à jour' pour sauvegarder."
+                )
+                setTimeout(() => setSuccessMessage(""), 5000)
+            } else {
+                setError(result.error || "Erreur lors de l'upload de l'image")
+                setPicturePreview("")
+            }
+        } catch (error) {
+            setError("Erreur lors de l'upload de l'image")
+            setPicturePreview("")
+            console.error("Team picture upload error:", error)
+        } finally {
+            setIsUploadingPicture(false)
+        }
+    }
+
+    const handleRemoveTeamPicture = () => {
+        setTeamPicture("")
+        setPicturePreview("")
+
+        // Reset file input
+        const fileInput = document.getElementById(
+            "team-picture-input"
+        ) as HTMLInputElement
+        if (fileInput) {
+            fileInput.value = ""
+        }
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -432,22 +502,97 @@ export default function TeamForm({
                         className={styles.input}
                         autoFocus
                     />
-                </div>
-
+                </div>{" "}
                 <div className={styles.formGroup}>
-                    <label htmlFor="team-description" className={styles.label}>
-                        Description (optionnelle)
-                    </label>
-                    <textarea
-                        id="team-description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Décrivez brièvement cette équipe..."
-                        className={styles.textarea}
-                        rows={4}
-                    />
-                </div>
+                    <div className={styles.descriptionAndImageRow}>
+                        <div className={styles.descriptionSection}>
+                            <label
+                                htmlFor="team-description"
+                                className={styles.label}
+                            >
+                                Description (optionnelle)
+                            </label>
+                            <textarea
+                                id="team-description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Décrivez brièvement cette équipe..."
+                                className={styles.textarea}
+                                rows={4}
+                            />
+                        </div>
 
+                        <div className={styles.imageSection}>
+                            <label
+                                htmlFor="team-picture"
+                                className={styles.label}
+                            >
+                                Photo de l'équipe
+                            </label>
+                            <div className={styles.pictureUploadContainer}>
+                                {teamPicture || picturePreview ? (
+                                    <div className={styles.picturePreview}>
+                                        <img
+                                            src={
+                                                picturePreview ||
+                                                getTeamPictureUrl(teamPicture)
+                                            }
+                                            alt="Aperçu de la photo de l'équipe"
+                                            className={styles.pictureImage}
+                                        />
+                                        <button
+                                            type="button"
+                                            className={
+                                                styles.removePictureButton
+                                            }
+                                            onClick={handleRemoveTeamPicture}
+                                            aria-label="Retirer la photo de l'équipe"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className={styles.picturePlaceholder}>
+                                        <Users
+                                            size={48}
+                                            className={styles.placeholderIcon}
+                                        />
+                                        <span>Aucune photo</span>
+                                    </div>
+                                )}
+                                <input
+                                    id="team-picture-input"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleTeamPictureUpload}
+                                    className={styles.fileInput}
+                                    disabled={isUploadingPicture}
+                                />
+                                <label
+                                    htmlFor="team-picture-input"
+                                    className={styles.uploadButton}
+                                >
+                                    {isUploadingPicture ? (
+                                        <>
+                                            <div
+                                                className={styles.buttonSpinner}
+                                            ></div>
+                                            Chargement...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload size={16} />
+                                            {teamPicture
+                                                ? "Changer"
+                                                : "Ajouter"}{" "}
+                                            la photo
+                                        </>
+                                    )}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div className={styles.formGroup}>
                     {isEditing && canManageMembers && (
                         <div className={styles.membersSection}>
@@ -464,6 +609,7 @@ export default function TeamForm({
                                 </div>
                             ) : (
                                 <div className={styles.membersList}>
+                                    {" "}
                                     {teamMembers.map((member) => (
                                         <div
                                             key={member.userId}
@@ -474,10 +620,9 @@ export default function TeamForm({
                                             >
                                                 {member.picture ? (
                                                     <img
-                                                        src={
-                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                        }
+                                                        src={getProfilePictureUrl(
+                                                            member.picture
+                                                        )}
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
                                                 ) : (
@@ -544,7 +689,6 @@ export default function TeamForm({
                             )}
                         </div>
                     )}
-
                     <div className={styles.membersSelection}>
                         <div className={styles.searchContainer}>
                             <Search size={16} className={styles.searchIcon} />
@@ -564,6 +708,7 @@ export default function TeamForm({
                                     {selectedMembers.length})
                                 </h4>
                                 <div className={styles.membersList}>
+                                    {" "}
                                     {selectedMembers.map((member) => (
                                         <div
                                             key={member.id}
@@ -574,10 +719,9 @@ export default function TeamForm({
                                             >
                                                 {member.picture ? (
                                                     <img
-                                                        src={
-                                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                            "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                        }
+                                                        src={getProfilePictureUrl(
+                                                            member.picture
+                                                        )}
                                                         alt={`${member.firstname} ${member.lastname}`}
                                                     />
                                                 ) : (
@@ -658,13 +802,13 @@ export default function TeamForm({
                                         key={user.id}
                                         className={styles.userItem}
                                     >
+                                        {" "}
                                         <div className={styles.memberAvatar}>
                                             {user.picture ? (
                                                 <img
-                                                    src={
-                                                        `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}` ||
-                                                        "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                    }
+                                                    src={getProfilePictureUrl(
+                                                        user.picture
+                                                    )}
                                                     alt={`${user.firstname} ${user.lastname}`}
                                                 />
                                             ) : (
@@ -709,9 +853,8 @@ export default function TeamForm({
                                 ))
                             )}
                         </div>
-                    </div>
+                    </div>{" "}
                 </div>
-
                 <div className={styles.formActions}>
                     {isEditing && canManageMembers && (
                         <button

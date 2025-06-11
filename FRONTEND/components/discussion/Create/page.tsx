@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useAppContext } from "@/context/AppContext"
 import { X, CirclePlus, Send } from "lucide-react"
 import { User } from "@/types/User"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface CreateDiscussionProps {
     onDiscussionCreated: () => void
@@ -141,11 +142,10 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                                 onClick={() => handleUserSelect(user)}
                                 className="search-result-item"
                             >
+                                {" "}
                                 <div className="user-info">
                                     <img
-                                        src={
-                                            `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`
-                                        }
+                                        src={getProfilePictureUrl(user.picture)}
                                         alt=""
                                         className="user-avatar"
                                     />
@@ -157,7 +157,7 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                     </div>
                 )}
             </div>
-            
+
             <div className="message-input">
                 <input
                     type="text"
@@ -171,7 +171,9 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                 <button
                     onClick={handleCreateDiscussion}
                     disabled={
-                        isCreating || selectedUsers.length === 0 || !message.trim()
+                        isCreating ||
+                        selectedUsers.length === 0 ||
+                        !message.trim()
                     }
                     className="create-button"
                 >

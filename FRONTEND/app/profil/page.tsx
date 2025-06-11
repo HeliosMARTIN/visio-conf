@@ -6,12 +6,12 @@ import { useState, useRef, useEffect } from "react"
 import { ImageDown, Loader2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { User } from "@/types/User"
+import { getProfilePictureUrl, getApiUrl } from "@/utils/fileHelpers"
 
 export default function ProfilPage() {
     const { currentUser, controleur, canal, setCurrentUser } = useAppContext()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const pendingFileRef = useRef<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [uploadError, setUploadError] = useState<string | null>(null)
     const pathname = usePathname()
@@ -19,9 +19,9 @@ export default function ProfilPage() {
     const nomDInstance = "ProfilPage"
     const verbose = false
 
-    const listeMessageEmis = ["upload_request", "update_user_request"]
+    const listeMessageEmis = ["update_user_request"]
 
-    const listeMessageRecus = ["upload_response", "update_user_response"]
+    const listeMessageRecus = ["update_user_response"]
 
     // Fonction pour formater les dates avec gestion d'erreur
     const formatDate = (dateValue: string | Date | undefined) => {
@@ -47,12 +47,6 @@ export default function ProfilPage() {
     const handler = {
         nomDInstance,
         traitementMessage: (msg: {
-            upload_response?: {
-                etat: boolean
-                error?: string
-                fileName?: string
-                signedUrl?: string
-            }
             update_user_response?: {
                 etat: boolean
                 newUserInfo: User | null
@@ -65,67 +59,10 @@ export default function ProfilPage() {
                     msg
                 )
 
-            // ...existing code...
-
-            if (msg.upload_response) {
-                if (
-                    msg.upload_response.etat &&
-                    pendingFileRef.current &&
-                    msg.upload_response.signedUrl
-                ) {
-                    // Set mode to "cors" explicitly.
-                    fetch(msg.upload_response.signedUrl, {
-                        method: "PUT",
-                        mode: "cors",
-                        body: pendingFileRef.current,
-                        headers: {
-                            "Content-Type": pendingFileRef.current.type,
-                        },
-                    }).then((response) => {
-                        // Considérer les réponses "Slow Down" comme non critiques
-                        if (
-                            response.ok ||
-                            response.status === 503 ||
-                            response.statusText === "Slow Down"
-                        ) {
-                            const updateProfilePictureMessage = {
-                                update_user_request: {
-                                    id: currentUser?.id, // Utilisez l'opérateur de chaînage optionnel
-                                    picture: msg.upload_response?.fileName,
-                                },
-                            }
-                            // Vérifiez que currentUser existe avant d'envoyer
-                            if (currentUser?.id) {
-                                controleur.envoie(
-                                    handler,
-                                    updateProfilePictureMessage
-                                )
-                                pendingFileRef.current = null
-                                setUploadError(null)
-                            } else {
-                                setUploadError(
-                                    "Utilisateur non connecté. Veuillez vous reconnecter."
-                                )
-                                setIsUploading(false)
-                            }
-                        } else {
-                            setUploadError(
-                                "Échec de l'upload sur S3: " +
-                                    response.statusText
-                            )
-                        }
-                        setIsUploading(false)
-                    })
-                } else {
-                    setUploadError(
-                        "Échec de l'upload: " + msg.upload_response.error
-                    )
-                    setIsUploading(false)
-                }
-            }
             if (msg.update_user_response) {
                 if (msg.update_user_response.etat) {
                     setCurrentUser(msg.update_user_response.newUserInfo)
+                    setUploadError(null)
                 } else {
                     setUploadError(
                         "Échec de la mise à jour du profil: " +
@@ -171,7 +108,6 @@ export default function ProfilPage() {
     useEffect(() => {
         // Réinitialisation complète lorsque l'utilisateur change
         setSelectedFile(null)
-        pendingFileRef.current = null
         setIsUploading(false)
         setUploadError(null)
 
@@ -214,11 +150,12 @@ export default function ProfilPage() {
         }
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB threshold
-
-    // Upload du fichier
-    const uploadFile = (file: File) => {
-        if (!controleur || !currentUser) return
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB threshold    // Upload du fichier avec le système local
+    const uploadFile = async (file: File) => {
+        if (!currentUser) {
+            setUploadError("Utilisateur non connecté")
+            return
+        }
 
         if (file.size > MAX_FILE_SIZE) {
             setUploadError(
@@ -230,24 +167,50 @@ export default function ProfilPage() {
         setIsUploading(true)
         setUploadError(null)
 
-        // Sauvegarder le fichier dans la ref pour qu'il reste disponible dans le handler
-        pendingFileRef.current = file
-        // Réinitialiser l'affichage de l'input file
+        try {
+            // Créer FormData pour l'upload
+            const formData = new FormData()
+            formData.append("profilePicture", file)
+
+            // Envoyer le fichier au serveur local
+            const response = await fetch("/api/files/upload/profile", {
+                method: "POST",
+                body: formData,
+                credentials: "include", // Pour inclure les cookies d'authentification
+            })
+
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`)
+            }
+
+            const result = await response.json()
+
+            if (result.success) {
+                // Mettre à jour le profil utilisateur avec le nouveau nom de fichier
+                const updateProfilePictureMessage = {
+                    update_user_request: {
+                        id: currentUser.id,
+                        picture: result.filename,
+                    },
+                }
+
+                if (controleur) {
+                    controleur.envoie(handler, updateProfilePictureMessage)
+                }
+            } else {
+                setUploadError(result.error || "Erreur lors de l'upload")
+                setIsUploading(false)
+            }
+        } catch (error) {
+            console.error("Erreur upload:", error)
+            setUploadError("Erreur lors de l'upload du fichier")
+            setIsUploading(false)
+        }
+
+        // Réinitialiser l'input file
         if (fileInputRef.current) {
             fileInputRef.current.value = ""
         }
-
-        // Envoyer uniquement le nom et le type du fichier; le backend génère une URL signée
-        const uploadMessage = {
-            upload_request: {
-                media: {
-                    name: file.name,
-                    fileType: file.type,
-                },
-            },
-        }
-
-        controleur.envoie(handler, uploadMessage)
     }
 
     if (!currentUser) {
@@ -276,17 +239,14 @@ export default function ProfilPage() {
                     <h1 className={styles.title}>MON PROFIL</h1>
                     <div className={styles.profilCard}>
                         <div className={styles.photoContainer}>
+                            {" "}
                             <img
-                                src={
-                                    currentUser.picture
-                                        ? `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${currentUser.picture}`
-                                        : "/images/default_profile_picture.png"
-                                }
+                                src={getProfilePictureUrl(currentUser.picture)}
                                 alt="Photo de profil"
                                 className={styles.profilePhoto}
                                 onError={(e) => {
                                     ;(e.target as HTMLImageElement).src =
-                                        "/images/default_profile_picture.png"
+                                        getProfilePictureUrl()
                                 }}
                             />
                             <button
@@ -309,11 +269,9 @@ export default function ProfilPage() {
                                 onChange={handleFileChange}
                             />
                         </div>
-
                         {uploadError && (
                             <p className={styles.errorMessage}>{uploadError}</p>
-                        )}
-
+                        )}{" "}
                         <h3>
                             {currentUser.firstname || "Prénom"}{" "}
                             {currentUser.lastname || "Nom"}
@@ -322,16 +280,6 @@ export default function ProfilPage() {
                             {currentUser.desc ||
                                 "Aucune description disponible"}
                         </p>
-
-                        <h3>
-                            {currentUser.firstname || "Prénom"}{" "}
-                            {currentUser.lastname || "Nom"}
-                        </h3>
-                        <p>
-                            {currentUser.desc ||
-                                "Aucune description disponible"}
-                        </p>
-
                         <div className={styles.profilItemsContainer}>
                             <div className={styles.profilItem}>
                                 <h4>Nom</h4>

@@ -11,13 +11,13 @@ import CanalSocketio from "./canalsocketio.js"
 import Controleur from "./controleur.js"
 import UsersService from "./services/Users.js"
 import MessagesService from "./services/Messages.js"
-import AwsS3Service from "./services/AwsS3Service.js"
 import RolesService from "./services/Roles.js"
 import PermsService from "./services/Perms.js"
 import SocketIdentificationService from "./services/SocketIdentification.js"
-import FileService from "./services/FileService.js"
+import LocalFileService from "./services/LocalFileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
+import fileRoutes from "./routes/files.js"
 
 dotenv.config()
 
@@ -28,7 +28,20 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const port = process.env.PORT || 3220
 const server = createServer(app)
-const io = new Server(server, { cors: { origin: "*" } })
+
+// Configuration CORS pour les credentials
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+}
+
+app.use(cors(corsOptions))
+
+const io = new Server(server, {
+    cors: corsOptions,
+})
 
 io.on("connection", (socket) => {
     socket.on("authenticate", async (token) => {
@@ -46,14 +59,36 @@ io.on("connection", (socket) => {
             console.error("Authentication failed:", err.message)
         }
     })
+
+    // Nettoyer automatiquement lors de la déconnexion
+    socket.on("disconnect", async () => {
+        try {
+            // Chercher l'utilisateur associé à ce socket
+            const userInfo =
+                await SocketIdentificationService.getUserInfoBySocketId(
+                    socket.id
+                )
+            if (userInfo && userInfo._id) {
+                SocketIdentificationService.userToSocket.delete(userInfo._id)
+                SocketIdentificationService.socketToUser.delete(socket.id)
+                console.log(
+                    `Socket association cleaned on disconnect for user ${userInfo._id}`
+                )
+            }
+        } catch (err) {
+            console.error("Disconnect cleanup failed:", err.message)
+        }
+    })
 })
 
 server.listen(port, () => {
     console.log(`Visioconf app listening on port ${port}`)
 })
-app.use(cors())
 app.use(express.static(path.join(__dirname, "public")))
 app.use(express.json())
+
+// File upload routes
+app.use("/api/files", fileRoutes)
 
 var verbose = process.env.VERBOSE === "true"
 var controleur = new Controleur()
@@ -65,8 +100,7 @@ new MessagesService(controleur, "MessagesService")
 new RolesService(controleur, "RolesService")
 new PermsService(controleur, "PermsService")
 new CanalSocketio(io, controleur, "canalsocketio")
-new AwsS3Service(controleur, "AwsS3Service")
-new FileService(controleur, "FileService")
+new LocalFileService(controleur, "LocalFileService") // New local file service
 new ChannelsService(controleur, "ChannelService")
 new TeamsService(controleur, "TeamsService")
 

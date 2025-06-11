@@ -89,7 +89,6 @@ class TeamsService {
         if (mesg.team_add_member_request) {
             await this.handleTeamAddMember(mesg)
         }
-
         if (mesg.team_remove_member_request) {
             await this.handleTeamRemoveMember(mesg)
         }
@@ -125,6 +124,7 @@ class TeamsService {
                         id: team._id,
                         name: team.name,
                         description: team.description,
+                        picture: team.picture,
                         createdAt: team.createdAt,
                         updatedAt: team.updatedAt,
                         createdBy: team.createdBy,
@@ -150,10 +150,10 @@ class TeamsService {
             this.controleur.envoie(this, message)
         }
     }
-
     async handleTeamCreate(mesg) {
         try {
-            const { name, description, members } = mesg.team_create_request
+            const { name, description, members, picture } =
+                mesg.team_create_request
 
             // Get user info from socket ID
             const socketId = mesg.id
@@ -164,12 +164,11 @@ class TeamsService {
 
             if (!userInfo) {
                 throw new Error("Utilisateur non authentifié")
-            }
-
-            // Create new team
+            } // Create new team
             const team = new Team({
                 name,
                 description,
+                picture,
                 createdBy: userInfo._id,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -256,7 +255,6 @@ class TeamsService {
                     }
                 }
             }
-
             const message = {
                 team_create_response: {
                     etat: true,
@@ -264,6 +262,7 @@ class TeamsService {
                         id: team._id,
                         name: team.name,
                         description: team.description,
+                        picture: team.picture,
                         createdAt: team.createdAt,
                         updatedAt: team.updatedAt,
                         createdBy: team.createdBy,
@@ -285,10 +284,9 @@ class TeamsService {
             this.controleur.envoie(this, message)
         }
     }
-
     async handleTeamUpdate(mesg) {
         try {
-            const { id, name, description } = mesg.team_update_request
+            const { id, name, description, picture } = mesg.team_update_request
 
             // Get user info from socket ID
             const socketId = mesg.id
@@ -318,6 +316,7 @@ class TeamsService {
             const updateData = {}
             if (name) updateData.name = name
             if (description !== undefined) updateData.description = description
+            if (picture !== undefined) updateData.picture = picture
             updateData.updatedAt = new Date()
 
             const team = await Team.findByIdAndUpdate(id, updateData, {
@@ -327,7 +326,6 @@ class TeamsService {
             if (!team) {
                 throw new Error("Équipe non trouvée")
             }
-
             const message = {
                 team_update_response: {
                     etat: true,
@@ -335,6 +333,7 @@ class TeamsService {
                         id: team._id,
                         name: team.name,
                         description: team.description,
+                        picture: team.picture,
                         createdAt: team.createdAt,
                         updatedAt: team.updatedAt,
                         createdBy: team.createdBy,
