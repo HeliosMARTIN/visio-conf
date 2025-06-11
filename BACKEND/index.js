@@ -69,12 +69,27 @@ io.on("connection", (socket) => {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET)
             const userId = decoded.userId
+
+            // Charger les informations complètes de l'utilisateur depuis la DB
+            const userInfo = await User.findById(
+                userId,
+                "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
+            )
+                .populate("roles", "role_label")
+                .lean()
+
+            if (!userInfo) {
+                console.error(`Utilisateur non trouvé pour ID: ${userId}`)
+                return
+            }
+
             await SocketIdentificationService.updateUserSocket(
                 userId,
-                socket.id
+                socket.id,
+                userInfo // Passer les informations complètes de l'utilisateur
             )
             console.log(
-                `Socket updated for user ${userId} with socket id ${socket.id}`
+                `Socket authentifié avec succès pour utilisateur ${userInfo.firstname} ${userInfo.lastname} (${userInfo.uuid}) avec socket id ${socket.id}`
             )
         } catch (err) {
             console.error("Authentication failed:", err.message)

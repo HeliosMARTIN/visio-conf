@@ -7,10 +7,7 @@ const nextConfig: NextConfig = {
     typescript: {
         ignoreBuildErrors: true,
     },
-    // Permettre l'accès depuis n'importe quelle adresse IP
-    experimental: {
-        serverComponentsExternalPackages: [],
-    },
+
     // Configuration pour supporter les adresses IP
     async headers() {
         return [

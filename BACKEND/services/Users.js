@@ -344,6 +344,10 @@ class UsersService {
         try {
             const { userId } = mesg.user_info_request
 
+            if (!userId) {
+                throw new Error("User ID is required")
+            }
+
             // Try to find user by ObjectId first (most common case), then by UUID
             let user = null // Check if userId looks like MongoDB ObjectId (24 hex characters)
             if (
@@ -392,8 +396,17 @@ class UsersService {
                 throw new Error("User not found")
             }
         } catch (error) {
+            console.warn(
+                `getUserInfo failed for socket ${mesg.id}: ${error.message}`
+            )
             const message = {
-                user_info_response: { etat: false, error: error.message },
+                user_info_response: {
+                    etat: false,
+                    error:
+                        error.message === "User not found"
+                            ? "AUTHENTICATION_REQUIRED"
+                            : error.message,
+                },
                 id: [mesg.id],
             }
             this.controleur.envoie(this, message)
