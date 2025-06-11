@@ -76,26 +76,7 @@ class MessagesService {
         )
     }
 
-    async traitementMessage(mesg) {
-        if (this.controleur.verboseall || this.verbose) {
-            console.log(
-                "INFO (" +
-                    this.nomDInstance +
-                    "): reçoit le message suivant à traiter"
-            )
-            console.log(mesg)
-        }
-        // CAS : DEMANDE DE LA LISTE DES MESSAGES D'UNE DISCUSSION
-        if (mesg.messages_get_request) {
-            try {
-                const { convId } = mesg.messages_get_request
-                const discussions = await Discussion.find({
-                    discussion_uuid: convId,
-                }).populate({
-                    path: "discussion_messages.message_sender",
-                    model: "User",
-                    select: "firstname lastname picture socket_id uuid",
-                })
+   
     async traitementMessage(mesg) {
         if (this.controleur.verboseall || this.verbose) {
             console.log(
@@ -117,9 +98,7 @@ class MessagesService {
                     select: "firstname lastname picture socket_id uuid",
                 })
 
-                const messages = discussions.flatMap(
-                    (discussion) => discussion.discussion_messages
-                )
+                
                 const messages = discussions.flatMap(
                     (discussion) => discussion.discussion_messages
                 )
@@ -572,7 +551,5 @@ class MessagesService {
                 this.controleur.envoie(this, message)
             }
         }
-    }
-}
-
+        
 export default MessagesService
