@@ -22,7 +22,7 @@ export default function Menu({ children }: { children: React.ReactNode }) {
       >
         <div className={styles.sidebarContent}>
           <div className={styles.logoContainer}>
-            <Link href="/" className={styles.logoLink}>
+            <Link href="/home" className={styles.logoLink}>
               <Image
                 src="/logo_Univ.png"
                 alt="Logo"
