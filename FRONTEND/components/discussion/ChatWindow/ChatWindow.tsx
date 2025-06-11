@@ -23,7 +23,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [newMessage, setNewMessage] = useState("")
     const [localMessages, setLocalMessages] = useState<Message[]>([])
     const { controleur } = useAppContext()
-    const nomDInstance = "ChatWindow"
+    // Créer un identifiant unique pour chaque instance de ChatWindow
+    const nomDInstance = useRef(`ChatWindow_${discussion?.discussion_uuid || ""}_${currentUser?.id || ""}`).current
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const listeMessageEmis = ["message_send_request", "messages_get_request"]
@@ -62,36 +63,46 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const handler = {
         nomDInstance,
         traitementMessage: (msg: any) => {
-            if (msg.message_send_response) {
+            console.log("[ChatWindow] Message reçu:", msg, "dans la discussion:", discussion?.discussion_uuid)
+            
+            if (msg?.message_send_response) {
+                console.log("[ChatWindow] Message send response reçue. ID:", msg.id, "Discussion UUID:", msg.message_send_response.discussion_uuid)
                 if (!msg.message_send_response.etat) {
                     console.error(
-                        "Erreur lors de l'envoi du message:",
+                        "[ChatWindow] Erreur lors de l'envoi du message:",
                         msg.message_send_response.error
                     )
                 } else {
-                    // Rafraîchir les messages après un envoi réussi
-                    fetchMessages()
-
-                    // Déclencher l'événement pour mettre à jour la liste des discussions
-                    if (discussion) {
-                        const event = new CustomEvent("discussion-updated", {
-                            detail: {
-                                discussionId: discussion.discussion_uuid,
-                                lastMessage: {
-                                    message_content: newMessage.trim(),
-                                    message_date_create:
-                                        new Date().toISOString(),
+                    // Pour tous les utilisateurs de la discussion
+                    if (discussion && discussion.discussion_uuid === msg.message_send_response.discussion_uuid) {
+                        console.log("[ChatWindow] Rafraichissement des messages de la discussion")
+                        fetchMessages()
+                        
+                        // Actions supplémentaires uniquement pour l'expéditeur
+                        if (msg.id?.includes(nomDInstance)) {
+                            console.log("[ChatWindow] Mise à jour de la liste des discussions pour l'expéditeur")
+                            const messageContent = newMessage.trim()
+                            const event = new CustomEvent("discussion-updated", {
+                                detail: {
+                                    discussionId: discussion.discussion_uuid,
+                                    lastMessage: {
+                                        message_content: messageContent,
+                                        message_date_create: new Date().toISOString(),
+                                    },
                                 },
-                            },
-                        })
-                        document.dispatchEvent(event)
+                            })
+                            document.dispatchEvent(event)
+                            setNewMessage("")
+                        }
                     }
                 }
             }
 
             if (msg.messages_get_response) {
                 if (msg.messages_get_response.etat) {
+                    console.log("[ChatWindow] Mise à jour des messages locaux")
                     setLocalMessages(msg.messages_get_response.messages || [])
+                    scrollToBottom()
                 }
             }
         },
@@ -138,6 +149,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         const messageUuid = uuidv4()
         const currentDate = new Date()
 
+        // Créer le message à envoyer
+        const messageSender = {
+            _id: currentUser.id,
+            email: currentUser.email,
+            firstname: currentUser.firstname || "",
+            lastname: currentUser.lastname || "",
+        }
+        const messageToSend: Message = {
+            message_uuid: messageUuid,
+            message_content: newMessage.trim(),
+            message_date_create: currentDate.toISOString(),
+            message_sender: messageSender,
+        }
+        // Mettre à jour les messages locaux pour afficher le nouveau message
+        setLocalMessages((prevMessages) => [
+            ...prevMessages,
+            messageToSend,
+        ])
+        scrollToBottom()
+        // Créer le message à envoyer au contrôleur
+        if (!discussion.discussion_uuid) {
+            console.error("Discussion UUID is missing")
+            return
+        }
+  
+
         const message = {
             message_send_request: {
                 userEmail: currentUser.email,
@@ -146,6 +183,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 message_content: newMessage.trim(),
                 message_date_create: currentDate.toISOString(),
             },
+            id: nomDInstance // Identifiant unique de l'instance ChatWindow
         }
 
         try {

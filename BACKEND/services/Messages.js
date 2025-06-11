@@ -203,6 +203,7 @@ class MessagesService {
         const message = {
           message_send_response: {
             etat: true,
+            discussion_uuid: discussion_uuid
           },
           id: socketIds, // Liste des socket_id des utilisateurs de la discussion
         };
