@@ -240,7 +240,9 @@ class UsersService {
             const token = jwt.sign(
                 { userId: user._id },
                 process.env.JWT_SECRET,
-                { expiresIn: "7d" }
+                {
+                    expiresIn: "7d",
+                }
             )
             const message = {
                 signup_response: { etat: true, token },
@@ -328,6 +330,7 @@ class UsersService {
                 picture: user.picture,
                 phone: user.phone,
                 disturb_status: user.disturb_status,
+                date_create: user.date_create || user.createdAt || null,
             }
             const message = {
                 update_user_response: {
@@ -355,7 +358,7 @@ class UsersService {
             const { userId } = mesg.user_info_request
             const user = await User.findById(
                 userId,
-                "firstname lastname email picture phone roles disturb_status"
+                "firstname lastname email picture phone roles disturb_status date_create"
             ).populate("roles", "role_label") // Populate the roles to get their names
             if (user) {
                 const userInfo = {
@@ -367,6 +370,7 @@ class UsersService {
                     phone: user.phone,
                     disturb_status: user.disturb_status,
                     roles: user.roles.map((role) => role.role_label),
+                    date_create: user.date_create || user.createdAt || null,
                 }
                 const message = {
                     user_info_response: { etat: true, userInfo },
