@@ -56,7 +56,7 @@ export default function SignupForm() {
                             );
                         }
                     }
-                    router.push("/home");
+                    router.push("/");
                 }
             }
         },
@@ -65,7 +65,7 @@ export default function SignupForm() {
     // Subscribe using the common controller instance
     useEffect(() => {
         if (currentUser) {
-            router.push("/home");
+            router.push("/");
         } else if (controleur) {
             controleur.inscription(
                 handler,
