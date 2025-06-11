@@ -15,7 +15,7 @@ export default function SignupPage() {
   useEffect(() => {
     const loggedIn = Cookies.get("loggedIn");
     if (loggedIn) {
-      router.push("/home");
+      router.push("/");
     }
   }, []);
 
