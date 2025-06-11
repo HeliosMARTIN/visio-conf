@@ -60,7 +60,7 @@ class UsersService {
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         )
-    };
+    }
 
     async traitementMessage(mesg) {
         if (this.controleur.verboseall || this.verbose) {
@@ -263,10 +263,11 @@ class UsersService {
         try {
             const users = await User.find(
                 {},
-                "firstname lastname email picture status roles is_online phone job desc password"
+                "uuid firstname lastname email picture status roles is_online phone job desc password disturb_status"
             )
             const formattedUsers = users.map((user) => ({
-                id: user._id,
+                _id: user._id,
+                id: user.uuid,
                 firstname: user.firstname,
                 lastname: user.lastname,
                 email: user.email,
@@ -277,6 +278,7 @@ class UsersService {
                 phone: user.phone,
                 job: user.job,
                 desc: user.desc,
+                disturb_status: user.disturb_status,
             }))
             const message = {
                 users_list_response: {
