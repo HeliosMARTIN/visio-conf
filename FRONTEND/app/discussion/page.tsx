@@ -32,6 +32,8 @@ export default function DiscussionPage() {
         "users_search_request",
         "message_send_request",
         "discuss_remove_member_request",
+        "discuss_remove_message_request",
+        "message_status_request",
     ]
     const listeMessageRecus = [
         "discuss_list_response",
@@ -39,12 +41,13 @@ export default function DiscussionPage() {
         "users_search_response",
         "message_send_response",
         "discuss_remove_member_response",
+        "discuss_remove_message_response",
+        "message_status_response",
     ]
 
     const handler = {
         nomDInstance,
         traitementMessage: (msg: any) => {
-            console.log("DEBUG: DiscussionPage - currentUser", currentUser)
 
             if (verbose || controleur?.verboseall) {
                 console.log(
@@ -114,6 +117,49 @@ export default function DiscussionPage() {
                     }
 
                     setShowCreateDiscussion(false)
+                }
+            }
+
+            if (msg.discuss_remove_message_response) {
+                if (!msg.discuss_remove_message_response.etat) {
+                    setError(
+                        `Erreur lors de la suppression: ${
+                            msg.discuss_remove_message_response.error || "Inconnu"
+                        }`
+                    )
+                } else {
+                    // Rafraîchir les messages après suppression
+                    if (selectedDiscussion) {
+                        const messageGetRequest = {
+                            messages_get_request: {
+                                convId: selectedDiscussion,
+                            },
+                        }
+                        controleur.envoie(handler, messageGetRequest)
+                    }
+                    // Rafraîchir aussi la liste des discussions pour mettre à jour le dernier message
+                    fetchDiscussions()
+                }
+            }
+
+            if (msg.message_status_response) {
+                if (!msg.message_status_response.etat) {
+                    console.error(
+                        `Erreur lors de la mise à jour du statut: ${
+                            msg.message_status_response.error || "Inconnu"
+                        }`
+                    )
+                } else {
+
+                    // Rafraîchir les messages pour obtenir les nouveaux statuts
+                    if (selectedDiscussion) {
+                        const messageGetRequest = {
+                            messages_get_request: {
+                                convId: selectedDiscussion,
+                            },
+                        }
+                        controleur.envoie(handler, messageGetRequest)
+                    }
                 }
             }
         },
@@ -198,63 +244,61 @@ export default function DiscussionPage() {
         }
     }
 
-// Fonction améliorée dans FRONTEND/app/discussion/page.tsx
-
-const handleRemoveDiscussion = (discussionId: string) => {
-    if (!currentUser) return;
-    
-    // Vérifions d'abord si la discussion existe
-    const discussionToRemove = discussions.find(d => d.discussion_uuid === discussionId);
-    if (!discussionToRemove) return;
-    
-    // Préparer le message pour le backend
-    if (controleur && currentUser) {
-        // Envoi de la demande au serveur avant de modifier l'interface
-        const message = {
-            discuss_remove_member_request: [
-                currentUser.id, // userId
-                discussionId    // discussionId
-            ]
-        };
+    // Fonction améliorée dans FRONTEND/app/discussion/page.tsx
+    const handleRemoveDiscussion = (discussionId: string) => {
+        if (!currentUser) return;
         
-        controleur.envoie(handler, message);
+        // Vérifions d'abord si la discussion existe
+        const discussionToRemove = discussions.find(d => d.discussion_uuid === discussionId);
+        if (!discussionToRemove) return;
         
-        // Mettre à jour l'interface utilisateur après l'envoi
-        setDiscussions((prev) =>
-            prev.filter((d) => d.discussion_uuid !== discussionId)
-        );
-        
-        // Si la discussion supprimée est celle actuellement sélectionnée
-        if (selectedDiscussion === discussionId) {
-            setSelectedDiscussion(null);
-            setMessages([]);
-        }
-        
-        // Fermer la fenêtre de création si elle est ouverte
-        setShowCreateDiscussion(false);
-        
-        // Afficher une notification de succès (optionnel)
-        setError(""); // Effacer les erreurs précédentes
-        
-        // Vous pourriez ajouter ici une notification temporaire
-        const successElement = document.createElement('div');
-        successElement.className = 'success-notification';
-        successElement.textContent = 'Vous avez quitté la conversation';
-        document.body.appendChild(successElement);
-        
-        // Supprimer la notification après quelques secondes
-        setTimeout(() => {
-            if (document.body.contains(successElement)) {
-                document.body.removeChild(successElement);
+        // Préparer le message pour le backend
+        if (controleur && currentUser) {
+            // Envoi de la demande au serveur avant de modifier l'interface
+            const message = {
+                discuss_remove_member_request: [
+                    currentUser.id, // userId
+                    discussionId    // discussionId
+                ]
+            };
+            
+            controleur.envoie(handler, message);
+            
+            // Mettre à jour l'interface utilisateur après l'envoi
+            setDiscussions((prev) =>
+                prev.filter((d) => d.discussion_uuid !== discussionId)
+            );
+            
+            // Si la discussion supprimée est celle actuellement sélectionnée
+            if (selectedDiscussion === discussionId) {
+                setSelectedDiscussion(null);
+                setMessages([]);
             }
-        }, 3000);
+            
+            // Fermer la fenêtre de création si elle est ouverte
+            setShowCreateDiscussion(false);
+            
+            // Afficher une notification de succès (optionnel)
+            setError(""); // Effacer les erreurs précédentes
+            
+            // Vous pourriez ajouter ici une notification temporaire
+            const successElement = document.createElement('div');
+            successElement.className = 'success-notification';
+            successElement.textContent = 'Vous avez quitté la conversation';
+            document.body.appendChild(successElement);
+            
+            // Supprimer la notification après quelques secondes
+            setTimeout(() => {
+                if (document.body.contains(successElement)) {
+                    document.body.removeChild(successElement);
+                }
+            }, 3000);
+        }
     }
-}
 
     const toggleCreateDiscussion = () => {
         setShowCreateDiscussion(!showCreateDiscussion)
     }
-
 
     if (!currentUser) {
         return <div>Chargement...</div>

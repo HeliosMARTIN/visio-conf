@@ -22,13 +22,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
     const [newMessage, setNewMessage] = useState("")
     const [localMessages, setLocalMessages] = useState<Message[]>([])
+    const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
     const { controleur } = useAppContext()
     // Créer un identifiant unique pour chaque instance de ChatWindow
     const nomDInstance = useRef(`ChatWindow_${discussion?.discussion_uuid || ""}_${currentUser?.id || ""}`).current
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [isVisible, setIsVisible] = useState(true) // Pour détecter si la fenêtre est visible
 
-    const listeMessageEmis = ["message_send_request", "messages_get_request"]
-    const listeMessageRecus = ["message_send_response", "messages_get_response"]
+    const listeMessageEmis = ["message_send_request", "messages_get_request", "discuss_remove_message_request", "message_status_request"]
+    const listeMessageRecus = ["message_send_response", "messages_get_response", "discuss_remove_message_response", "message_status_response"]
 
     // Initialiser les messages locaux quand les messages props changent
     useEffect(() => {
@@ -41,6 +43,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         scrollToBottom()
     }, [localMessages])
 
+    // Marquer les messages comme lus quand la discussion devient visible
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            setIsVisible(!document.hidden)
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }, [])
+
+    // Marquer automatiquement les messages comme lus
+    useEffect(() => {
+        if (discussion && isVisible && localMessages.length > 0) {
+            // Déclencher la mise à jour du statut de lecture après un court délai
+            const timer = setTimeout(() => {
+                markMessagesAsRead()
+            }, 1000) // Attendre 1 seconde avant de marquer comme lu
+
+            return () => clearTimeout(timer)
+        }
+    }, [discussion, localMessages, isVisible])
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
@@ -48,7 +72,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
     const isCurrentUserMessage = (message: Message): boolean => {
         const senderId = message.message_sender._id
-
         const currentUserId = currentUser.id
 
         // Si l'email est disponible, c'est la méthode la plus fiable pour comparer
@@ -58,6 +81,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         // Sinon, essayer les différents IDs
         return senderId === currentUserId
+    }
+
+    const markMessagesAsRead = () => {
+        if (!discussion || !controleur) return
+
+        const message = {
+            message_status_request: discussion.discussion_uuid,
+        }
+        controleur.envoie(handler, message)
     }
 
     const handler = {
@@ -105,6 +137,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     scrollToBottom()
                 }
             }
+
+            if (msg.discuss_remove_message_response) {
+                if (msg.discuss_remove_message_response.etat) {
+                    console.log("[ChatWindow] Message supprimé avec succès")
+                    // Rafraîchir les messages après suppression
+                    fetchMessages()
+                } else {
+                    console.error("[ChatWindow] Erreur lors de la suppression du message:", msg.discuss_remove_message_response.error)
+                }
+            }
+
+            if (msg.message_status_response) {
+                if (msg.message_status_response.etat) {
+                    console.log("[ChatWindow] Statut de lecture mis à jour avec succès")
+                    // Rafraîchir les messages pour obtenir les nouveaux statuts
+                    fetchMessages()
+                } else {
+                    console.error("[ChatWindow] Erreur lors de la mise à jour du statut:", msg.message_status_response.error)
+                }
+            }
         },
     }
 
@@ -137,6 +189,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         controleur.envoie(handler, message)
     }
 
+    const handleDeleteMessage = (messageId: string) => {
+        if (!discussion || !controleur) return
+
+        // Confirmer la suppression
+        if (window.confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) {
+            const message = {
+                discuss_remove_message_request: [messageId, discussion.discussion_uuid],
+            }
+            controleur.envoie(handler, message)
+        }
+    }
+
+    const handleEmojiReaction = (messageId: string) => {
+        // Placeholder pour la fonctionnalité emoji
+        // Vous pouvez implémenter un sélecteur d'emoji ici
+        console.log("Réaction emoji pour le message:", messageId)
+        // Pour l'instant, on peut juste afficher une alerte
+        alert("Fonctionnalité de réaction emoji à implémenter")
+    }
+
+    // Fonction pour afficher les coches de lecture
+    const renderReadStatus = (message: Message) => {
+        if (!isCurrentUserMessage(message)) return null
+        
+        const status = message.message_status || 'sent'
+        
+        return (
+            <div className="read-status">
+                {status === 'sent' && (
+                    <span className="check-single" title="Message envoyé">✓</span>
+                )}
+                {status === 'read' && (
+                    <span className="check-double" title="Message lu">✓✓</span>
+                )}
+            </div>
+        )
+    }
+
     if (!discussion) {
         return null
     }
@@ -161,6 +251,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             message_content: newMessage.trim(),
             message_date_create: currentDate.toISOString(),
             message_sender: messageSender,
+            message_status: 'sent' // Nouveau statut par défaut
         }
         // Mettre à jour les messages locaux pour afficher le nouveau message
         setLocalMessages((prevMessages) => [
@@ -173,7 +264,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             console.error("Discussion UUID is missing")
             return
         }
-  
 
         const message = {
             message_send_request: {
@@ -207,6 +297,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         className={`message ${
                             isCurrentUserMessage(message) ? "sent" : "received"
                         }`}
+                        onMouseEnter={() => setHoveredMessageId(message.message_uuid)}
+                        onMouseLeave={() => setHoveredMessageId(null)}
+                        style={{ position: 'relative' }}
                     >
                         <div className="message-content">
                             {message.message_content}
@@ -230,7 +323,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                     }
                                 )}
                             </span>
+                            {renderReadStatus(message)}
                         </div>
+                        
+                        {/* Actions de survol */}
+                        {hoveredMessageId === message.message_uuid && (
+                            <div className="message-actions">
+                                <button
+                                    className="action-btn emoji-btn"
+                                    onClick={() => handleEmojiReaction(message.message_uuid)}
+                                    title="Réagir avec un emoji"
+                                >
+                                    😊
+                                </button>
+                                {isCurrentUserMessage(message) && (
+                                    <button
+                                        className="action-btn delete-btn"
+                                        onClick={() => handleDeleteMessage(message.message_uuid)}
+                                        title="Supprimer le message"
+                                    >
+                                        🗑️
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ))}
                 <div ref={messagesEndRef} />

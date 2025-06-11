@@ -30,49 +30,32 @@ const DiscussionsList: React.FC<DiscussionsListProps> = ({
     onNewDiscussClick,
     removeDiscussion
 }) => {
-    console.log("Rendering DiscussionsList", discussions);
     const getDiscussionName = (discussion: Discussion): string => {
-        // Initial debug logs
-        console.log('=== GetDiscussionName Debug ===');
-        console.log('Discussion:', discussion);
-        console.log('CurrentUserId:', currentUserId);
 
         // Vérification de sécurité
         if (!discussion || !discussion.discussion_members) {
-            console.log('Discussion or members missing:', { discussion });
             return "Discussion sans nom";
         }
 
         if (discussion.discussion_type === "group" && discussion.discussion_name) {
-            console.log('Group discussion with name:', discussion.discussion_name);
             return discussion.discussion_name;
         }
 
         // Vérification que discussion_members est un tableau
         if (!Array.isArray(discussion.discussion_members)) {
-            console.log('Discussion members is not an array:', discussion.discussion_members);
             return "Discussion sans nom";
         }
 
-        console.log('Discussion members:', discussion.discussion_members);
 
         const otherMembers = discussion.discussion_members
         .filter(member => {
-            console.log('Filtering member:', {
-                member,
-                memberId: member._id,
-                currentUserId,
-                isOtherMember: member._id !== currentUserId
-            });
             return member && member._id !== currentUserId;
         })
         .map(member => {
-            console.log('Mapping member name:', `${member.firstname} ${member.lastname}`);
             return `${member.firstname} ${member.lastname}`;
         })
         .join(", ");
 
-        console.log('Final other members:', otherMembers);
         return otherMembers || "Discussion sans nom";
     };
     const formatDate = (dateString: string): string => {
