@@ -184,9 +184,7 @@ class TeamsService {
                 joinedAt: new Date(),
             })
 
-            await creatorMember.save()
-
-            // Ajouter les membres fournis (hors créateur déjà admin)
+            await creatorMember.save() // Ajouter les membres fournis (hors créateur déjà admin)
             if (Array.isArray(members) && members.length > 0) {
                 // On convertit tout en string pour la comparaison
                 const creatorIdStr = userInfo._id.toString()
@@ -196,13 +194,32 @@ class TeamsService {
 
                 for (const userId of filteredMembers) {
                     try {
-                        const member = new TeamMember({
-                            teamId: team._id,
-                            userId,
-                            role: "member",
-                            joinedAt: new Date(),
-                        })
-                        await member.save()
+                        // Find user to get ObjectId
+                        let user = null
+
+                        // Try to find by ObjectId first (if userId looks like ObjectId)
+                        if (
+                            userId &&
+                            userId.length === 24 &&
+                            /^[0-9a-fA-F]{24}$/.test(userId)
+                        ) {
+                            user = await User.findById(userId)
+                        }
+
+                        // If not found by ObjectId, try by UUID
+                        if (!user) {
+                            user = await User.findOne({ uuid: userId })
+                        }
+
+                        if (user) {
+                            const member = new TeamMember({
+                                teamId: team._id,
+                                userId: user._id, // Use ObjectId for consistency
+                                role: "member",
+                                joinedAt: new Date(),
+                            })
+                            await member.save()
+                        }
                     } catch (err) {
                         console.log("Error adding member", userId, err)
                     }
@@ -229,9 +246,7 @@ class TeamsService {
                 joinedAt: new Date(),
             })
 
-            await channelMember.save()
-
-            // Ajouter les membres fournis au channel général (hors créateur déjà admin)
+            await channelMember.save() // Ajouter les membres fournis au channel général (hors créateur déjà admin)
             if (Array.isArray(members) && members.length > 0) {
                 const creatorIdStr = userInfo._id.toString()
                 const filteredMembers = members.filter(
@@ -239,13 +254,32 @@ class TeamsService {
                 )
                 for (const userId of filteredMembers) {
                     try {
-                        const member = new ChannelMember({
-                            channelId: generalChannel._id,
-                            userId,
-                            role: "member",
-                            joinedAt: new Date(),
-                        })
-                        await member.save()
+                        // Find user to get ObjectId
+                        let user = null
+
+                        // Try to find by ObjectId first (if userId looks like ObjectId)
+                        if (
+                            userId &&
+                            userId.length === 24 &&
+                            /^[0-9a-fA-F]{24}$/.test(userId)
+                        ) {
+                            user = await User.findById(userId)
+                        }
+
+                        // If not found by ObjectId, try by UUID
+                        if (!user) {
+                            user = await User.findOne({ uuid: userId })
+                        }
+
+                        if (user) {
+                            const member = new ChannelMember({
+                                channelId: generalChannel._id,
+                                userId: user._id, // Use ObjectId for consistency
+                                role: "member",
+                                joinedAt: new Date(),
+                            })
+                            await member.save()
+                        }
                     } catch (err) {
                         console.log(
                             "Error adding member to channel",
@@ -610,18 +644,16 @@ class TeamsService {
 
             if (!isMember) {
                 throw new Error("Vous n'avez pas accès à cette équipe")
-            }
-
-            // Get all members with user information
+            } // Get all members with user information
             const members = await TeamMember.find({ teamId }).populate(
                 "userId",
-                "firstname lastname picture"
+                "firstname lastname picture uuid"
             )
 
             const formattedMembers = members.map((member) => ({
                 id: member._id,
                 teamId: member.teamId,
-                userId: member.userId._id,
+                userId: member.userId.uuid, // Use UUID instead of ObjectId
                 firstname: member.userId.firstname,
                 lastname: member.userId.lastname,
                 picture: member.userId.picture,
@@ -684,19 +716,29 @@ class TeamsService {
                 throw new Error(
                     "Vous n'avez pas les droits pour ajouter des membres à cette équipe"
                 )
+            } // Check if user exists - handle both ObjectId and UUID
+            let user = null
+
+            // Try to find by ObjectId first (if userId looks like ObjectId)
+            if (
+                userId &&
+                userId.length === 24 &&
+                /^[0-9a-fA-F]{24}$/.test(userId)
+            ) {
+                user = await User.findById(userId)
             }
 
-            // Check if user exists
-            const user = await User.findById(userId)
+            // If not found by ObjectId, try by UUID
+            if (!user) {
+                user = await User.findOne({ uuid: userId })
+            }
 
             if (!user) {
                 throw new Error("Utilisateur non trouvé")
-            }
-
-            // Check if user is already a member
+            } // Check if user is already a member
             const existingMember = await TeamMember.findOne({
                 teamId,
-                userId,
+                userId: user._id, // Use ObjectId for consistency
             })
 
             if (existingMember) {
@@ -706,7 +748,7 @@ class TeamsService {
             // Add user as member
             const member = new TeamMember({
                 teamId,
-                userId,
+                userId: user._id, // Use ObjectId for consistency
                 role: "member",
                 joinedAt: new Date(),
             })
@@ -722,14 +764,13 @@ class TeamsService {
             for (const channel of publicChannels) {
                 const channelMember = new ChannelMember({
                     channelId: channel._id,
-                    userId,
+                    userId: user._id, // Use ObjectId for consistency
                     role: "member",
                     joinedAt: new Date(),
                 })
 
                 await channelMember.save()
             }
-
             const message = {
                 team_add_member_response: {
                     etat: true,
@@ -737,7 +778,7 @@ class TeamsService {
                     member: {
                         id: member._id,
                         teamId: member.teamId,
-                        userId: member.userId,
+                        userId: user.uuid, // Return UUID for frontend consistency
                         role: member.role,
                         joinedAt: member.joinedAt,
                     },
@@ -784,42 +825,62 @@ class TeamsService {
                 throw new Error(
                     "Vous n'avez pas les droits pour retirer des membres de cette équipe"
                 )
+            } // Find the user first to get their ObjectId
+            let user = null
+
+            // Try to find by ObjectId first (if userId looks like ObjectId)
+            if (
+                userId &&
+                userId.length === 24 &&
+                /^[0-9a-fA-F]{24}$/.test(userId)
+            ) {
+                user = await User.findById(userId)
             }
 
-            // Check if user is a member
+            // If not found by ObjectId, try by UUID
+            if (!user) {
+                user = await User.findOne({ uuid: userId })
+            }
+
+            if (!user) {
+                throw new Error("Utilisateur non trouvé")
+            }
+
+            // Check if user is a member using ObjectId
             const member = await TeamMember.findOne({
                 teamId,
-                userId,
+                userId: user._id, // Use ObjectId for consistency
             })
 
             if (!member) {
                 throw new Error("Cet utilisateur n'est pas membre de l'équipe")
             }
 
-            // Cannot remove another admin
-            if (member.role === "admin" && userInfo._id.toString() !== userId) {
+            // Cannot remove another admin (compare using ObjectId)
+            if (
+                member.role === "admin" &&
+                userInfo._id.toString() !== user._id.toString()
+            ) {
                 throw new Error(
                     "Vous ne pouvez pas retirer un autre administrateur"
                 )
             }
 
             // Remove user from team
-            await TeamMember.findByIdAndDelete(member._id)
-
-            // Remove user from all channels in the team
+            await TeamMember.findByIdAndDelete(member._id) // Remove user from all channels in the team
             const channels = await Channel.find({ teamId })
             const channelIds = channels.map((channel) => channel._id)
 
             await ChannelMember.deleteMany({
                 channelId: { $in: channelIds },
-                userId,
+                userId: user._id, // Use ObjectId for consistency
             })
 
             const message = {
                 team_remove_member_response: {
                     etat: true,
                     teamId,
-                    userId,
+                    userId: user.uuid, // Return UUID for frontend consistency
                 },
                 id: [mesg.id],
             }

@@ -5,20 +5,10 @@ import styles from "./TeamForm.module.css"
 import { useAppContext } from "@/context/AppContext"
 import { getProfilePictureUrl, getTeamPictureUrl } from "@/utils/fileHelpers"
 import { TeamPictureUploadService } from "@/services/TeamPictureUploadService"
-import {
-    Users,
-    X,
-    Search,
-    Plus,
-    Trash2,
-    AlertCircle,
-    CheckSquare,
-    Square,
-    Camera,
-    Upload,
-} from "lucide-react"
+import { Users, X, AlertCircle, Upload, Trash2 } from "lucide-react"
 import type { Team, TeamMember } from "@/types/Team"
 import type { User } from "@/types/User"
+import MemberSelector, { type Member } from "../common/MemberSelector"
 
 interface TeamFormProps {
     onTeamCreated: (team: Team) => void
@@ -36,11 +26,8 @@ export default function TeamForm({
     const [description, setDescription] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [usersList, setUsersList] = useState<User[]>([])
-    const [filteredUsers, setFilteredUsers] = useState<User[]>([])
-    const [selectedMembers, setSelectedMembers] = useState<User[]>([])
+    const [members, setMembers] = useState<Member[]>([])
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
-    const [searchTerm, setSearchTerm] = useState("")
     const [isLoadingUsers, setIsLoadingUsers] = useState(false)
     const [isLoadingMembers, setIsLoadingMembers] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
@@ -70,16 +57,23 @@ export default function TeamForm({
         "team_add_member_response",
         "team_remove_member_response",
     ]
-
     useEffect(() => {
         // Charger tous les utilisateurs pour la sélection des membres
-        loadUsers() // Si on est en mode édition, charger les détails de l'équipe
+        loadUsers()
+
         if (teamToEdit) {
             setName(teamToEdit.name || "")
             setDescription(teamToEdit.description || "")
             setTeamPicture(teamToEdit.picture || "")
             setIsEditing(true)
+            // Charger les membres de l'équipe après avoir chargé les utilisateurs
             loadTeamMembers(teamToEdit.id)
+        } else {
+            // Réinitialiser en mode création
+            setName("")
+            setDescription("")
+            setTeamPicture("")
+            setIsEditing(false)
         }
 
         return () => {
@@ -89,23 +83,7 @@ export default function TeamForm({
                 listeMessageRecus
             )
         }
-    }, [teamToEdit])
-
-    useEffect(() => {
-        // Filtrer les utilisateurs en fonction du terme de recherche
-        if (usersList.length > 0) {
-            const filtered = usersList.filter(
-                (user) =>
-                    `${user.firstname} ${user.lastname}`
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()) &&
-                    user.id !== currentUser?.id &&
-                    !teamMembers.some((member) => member.userId === user.id) &&
-                    !selectedMembers.some((member) => member.id === user.id)
-            )
-            setFilteredUsers(filtered)
-        }
-    }, [searchTerm, usersList, teamMembers, selectedMembers, currentUser])
+    }, [teamToEdit?.id]) // Utiliser l'ID pour éviter les re-renders inutiles
 
     const handler = {
         nomDInstance,
@@ -161,36 +139,73 @@ export default function TeamForm({
                     )
                 }
             }
-
             if (msg.users_list_response) {
                 setIsLoadingUsers(false)
 
                 if (msg.users_list_response.etat) {
                     const users = msg.users_list_response.users || []
-                    setUsersList(users)
+                    console.log("TeamForm - Users loaded:", users) // Convertir en format Member avec isSelected = false par défaut
+                    const membersConverted: Member[] = users
+                        .filter((user: any) => user.id !== currentUser?.id)
+                        .map((user: any) => ({
+                            id: user.id,
+                            firstname: user.firstname,
+                            lastname: user.lastname,
+                            picture: user.picture,
+                            isSelected: false,
+                        }))
+                    setMembers(membersConverted)
                 }
             }
-
             if (msg.team_members_response) {
                 setIsLoadingMembers(false)
 
                 if (msg.team_members_response.etat) {
-                    const members = msg.team_members_response.members || []
-                    setTeamMembers(members)
+                    const teamMembersData =
+                        msg.team_members_response.members || []
+                    setTeamMembers(teamMembersData)
+
+                    // Mettre à jour les membres en marquant ceux de l'équipe comme sélectionnés
+                    setMembers((prevMembers) =>
+                        prevMembers.map((member) => {
+                            return {
+                                ...member,
+                                isSelected: teamMembersData.some(
+                                    (teamMember: any) =>
+                                        teamMember.userId === member.id
+                                ),
+                            }
+                        })
+                    )
+                } else {
+                    console.error(
+                        "TeamForm - Error loading members:",
+                        msg.team_members_response.error
+                    )
                 }
             }
-
             if (msg.team_add_member_response) {
                 setIsLoading(false)
 
                 if (msg.team_add_member_response.etat) {
-                    // Recharger les membres de l'équipe
+                    // Recharger les membres de l'équipe pour mettre à jour teamMembers
                     if (teamToEdit) {
                         loadTeamMembers(teamToEdit.id)
                         setSuccessMessage("Membre ajouté avec succès")
                         setTimeout(() => setSuccessMessage(""), 3000)
                     }
                 } else {
+                    // En cas d'erreur, remettre l'état précédent
+                    const addedUserId = msg.team_add_member_response.userId
+                    if (addedUserId) {
+                        setMembers((prevMembers) =>
+                            prevMembers.map((member) =>
+                                member.id === addedUserId
+                                    ? { ...member, isSelected: false }
+                                    : member
+                            )
+                        )
+                    }
                     setError(
                         msg.team_add_member_response.error ||
                             "Erreur lors de l'ajout du membre"
@@ -202,13 +217,24 @@ export default function TeamForm({
                 setIsLoading(false)
 
                 if (msg.team_remove_member_response.etat) {
-                    // Recharger les membres de l'équipe
+                    // Recharger les membres de l'équipe pour mettre à jour teamMembers
                     if (teamToEdit) {
                         loadTeamMembers(teamToEdit.id)
                         setSuccessMessage("Membre retiré avec succès")
                         setTimeout(() => setSuccessMessage(""), 3000)
                     }
                 } else {
+                    // En cas d'erreur, remettre l'état précédent
+                    const removedUserId = msg.team_remove_member_response.userId
+                    if (removedUserId) {
+                        setMembers((prevMembers) =>
+                            prevMembers.map((member) =>
+                                member.id === removedUserId
+                                    ? { ...member, isSelected: true }
+                                    : member
+                            )
+                        )
+                    }
                     setError(
                         msg.team_remove_member_response.error ||
                             "Erreur lors de la suppression du membre"
@@ -250,7 +276,11 @@ export default function TeamForm({
             return
         }
 
-        if (!isEditing && selectedMembers.length === 0) {
+        const selectedMemberIds = members
+            .filter((member) => member.isSelected)
+            .map((member) => member.id)
+
+        if (!isEditing && selectedMemberIds.length === 0) {
             setError(
                 "Vous devez sélectionner au moins un membre pour créer une équipe"
             )
@@ -279,7 +309,7 @@ export default function TeamForm({
                     name,
                     description,
                     picture: teamPicture,
-                    members: selectedMembers.map((member) => member.id),
+                    members: selectedMemberIds,
                 },
             }
             controleur?.envoie(handler, createRequest)
@@ -321,9 +351,7 @@ export default function TeamForm({
     }
 
     const handleRemoveMember = (userId: string) => {
-        if (!controleur || !canal || !teamToEdit) return
-
-        // Ne pas permettre de supprimer le dernier admin
+        if (!controleur || !canal || !teamToEdit) return // Ne pas permettre de supprimer le dernier admin
         const isLastAdmin =
             userId === currentUser?.id &&
             teamMembers.filter((member) => member.role === "admin").length ===
@@ -337,7 +365,6 @@ export default function TeamForm({
             )
             return
         }
-
         setIsLoading(true)
         setError("")
 
@@ -348,50 +375,63 @@ export default function TeamForm({
             },
         }
         controleur.envoie(handler, request)
-    }
-
-    const toggleMember = (user: User) => {
-        const isMemberSelected = selectedMembers.some(
-            (member) => member.id === user.id
-        )
-
-        if (isMemberSelected) {
-            // Retirer le membre
-            setSelectedMembers(
-                selectedMembers.filter((member) => member.id !== user.id)
+    } // Nouvelles fonctions simplifiées pour MemberSelector
+    const handleMemberToggle = (member: Member) => {
+        if (isEditing && teamToEdit) {
+            // En mode édition, ajouter/retirer directement du serveur
+            if (member.isSelected) {
+                // Membre actuellement dans l'équipe, le retirer
+                handleRemoveMember(member.id)
+                // Mettre à jour immédiatement l'état local pour un feedback visuel
+                setMembers((prevMembers) =>
+                    prevMembers.map((m) =>
+                        m.id === member.id ? { ...m, isSelected: false } : m
+                    )
+                )
+            } else {
+                // Membre pas dans l'équipe, l'ajouter
+                handleAddMember(member.id)
+                // Mettre à jour immédiatement l'état local pour un feedback visuel
+                setMembers((prevMembers) =>
+                    prevMembers.map((m) =>
+                        m.id === member.id ? { ...m, isSelected: true } : m
+                    )
+                )
+            }
+        } else {
+            // En mode création, simplement toggle l'état
+            setMembers((prevMembers) =>
+                prevMembers.map((m) =>
+                    m.id === member.id ? { ...m, isSelected: !m.isSelected } : m
+                )
             )
-        } else {
-            // Ajouter le membre
-            setSelectedMembers([...selectedMembers, user])
         }
     }
 
-    const handleSelectAllMembers = () => {
-        // Get all available members (filtered members that are not already selected)
-        const availableMembers = filteredUsers.filter(
-            (user) => !selectedMembers.some((member) => member.id === user.id)
-        )
-
-        if (availableMembers.length > 0) {
-            // Select all available members
-            setSelectedMembers([...selectedMembers, ...availableMembers])
+    const handleSelectAll = () => {
+        if (isEditing) {
+            // En mode édition, ajouter tous les membres non sélectionnés
+            const membersToAdd = members.filter((member) => !member.isSelected)
+            membersToAdd.forEach((member) => handleAddMember(member.id))
         } else {
-            // If all are selected, unselect all
-            setSelectedMembers([])
+            // En mode création, toggle tous les membres
+            const hasUnselected = members.some((member) => !member.isSelected)
+
+            setMembers((prevMembers) =>
+                prevMembers.map((member) => ({
+                    ...member,
+                    isSelected: hasUnselected,
+                }))
+            )
         }
-    }
-
-    const areAllMembersSelected =
-        filteredUsers.length > 0 &&
-        filteredUsers.every((user) =>
-            selectedMembers.some((member) => member.id === user.id)
-        )
-
+    } // Calculer les permissions
     const isUserAdmin = teamMembers.some(
         (member) => member.userId === currentUser?.id && member.role === "admin"
     )
+
     const isCreator = teamToEdit?.createdBy === currentUser?.id
-    const canManageMembers = isUserAdmin || isCreator
+
+    const canManageMembers = isUserAdmin || isCreator || !isEditing
 
     const handleTeamPictureUpload = async (
         event: React.ChangeEvent<HTMLInputElement>
@@ -592,268 +632,32 @@ export default function TeamForm({
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>{" "}
                 <div className={styles.formGroup}>
-                    {isEditing && canManageMembers && (
-                        <div className={styles.membersSection}>
-                            <h3 className={styles.sectionTitle}>
-                                Membres actuels ({teamMembers.length})
-                            </h3>
-                            {isLoadingMembers ? (
-                                <div className={styles.loading}>
-                                    Chargement des membres...
-                                </div>
-                            ) : teamMembers.length === 0 ? (
-                                <div className={styles.emptyState}>
-                                    Aucun membre dans cette équipe
-                                </div>
-                            ) : (
-                                <div className={styles.membersList}>
-                                    {" "}
-                                    {teamMembers.map((member) => (
-                                        <div
-                                            key={member.userId}
-                                            className={styles.memberItem}
-                                        >
-                                            <div
-                                                className={styles.memberAvatar}
-                                            >
-                                                {member.picture ? (
-                                                    <img
-                                                        src={getProfilePictureUrl(
-                                                            member.picture
-                                                        )}
-                                                        alt={`${member.firstname} ${member.lastname}`}
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        {member.firstname?.charAt(
-                                                            0
-                                                        ) || "?"}
-                                                        {member.lastname?.charAt(
-                                                            0
-                                                        ) || "?"}
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className={styles.memberInfo}>
-                                                <span
-                                                    className={
-                                                        styles.memberName
-                                                    }
-                                                >
-                                                    {member.firstname}{" "}
-                                                    {member.lastname}
-                                                    {member.userId ===
-                                                        currentUser?.id && (
-                                                        <span
-                                                            className={
-                                                                styles.youBadge
-                                                            }
-                                                        >
-                                                            Vous
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <span
-                                                    className={
-                                                        styles.memberRole
-                                                    }
-                                                >
-                                                    {member.role === "admin"
-                                                        ? "Administrateur"
-                                                        : "Membre"}
-                                                </span>
-                                            </div>
-                                            {canManageMembers &&
-                                                member.userId !==
-                                                    currentUser?.id && (
-                                                    <button
-                                                        type="button"
-                                                        className={
-                                                            styles.removeButton
-                                                        }
-                                                        onClick={() =>
-                                                            handleRemoveMember(
-                                                                member.userId
-                                                            )
-                                                        }
-                                                        disabled={isLoading}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    <div className={styles.membersSelection}>
-                        <div className={styles.searchContainer}>
-                            <Search size={16} className={styles.searchIcon} />
-                            <input
-                                type="text"
-                                className={styles.searchInput}
-                                placeholder="Rechercher des utilisateurs..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-
-                        {!isEditing && selectedMembers.length > 0 && (
-                            <div className={styles.selectedMembers}>
-                                <h4 className={styles.selectedMembersTitle}>
-                                    Membres sélectionnés (
-                                    {selectedMembers.length})
-                                </h4>
-                                <div className={styles.membersList}>
-                                    {" "}
-                                    {selectedMembers.map((member) => (
-                                        <div
-                                            key={member.id}
-                                            className={styles.memberItem}
-                                        >
-                                            <div
-                                                className={styles.memberAvatar}
-                                            >
-                                                {member.picture ? (
-                                                    <img
-                                                        src={getProfilePictureUrl(
-                                                            member.picture
-                                                        )}
-                                                        alt={`${member.firstname} ${member.lastname}`}
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        {member.firstname?.charAt(
-                                                            0
-                                                        ) || "?"}
-                                                        {member.lastname?.charAt(
-                                                            0
-                                                        ) || "?"}
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className={styles.memberInfo}>
-                                                <span
-                                                    className={
-                                                        styles.memberName
-                                                    }
-                                                >
-                                                    {member.firstname}{" "}
-                                                    {member.lastname}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={styles.removeButton}
-                                                onClick={() =>
-                                                    toggleMember(member)
-                                                }
-                                                aria-label={`Retirer ${member.firstname} ${member.lastname}`}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className={styles.usersList}>
-                            <div className={styles.usersListHeader}>
-                                <h4 className={styles.usersListTitle}>
-                                    {isEditing
-                                        ? "Ajouter des membres"
-                                        : "Utilisateurs disponibles"}
-                                </h4>
-                                {!isEditing && filteredUsers.length > 0 && (
-                                    <button
-                                        type="button"
-                                        className={styles.selectAllButton}
-                                        onClick={handleSelectAllMembers}
-                                    >
-                                        {areAllMembersSelected ? (
-                                            <>
-                                                <CheckSquare size={16} />
-                                                Désélectionner tout
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Square size={16} />
-                                                Sélectionner tout
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-                            </div>
-                            {isLoadingUsers ? (
-                                <div className={styles.loadingUsers}>
-                                    Chargement des utilisateurs...
-                                </div>
-                            ) : filteredUsers.length === 0 ? (
-                                <div className={styles.noResults}>
-                                    Aucun utilisateur trouvé
-                                </div>
-                            ) : (
-                                filteredUsers.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        className={styles.userItem}
-                                    >
-                                        {" "}
-                                        <div className={styles.memberAvatar}>
-                                            {user.picture ? (
-                                                <img
-                                                    src={getProfilePictureUrl(
-                                                        user.picture
-                                                    )}
-                                                    alt={`${user.firstname} ${user.lastname}`}
-                                                />
-                                            ) : (
-                                                <>
-                                                    {user.firstname?.charAt(
-                                                        0
-                                                    ) || "?"}
-                                                    {user.lastname?.charAt(0) ||
-                                                        "?"}
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className={styles.memberInfo}>
-                                            <span className={styles.memberName}>
-                                                {user.firstname} {user.lastname}
-                                            </span>
-                                        </div>
-                                        {isEditing ? (
-                                            <button
-                                                type="button"
-                                                className={styles.addButton}
-                                                onClick={() =>
-                                                    handleAddMember(user.id)
-                                                }
-                                                disabled={isLoading}
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                className={styles.addButton}
-                                                onClick={() =>
-                                                    toggleMember(user)
-                                                }
-                                                aria-label={`Ajouter ${user.firstname} ${user.lastname}`}
-                                            >
-                                                <Plus size={16} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>{" "}
+                    <MemberSelector
+                        members={members}
+                        onMemberToggle={handleMemberToggle}
+                        onSelectAll={handleSelectAll}
+                        isLoading={isLoadingUsers}
+                        searchPlaceholder="Rechercher des utilisateurs..."
+                        canManageMembers={canManageMembers}
+                        currentUserId={currentUser?.id}
+                        selectedMembersTitle={
+                            isEditing
+                                ? `Membres actuels de l'équipe (${
+                                      members.filter((m) => m.isSelected).length
+                                  })`
+                                : `Membres sélectionnés (${
+                                      members.filter((m) => m.isSelected).length
+                                  })`
+                        }
+                        availableMembersTitle={
+                            isEditing
+                                ? "Ajouter des membres"
+                                : "Utilisateurs disponibles"
+                        }
+                        showSelectedSection={true}
+                    />
                 </div>
                 <div className={styles.formActions}>
                     {isEditing && canManageMembers && (

@@ -152,7 +152,7 @@ export default function EquipesPage() {
         (team: any) => {
             // D'abord utiliser le gestionnaire d'équipes
             teamManager.handleTeamCreated(team)
-            
+
             // Puis recharger les équipes avec un délai pour éviter les conflits
             setTimeout(() => {
                 reloadTeams()
@@ -206,12 +206,11 @@ export default function EquipesPage() {
                             onChannelDeleted={
                                 channelManager.handleChannelDeleted
                             }
-                        />
-
+                        />{" "}
                         {channelManager.selectedChannel ? (
                             <ChannelView
                                 channel={channelManager.selectedChannel}
-                                userId={currentUser?.id || ""}
+                                userId={currentUser?._id || ""}
                                 onEditChannel={() =>
                                     channelManager.handleEditChannel()
                                 }

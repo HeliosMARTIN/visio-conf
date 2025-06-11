@@ -599,19 +599,17 @@ class ChannelsService {
                 if (!isMember) {
                     throw new Error("Vous n'avez pas accès à ce canal")
                 }
-            }
-
-            // Get all members with user information
+            } // Get all members with user information
             const members = await ChannelMember.find({ channelId }).populate(
                 "userId",
-                "firstname lastname picture"
+                "firstname lastname picture uuid"
             )
 
             const formattedMembers = members.map((member) => ({
                 _id: member._id,
                 id: member._id,
                 channelId: member.channelId,
-                userId: member.userId._id,
+                userId: member.userId.uuid, // Use UUID instead of ObjectId
                 firstname: member.userId.firstname,
                 lastname: member.userId.lastname,
                 picture: member.userId.picture,

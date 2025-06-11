@@ -230,6 +230,7 @@ export default function ChannelView({
     }
 
     const isChannelCreator = channel.createdBy === userId
+
     const canPostMessage = isChannelCreator // Seul le créateur peut créer des posts
 
     return (
