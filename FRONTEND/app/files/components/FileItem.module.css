@@ -11,6 +11,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding: 16px;
   width: 160px;
   height: 160px;
@@ -34,7 +35,7 @@
 }
 
 .fileItem.grid .iconContainer {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   height: 80px;
 }
 
@@ -62,8 +63,9 @@
 
 .fileItem.grid .fileDetails {
   flex-direction: column;
-  align-items: center;
   width: 100%;
+  justify-content: center;
+  flex: 1;
 }
 
 .fileItem.list .fileDetails {
@@ -90,6 +92,24 @@
   font-size: 14px;
   flex: 1;
   min-width: 0;
+}
+
+.fileNameContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.fileNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
 }
 
 .fileDate,
@@ -153,7 +173,7 @@
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  width: 160px;
+  width: 180px;
   z-index: 1050;
   overflow: hidden;
 }
@@ -185,6 +205,43 @@
   background-color: #fee2e2;
 }
 
+/* Sharing indicators */
+.teamSharedIndicator,
+.publicSharedIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.teamSharedIndicator {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.publicSharedIndicator {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.fileIndicators {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.fileOwner {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 2px;
+}
+
 @media (max-width: 640px) {
   .fileItem.grid {
     width: 120px;
@@ -201,9 +258,18 @@
     width: 60px;
     height: 60px;
   }
-
   .fileItem.list .fileDate {
     display: none;
+  }
+    /* Responsive adjustments for file indicators */
+  .fileIndicators {
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .teamSharedIndicator,
+  .publicSharedIndicator {
+    width: 16px;
+    height: 16px;
   }
 }
 

@@ -1,6 +1,7 @@
 "use client"
 import { User } from "../types/User"
 import styles from "./CurrentUser.module.css"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 
 interface CurrentUserProps {
     user: User
@@ -9,9 +10,10 @@ interface CurrentUserProps {
 export default function CurrentUser({ user }: CurrentUserProps) {
     return (
         <div className={styles.currentUser}>
+            {" "}
             <div className={styles.profilePicture}>
                 <img
-                    src={`https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}`}
+                    src={getProfilePictureUrl(user.picture)}
                     alt="Profile picture"
                     className={styles.profilePictureImg}
                 />

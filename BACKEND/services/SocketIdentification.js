@@ -15,7 +15,7 @@ class SocketIdentificationService {
         // userId -> socketId
         this.userToSocket = new Map()
 
-        this.verbose = false // Activer pour plus de logs
+        this.verbose = false // Activer pour plus de logs temporairement
     }
 
     /**
@@ -51,21 +51,45 @@ class SocketIdentificationService {
                     }
                 }
                 if (userId) {
-                    userInfo = await User.findById(userId).lean()
+                    userInfo = await User.findById(
+                        userId,
+                        "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
+                    )
+                        .populate("roles", "role_label")
+                        .lean()
                     if (userInfo) {
                         this.socketToUser.set(socketId, userInfo)
+                        console.log(
+                            `DEBUG (SocketIdentificationService): Utilisateur rechargé depuis DB pour socket ${socketId}:`,
+                            {
+                                uuid: userInfo.uuid,
+                                email: userInfo.email,
+                                _id: userInfo._id,
+                            }
+                        )
                     }
                 }
             }
-
             if (this.verbose) {
                 if (userInfo) {
                     console.log(
-                        `INFO (SocketIdentificationService): Utilisateur trouvé pour le socket ${socketId}`
+                        `INFO (SocketIdentificationService): Utilisateur trouvé pour le socket ${socketId}`,
+                        {
+                            uuid: userInfo.uuid,
+                            email: userInfo.email,
+                            _id: userInfo._id,
+                        }
                     )
                 } else {
                     console.log(
                         `INFO (SocketIdentificationService): Aucun utilisateur trouvé pour le socket ${socketId}`
+                    )
+                    console.log(
+                        `DEBUG (SocketIdentificationService): État des Maps - socketToUser.size=${this.socketToUser.size}, userToSocket.size=${this.userToSocket.size}`
+                    )
+                    console.log(
+                        `DEBUG (SocketIdentificationService): userToSocket entries:`,
+                        Array.from(this.userToSocket.entries())
                     )
                 }
             }
@@ -85,8 +109,7 @@ class SocketIdentificationService {
      * @param {string} socketId - Le nouvel identifiant de socket WebSocket
      * @param {Object} userInfo - Les informations de l'utilisateur (optionnel)
      * @returns {Object|null} - Les informations de l'utilisateur mises à jour ou null en cas d'erreur
-     */
-    async updateUserSocket(userId, socketId, userInfo = null) {
+     */ async updateUserSocket(userId, socketId, userInfo = null) {
         try {
             if (!userId || !socketId) {
                 console.error(
@@ -95,20 +118,42 @@ class SocketIdentificationService {
                 return null
             }
 
+            console.log(
+                `DEBUG (SocketIdentificationService): Mise à jour socket pour user ${userId} avec socket ${socketId}`
+            )
+
             let updatedUserInfo = userInfo
             if (!updatedUserInfo) {
                 // Cherche l'ancien socket pour ce user
                 const oldSocketId = this.userToSocket.get(userId)
-                console.log(this.userToSocket)
+                console.log(
+                    `DEBUG (SocketIdentificationService): Ancien socket pour user ${userId}:`,
+                    oldSocketId
+                )
+                console.log(
+                    "DEBUG (SocketIdentificationService): userToSocket Map:",
+                    Array.from(this.userToSocket.entries())
+                )
 
                 if (oldSocketId) {
                     updatedUserInfo = await this.getUserInfoBySocketId(
                         oldSocketId
                     )
                 }
+                // Si toujours rien, charger depuis la DB
+                if (!updatedUserInfo) {
+                    updatedUserInfo = await User.findById(userId).lean()
+                    console.log(
+                        `DEBUG (SocketIdentificationService): Chargé depuis DB pour ${userId}:`,
+                        updatedUserInfo ? "trouvé" : "non trouvé"
+                    )
+                }
                 // Si toujours rien, objet minimal
                 if (!updatedUserInfo) {
                     updatedUserInfo = { _id: userId }
+                    console.log(
+                        `DEBUG (SocketIdentificationService): Objet minimal créé pour ${userId}`
+                    )
                 }
             }
 
@@ -116,11 +161,30 @@ class SocketIdentificationService {
             if (this.userToSocket.has(userId)) {
                 const oldSocketId = this.userToSocket.get(userId)
                 this.socketToUser.delete(oldSocketId)
-            }
-
-            // Mettre à jour les associations
+                console.log(
+                    `DEBUG (SocketIdentificationService): Supprimé ancien socket ${oldSocketId} pour user ${userId}`
+                )
+            } // Mettre à jour les associations
             this.userToSocket.set(userId, socketId)
             this.socketToUser.set(socketId, updatedUserInfo)
+
+            console.log(
+                `DEBUG (SocketIdentificationService): Socket mis à jour avec succès pour l'utilisateur ${userId}. Associations: userToSocket=${this.userToSocket.size}, socketToUser=${this.socketToUser.size}`
+            )
+            console.log(
+                `DEBUG (SocketIdentificationService): UserInfo stocké:`,
+                JSON.stringify(
+                    {
+                        _id: updatedUserInfo._id,
+                        uuid: updatedUserInfo.uuid,
+                        email: updatedUserInfo.email,
+                        firstname: updatedUserInfo.firstname,
+                        lastname: updatedUserInfo.lastname,
+                    },
+                    null,
+                    2
+                )
+            )
 
             if (this.verbose) {
                 console.log(

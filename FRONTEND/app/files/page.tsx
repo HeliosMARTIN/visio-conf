@@ -1,6 +1,6 @@
-import { Folder } from "lucide-react"
+import { Folder, Users } from "lucide-react"
 import styles from "./page.module.css"
-import FileExplorerContainer from "./components/FileExplorerContainer"
+import TabbedFileExplorer from "./components/TabbedFileExplorer"
 
 export default function FilesPage() {
     return (
@@ -8,14 +8,15 @@ export default function FilesPage() {
             <div className={styles.header}>
                 <div className={styles.titleContainer}>
                     <Folder className={styles.icon} />
-                    <h1 className={styles.title}>Mes Fichiers</h1>
+                    <h1 className={styles.title}>Gestionnaire de Fichiers</h1>
                 </div>
                 <p className={styles.subtitle}>
-                    Gérez et organisez vos fichiers en toute simplicité
+                    Gérez vos fichiers personnels et les fichiers partagés par
+                    vos équipes
                 </p>
             </div>
             <div className={styles.fileExplorerContainer}>
-                <FileExplorerContainer />
+                <TabbedFileExplorer />
             </div>
         </div>
     )

@@ -2,6 +2,7 @@ export interface Team {
     id: string
     name: string
     description?: string
+    picture?: string // Nom du fichier de l'image de l'équipe
     createdBy: string
     createdAt: string
     updatedAt: string

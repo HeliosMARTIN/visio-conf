@@ -4,6 +4,7 @@ import type React from "react"
 
 import styles from "./ChannelForm.module.css"
 import { useAppContext } from "@/context/AppContext"
+import { getProfilePictureUrl } from "@/utils/fileHelpers"
 import {
     HashIcon,
     Lock,
@@ -11,11 +12,10 @@ import {
     X,
     Check,
     MessageSquare,
-    Search,
-    Plus,
-    Trash2,
+    AlertCircle,
 } from "lucide-react"
 import type { Team } from "@/types/Team"
+import MemberSelector, { type Member } from "../common/MemberSelector"
 
 interface User {
     id: string
@@ -42,13 +42,10 @@ export default function ChannelForm({
     const [isPublic, setIsPublic] = useState(true)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [teamMembers, setTeamMembers] = useState<User[]>([])
-    const [filteredMembers, setFilteredMembers] = useState<User[]>([])
-    const [selectedMembers, setSelectedMembers] = useState<User[]>([])
-    const [searchTerm, setSearchTerm] = useState("")
+    const [members, setMembers] = useState<Member[]>([])
     const [isEditing, setIsEditing] = useState(false)
     const [isLoadingMembers, setIsLoadingMembers] = useState(false)
-    const [channelMembers, setChannelMembers] = useState<any[]>([])
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const nomDInstance = "ChannelForm"
     const verbose = false
@@ -56,45 +53,46 @@ export default function ChannelForm({
     const listeMessageEmis = [
         "channel_create_request",
         "channel_update_request",
+        "channel_delete_request",
         "team_members_request",
         "channel_members_request",
     ]
     const listeMessageRecus = [
         "channel_create_response",
         "channel_update_response",
+        "channel_delete_response",
         "team_members_response",
         "channel_members_response",
     ]
 
     useEffect(() => {
+        // Charger tous les membres de l'équipe
+        loadTeamMembers()
+
         if (channelToEdit) {
             setName(channelToEdit.name)
             setIsPublic(channelToEdit.isPublic)
             setIsEditing(true)
 
-            // Récupérer les membres du canal existant
+            // Récupérer les membres du canal existant si c'est un canal privé
             if (!channelToEdit.isPublic) {
                 loadChannelMembers(channelToEdit.id)
             }
+        } else {
+            // Réinitialiser les valeurs si on crée un nouveau canal
+            setName("")
+            setIsPublic(true)
+            setIsEditing(false)
         }
 
-        // Charger tous les membres de l'équipe
-        loadTeamMembers()
-    }, [channelToEdit, team.id])
-
-    useEffect(() => {
-        // Filtrer les membres en fonction du terme de recherche
-        if (teamMembers.length > 0) {
-            const filtered = teamMembers.filter(
-                (user) =>
-                    `${user.firstname} ${user.lastname}`
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()) &&
-                    user.id !== currentUser?.id
+        return () => {
+            controleur?.desincription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
             )
-            setFilteredMembers(filtered)
         }
-    }, [searchTerm, teamMembers, currentUser])
+    }, [channelToEdit?.id, team.id]) // Dépendances spécifiques pour éviter la récursion
 
     const handler = {
         nomDInstance,
@@ -109,6 +107,7 @@ export default function ChannelForm({
                 setIsLoading(false)
 
                 if (msg.channel_create_response.etat) {
+                    // Passer le canal créé et fermer le formulaire
                     onChannelCreated(msg.channel_create_response.channel)
                 } else {
                     setError(
@@ -122,6 +121,7 @@ export default function ChannelForm({
                 setIsLoading(false)
 
                 if (msg.channel_update_response.etat) {
+                    // Passer le canal mis à jour et fermer le formulaire
                     onChannelCreated(msg.channel_update_response.channel)
                 } else {
                     setError(
@@ -131,13 +131,31 @@ export default function ChannelForm({
                 }
             }
 
+            if (msg.channel_delete_response) {
+                setIsDeleting(false)
+
+                if (msg.channel_delete_response.etat) {
+                    // Passer le canal supprimé et fermer le formulaire
+                    onChannelCreated({
+                        ...channelToEdit,
+                        deleted: true,
+                        id: channelToEdit.id,
+                    })
+                } else {
+                    setError(
+                        msg.channel_delete_response.error ||
+                            "Erreur lors de la suppression du canal"
+                    )
+                }
+            }
             if (msg.team_members_response) {
                 setIsLoadingMembers(false)
 
                 if (msg.team_members_response.etat) {
-                    const members = msg.team_members_response.members || []
-                    // Filtrer pour exclure l'utilisateur courant de la liste
-                    const otherUsers = members
+                    const teamMembersData =
+                        msg.team_members_response.members || []
+                    // Convertir en format Member avec isSelected = false par défaut
+                    const membersConverted: Member[] = teamMembersData
                         .filter(
                             (member: any) => member.userId !== currentUser?.id
                         )
@@ -146,33 +164,27 @@ export default function ChannelForm({
                             firstname: member.firstname,
                             lastname: member.lastname,
                             picture: member.picture,
+                            isSelected: false,
                         }))
-
-                    setTeamMembers(otherUsers)
-                    setFilteredMembers(otherUsers)
+                    setMembers(membersConverted)
                 }
             }
 
             if (msg.channel_members_response) {
                 if (msg.channel_members_response.etat) {
-                    const members = msg.channel_members_response.members || []
-                    setChannelMembers(members)
+                    const channelMembersData =
+                        msg.channel_members_response.members || []
 
-                    // Récupérer les utilisateurs qui sont membres
-                    const memberUsers = members
-                        .filter(
-                            (member: any) => member.userId !== currentUser?.id
-                        )
-                        .map((member: any) => {
-                            return {
-                                id: member.userId,
-                                firstname: member.firstname,
-                                lastname: member.lastname,
-                                picture: member.picture,
-                            }
-                        })
-
-                    setSelectedMembers(memberUsers)
+                    // Mettre à jour les membres en marquant ceux du canal comme sélectionnés
+                    setMembers((prevMembers) =>
+                        prevMembers.map((member) => ({
+                            ...member,
+                            isSelected: channelMembersData.some(
+                                (channelMember: any) =>
+                                    channelMember.userId === member.id
+                            ),
+                        }))
+                    )
                 }
             }
         },
@@ -209,7 +221,11 @@ export default function ChannelForm({
             return
         }
 
-        if (!isPublic && selectedMembers.length === 0) {
+        const selectedMemberIds = members
+            .filter((member) => member.isSelected)
+            .map((member) => member.id)
+
+        if (!isPublic && selectedMemberIds.length === 0) {
             setError(
                 "Vous devez sélectionner au moins un membre pour un canal privé"
             )
@@ -229,9 +245,7 @@ export default function ChannelForm({
                     name,
                     isPublic,
                     teamId: team.id,
-                    members: !isPublic
-                        ? selectedMembers.map((member) => member.id)
-                        : [],
+                    members: !isPublic ? selectedMemberIds : [],
                 },
             }
             controleur?.envoie(handler, updateRequest)
@@ -242,13 +256,25 @@ export default function ChannelForm({
                     name,
                     isPublic,
                     teamId: team.id,
-                    members: !isPublic
-                        ? selectedMembers.map((member) => member.id)
-                        : [],
+                    members: !isPublic ? selectedMemberIds : [],
                 },
             }
             controleur?.envoie(handler, createRequest)
         }
+    }
+
+    const handleDeleteChannel = () => {
+        if (!controleur || !canal || !channelToEdit) return
+
+        setIsDeleting(true)
+        setError("")
+
+        const request = {
+            channel_delete_request: {
+                channelId: channelToEdit.id,
+            },
+        }
+        controleur.envoie(handler, request)
     }
 
     const handleCancel = () => {
@@ -256,20 +282,23 @@ export default function ChannelForm({
         onCancel()
     }
 
-    const toggleMember = (user: User) => {
-        const isMemberSelected = selectedMembers.some(
-            (member) => member.id === user.id
-        )
-
-        if (isMemberSelected) {
-            // Retirer le membre
-            setSelectedMembers(
-                selectedMembers.filter((member) => member.id !== user.id)
+    const handleMemberToggle = (member: Member) => {
+        setMembers((prevMembers) =>
+            prevMembers.map((m) =>
+                m.id === member.id ? { ...m, isSelected: !m.isSelected } : m
             )
-        } else {
-            // Ajouter le membre
-            setSelectedMembers([...selectedMembers, user])
-        }
+        )
+    }
+
+    const handleSelectAll = () => {
+        const hasUnselected = members.some((member) => !member.isSelected)
+
+        setMembers((prevMembers) =>
+            prevMembers.map((member) => ({
+                ...member,
+                isSelected: hasUnselected,
+            }))
+        )
     }
 
     return (
@@ -295,6 +324,13 @@ export default function ChannelForm({
                 </button>
             </div>
 
+            {error && (
+                <div className={styles.error}>
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label htmlFor="channel-name" className={styles.label}>
@@ -313,7 +349,6 @@ export default function ChannelForm({
                         />
                     </div>
                 </div>
-
                 <div className={styles.formGroup}>
                     <label className={styles.label}>Visibilité</label>
                     <div className={styles.visibilityOptions}>
@@ -364,181 +399,34 @@ export default function ChannelForm({
                             )}
                         </button>
                     </div>
-                </div>
-
+                </div>{" "}
                 {!isPublic && (
                     <div className={styles.formGroup}>
                         <label className={styles.label}>Membres</label>
-                        <div className={styles.membersSelection}>
-                            <div className={styles.searchContainer}>
-                                <Search
-                                    size={16}
-                                    className={styles.searchIcon}
-                                />
-                                <input
-                                    type="text"
-                                    className={styles.searchInput}
-                                    placeholder="Rechercher des membres..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                />
-                            </div>
-
-                            {selectedMembers.length > 0 && (
-                                <div className={styles.selectedMembers}>
-                                    <h4 className={styles.selectedMembersTitle}>
-                                        Membres sélectionnés (
-                                        {selectedMembers.length})
-                                    </h4>
-                                    <div className={styles.membersList}>
-                                        {selectedMembers.map((member) => (
-                                            <div
-                                                key={member.id}
-                                                className={styles.memberItem}
-                                            >
-                                                <div
-                                                    className={
-                                                        styles.memberAvatar
-                                                    }
-                                                >
-                                                    {member.picture ? (
-                                                        <img
-                                                            src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${member.picture}` ||
-                                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                            }
-                                                            alt={`${member.firstname} ${member.lastname}`}
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            {member.firstname?.charAt(
-                                                                0
-                                                            ) || "?"}
-                                                            {member.lastname?.charAt(
-                                                                0
-                                                            ) || "?"}
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className={
-                                                        styles.memberInfo
-                                                    }
-                                                >
-                                                    <span
-                                                        className={
-                                                            styles.memberName
-                                                        }
-                                                    >
-                                                        {member.firstname}{" "}
-                                                        {member.lastname}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    className={
-                                                        styles.removeButton
-                                                    }
-                                                    onClick={() =>
-                                                        toggleMember(member)
-                                                    }
-                                                    aria-label={`Retirer ${member.firstname} ${member.lastname}`}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className={styles.usersList}>
-                                <h4 className={styles.usersListTitle}>
-                                    Ajouter des membres
-                                </h4>
-                                {isLoadingMembers ? (
-                                    <div className={styles.loadingUsers}>
-                                        Chargement des membres...
-                                    </div>
-                                ) : filteredMembers.length === 0 ? (
-                                    <div className={styles.noResults}>
-                                        Aucun membre trouvé
-                                    </div>
-                                ) : (
-                                    filteredMembers
-                                        .filter(
-                                            (user) =>
-                                                !selectedMembers.some(
-                                                    (member) =>
-                                                        member.id === user.id
-                                                )
-                                        )
-                                        .map((user) => (
-                                            <div
-                                                key={user.id}
-                                                className={styles.userItem}
-                                            >
-                                                <div
-                                                    className={
-                                                        styles.memberAvatar
-                                                    }
-                                                >
-                                                    {user.picture ? (
-                                                        <img
-                                                            src={
-                                                                `https://visioconfbucket.s3.eu-north-1.amazonaws.com/${user.picture}` ||
-                                                                "https://visioconfbucket.s3.eu-north-1.amazonaws.com/default_profile_picture.png"
-                                                            }
-                                                            alt={`${user.firstname} ${user.lastname}`}
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            {user.firstname?.charAt(
-                                                                0
-                                                            ) || "?"}
-                                                            {user.lastname?.charAt(
-                                                                0
-                                                            ) || "?"}
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className={
-                                                        styles.memberInfo
-                                                    }
-                                                >
-                                                    <span
-                                                        className={
-                                                            styles.memberName
-                                                        }
-                                                    >
-                                                        {user.firstname}{" "}
-                                                        {user.lastname}
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    className={styles.addButton}
-                                                    onClick={() =>
-                                                        toggleMember(user)
-                                                    }
-                                                    aria-label={`Ajouter ${user.firstname} ${user.lastname}`}
-                                                >
-                                                    <Plus size={16} />
-                                                </button>
-                                            </div>
-                                        ))
-                                )}
-                            </div>
-                        </div>
+                        <MemberSelector
+                            members={members}
+                            onMemberToggle={handleMemberToggle}
+                            onSelectAll={handleSelectAll}
+                            isLoading={isLoadingMembers}
+                            searchPlaceholder="Rechercher des membres..."
+                            currentUserId={currentUser?.id}
+                            selectedMembersTitle={`Membres sélectionnés (${
+                                members.filter((m) => m.isSelected).length
+                            })`}
+                            availableMembersTitle="Ajouter des membres"
+                        />
                     </div>
                 )}
-
-                {error && <div className={styles.error}>{error}</div>}
-
                 <div className={styles.formActions}>
+                    {isEditing && (
+                        <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteChannel()}
+                        >
+                            Supprimer le canal
+                        </button>
+                    )}
                     <button
                         type="button"
                         className={styles.cancelButton}
