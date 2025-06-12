@@ -2,6 +2,9 @@ import mongoose from "mongoose"
 import { v4 as uuidv4 } from "uuid"
 import { sha256 } from "js-sha256"
 import dotenv from "dotenv"
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from "url"
 import User from "./models/user.js"
 import Role from "./models/role.js"
 import Permission from "./models/permission.js"
@@ -16,8 +19,59 @@ import ChannelMember from "./models/channelMember.js"
 
 dotenv.config()
 
+// Configuration des chemins pour ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+
+// Fonction utilitaire pour copier les fichiers seed
+const copySeedFile = async (seedFileName, targetPath) => {
+    try {
+        const seedFilePath = path.join(
+            __dirname,
+            "uploads",
+            "seed-files",
+            seedFileName
+        )
+        const targetDir = path.dirname(targetPath)
+
+        // Créer le dossier de destination s'il n'existe pas
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true })
+        }
+
+        // Copier le fichier
+        if (fs.existsSync(seedFilePath)) {
+            fs.copyFileSync(seedFilePath, targetPath)
+            console.log(`✓ Fichier copié: ${seedFileName} -> ${targetPath}`)
+            return true
+        } else {
+            console.warn(`⚠️  Fichier seed non trouvé: ${seedFilePath}`)
+            return false
+        }
+    } catch (error) {
+        console.error(`❌ Erreur lors de la copie de ${seedFileName}:`, error)
+        return false
+    }
+}
+
+// Fonction pour obtenir la taille d'un fichier
+const getFileSize = (filePath) => {
+    try {
+        if (fs.existsSync(filePath)) {
+            const stats = fs.statSync(filePath)
+            return stats.size
+        }
+    } catch (error) {
+        console.error(
+            `Erreur lors de la lecture de la taille du fichier ${filePath}:`,
+            error
+        )
+    }
+    return 0
+}
 
 // Utilisateurs de test
 const usersToInsert = [
@@ -872,64 +926,119 @@ const initializeFiles = async (users) => {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 })
-                await coursFolder.save()
-
-                // Fichiers dans Cours
+                await coursFolder.save() // Fichiers dans Cours
                 const coursFiles = [
                     {
                         id: uuidv4(),
-                        name: "cours_web.pdf",
+                        name: "cours_web.txt",
                         type: "file",
-                        size: 1024 * 1024 * 2, // 2 MB
-                        mimeType: "application/pdf",
-                        extension: "pdf",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "text/plain",
+                        extension: "txt",
                         ownerId: user.uuid,
                         parentId: coursFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/cours_web.pdf`,
+                        path: `files/${user.uuid}/${uuidv4()}/cours_web.txt`,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     },
                     {
                         id: uuidv4(),
-                        name: "notes_cours.docx",
+                        name: "notes_cours.txt",
                         type: "file",
-                        size: 1024 * 512, // 512 KB
-                        mimeType:
-                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        extension: "docx",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "text/plain",
+                        extension: "txt",
                         ownerId: user.uuid,
                         parentId: coursFolder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/notes_cours.docx`,
+                        path: `files/${user.uuid}/${uuidv4()}/notes_cours.txt`,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     },
                 ]
 
                 for (const file of coursFiles) {
+                    // Construire le chemin complet du fichier
+                    const fullPath = path.join(__dirname, "uploads", file.path)
+
+                    // Copier le fichier seed correspondant
+                    const seedFileName = file.name
+                    const copySuccess = await copySeedFile(
+                        seedFileName,
+                        fullPath
+                    )
+
+                    if (copySuccess) {
+                        // Mettre à jour la taille du fichier avec la vraie taille
+                        file.size = getFileSize(fullPath)
+                    }
+
                     const newFile = new File(file)
                     await newFile.save()
-                }
-
-                // Fichiers dans Documents
+                } // Fichiers dans Documents
                 const docFiles = [
                     {
                         id: uuidv4(),
-                        name: "rapport_annuel.pdf",
+                        name: "rapport_annuel.txt",
                         type: "file",
-                        size: 1024 * 1024 * 3, // 3 MB
-                        mimeType: "application/pdf",
-                        extension: "pdf",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "text/plain",
+                        extension: "txt",
                         ownerId: user.uuid,
                         parentId: folder.id,
                         path: `files/${
                             user.uuid
-                        }/${uuidv4()}/rapport_annuel.pdf`,
+                        }/${uuidv4()}/rapport_annuel.txt`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "documentation_technique.txt",
+                        type: "file",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "text/plain",
+                        extension: "txt",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${
+                            user.uuid
+                        }/${uuidv4()}/documentation_technique.txt`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "guide_utilisateur.txt",
+                        type: "file",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "text/plain",
+                        extension: "txt",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${
+                            user.uuid
+                        }/${uuidv4()}/guide_utilisateur.txt`,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     },
                 ]
 
                 for (const file of docFiles) {
+                    // Construire le chemin complet du fichier
+                    const fullPath = path.join(__dirname, "uploads", file.path)
+
+                    // Copier le fichier seed correspondant
+                    const seedFileName = file.name
+                    const copySuccess = await copySeedFile(
+                        seedFileName,
+                        fullPath
+                    )
+
+                    if (copySuccess) {
+                        // Mettre à jour la taille du fichier avec la vraie taille
+                        file.size = getFileSize(fullPath)
+                    }
+
                     const newFile = new File(file)
                     await newFile.save()
                 }
@@ -938,35 +1047,50 @@ const initializeFiles = async (users) => {
                 const imageFiles = [
                     {
                         id: uuidv4(),
-                        name: "photo_profil.jpg",
+                        name: "default_profile_picture.png",
                         type: "file",
-                        size: 1024 * 256, // 256 KB
-                        mimeType: "image/jpeg",
-                        extension: "jpg",
-                        ownerId: user.uuid,
-                        parentId: folder.id,
-                        path: `files/${user.uuid}/${uuidv4()}/photo_profil.jpg`,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    },
-                    {
-                        id: uuidv4(),
-                        name: "logo_universite.png",
-                        type: "file",
-                        size: 1024 * 128, // 128 KB
+                        size: 0, // Sera calculé dynamiquement
                         mimeType: "image/png",
                         extension: "png",
                         ownerId: user.uuid,
                         parentId: folder.id,
                         path: `files/${
                             user.uuid
-                        }/${uuidv4()}/logo_universite.png`,
+                        }/${uuidv4()}/default_profile_picture.png`,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    },
+                    {
+                        id: uuidv4(),
+                        name: "Logo_Univ.png",
+                        type: "file",
+                        size: 0, // Sera calculé dynamiquement
+                        mimeType: "image/png",
+                        extension: "png",
+                        ownerId: user.uuid,
+                        parentId: folder.id,
+                        path: `files/${user.uuid}/${uuidv4()}/Logo_Univ.png`,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     },
                 ]
 
                 for (const file of imageFiles) {
+                    // Construire le chemin complet du fichier
+                    const fullPath = path.join(__dirname, "uploads", file.path)
+
+                    // Copier le fichier seed correspondant
+                    const seedFileName = file.name
+                    const copySuccess = await copySeedFile(
+                        seedFileName,
+                        fullPath
+                    )
+
+                    if (copySuccess) {
+                        // Mettre à jour la taille du fichier avec la vraie taille
+                        file.size = getFileSize(fullPath)
+                    }
+
                     const newFile = new File(file)
                     await newFile.save()
                 }
@@ -981,15 +1105,13 @@ const initializeFiles = async (users) => {
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 })
-                await projetWebFolder.save()
-
-                // Fichiers dans Projet Web
+                await projetWebFolder.save() // Fichiers dans Projet Web
                 const projetWebFiles = [
                     {
                         id: uuidv4(),
                         name: "index.html",
                         type: "file",
-                        size: 1024 * 10, // 10 KB
+                        size: 0, // Sera calculé dynamiquement
                         mimeType: "text/html",
                         extension: "html",
                         ownerId: user.uuid,
@@ -1002,7 +1124,7 @@ const initializeFiles = async (users) => {
                         id: uuidv4(),
                         name: "style.css",
                         type: "file",
-                        size: 1024 * 5, // 5 KB
+                        size: 0, // Sera calculé dynamiquement
                         mimeType: "text/css",
                         extension: "css",
                         ownerId: user.uuid,
@@ -1015,7 +1137,7 @@ const initializeFiles = async (users) => {
                         id: uuidv4(),
                         name: "script.js",
                         type: "file",
-                        size: 1024 * 8, // 8 KB
+                        size: 0, // Sera calculé dynamiquement
                         mimeType: "application/javascript",
                         extension: "js",
                         ownerId: user.uuid,
@@ -1027,6 +1149,20 @@ const initializeFiles = async (users) => {
                 ]
 
                 for (const file of projetWebFiles) {
+                    // Construire le chemin complet du fichier
+                    const fullPath = path.join(__dirname, "uploads", file.path)
+
+                    // Copier le fichier seed correspondant
+                    const seedFileName = file.name
+                    const copySuccess = await copySeedFile(
+                        seedFileName,
+                        fullPath
+                    )
+
+                    if (copySuccess) {
+                        // Mettre à jour la taille du fichier avec la vraie taille
+                        file.size = getFileSize(fullPath)
+                    }
                     const newFile = new File(file)
                     await newFile.save()
                 }

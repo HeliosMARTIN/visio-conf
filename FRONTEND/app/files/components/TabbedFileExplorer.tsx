@@ -205,6 +205,19 @@ export default function TabbedFileExplorer() {
         }
     }
 
+    const navigateToPath = (index: number) => {
+        if (index === -1) {
+            // Navigate to root
+            setCurrentPath([{ name: "Mes fichiers" }])
+            fetchFiles()
+        } else {
+            // Navigate to specific path index
+            const newPath = currentPath.slice(0, index + 1)
+            setCurrentPath(newPath)
+            fetchFiles(newPath[newPath.length - 1]?.id)
+        }
+    }
+
     const createFolder = (name: string) => {
         if (!controleur) return
 
@@ -378,7 +391,9 @@ export default function TabbedFileExplorer() {
                 navigateToFolder(folderId, folder.name)
             }
         } else {
-            navigateBack()
+            // Navigate to root
+            setCurrentPath([{ name: "Mes fichiers" }])
+            fetchFiles()
         }
         // Refresh files after navigation
         setTimeout(() => fetchFiles(folderId), 100)
@@ -437,11 +452,7 @@ export default function TabbedFileExplorer() {
                 {activeTab === "personal" ? (
                     <FileExplorer
                         files={files}
-                        currentPath={
-                            currentPath
-                                .map((p) => p.id)
-                                .filter(Boolean) as string[]
-                        }
+                        currentPath={currentPath}
                         isLoading={isLoading}
                         onFetchFiles={fetchFiles}
                         onCreateFolder={createFolder}
@@ -450,6 +461,7 @@ export default function TabbedFileExplorer() {
                         onRenameFile={renameFile}
                         onMoveFile={moveFile}
                         onNavigate={handleNavigate}
+                        onNavigateToPath={navigateToPath}
                         userTeams={userTeams}
                         onShareToTeam={shareToTeam}
                         showUploadActions={true}

@@ -45,7 +45,6 @@ export const AppContextProvider = ({
     const verbose = false
     const listeMessageEmis = ["user_info_request"]
     const listeMessageRecus = ["user_info_response"]
-    
     const handler = {
         nomDInstance,
         traitementMessage: (msg: {
@@ -66,6 +65,20 @@ export const AppContextProvider = ({
                         "Failed to fetch user info: ",
                         msg.user_info_response.error
                     )
+
+                    // Si l'erreur indique que l'authentification est requise, logout automatique
+                    if (
+                        msg.user_info_response.error ===
+                        "AUTHENTICATION_REQUIRED"
+                    ) {
+                        console.log("Authentication required, logging out...")
+                        // Nettoyer les données
+                        Cookies.remove("token")
+                        localStorage.removeItem("auth_token")
+                        setCurrentUser(null)
+                        // Rediriger vers login
+                        router.push("/login")
+                    }
                 } else {
                     setCurrentUser(msg.user_info_response.userInfo || null)
                 }
@@ -104,7 +117,8 @@ export const AppContextProvider = ({
     // Récupération des infos utilisateur
     useEffect(() => {
         if (!currentUser) {
-            const token = Cookies.get("token") || localStorage.getItem("auth_token")
+            const token =
+                Cookies.get("token") || localStorage.getItem("auth_token")
 
             if (token) {
                 const decoded = jwt.decode(token) as any
@@ -112,16 +126,22 @@ export const AppContextProvider = ({
 
                 // Fonction simple pour attendre la connexion et envoyer la requête
                 const sendUserInfoRequest = () => {
-                    if (canalRef.current?.socket?.connected && controleurRef.current) {
+                    if (
+                        canalRef.current?.socket?.connected &&
+                        controleurRef.current
+                    ) {
                         try {
                             controleurRef.current.envoie(handler, {
                                 user_info_request: { userId },
                             })
-                            
+
                             // Authentifier le socket
                             canalRef.current.socket.emit("authenticate", token)
                         } catch (error) {
-                            console.error("Erreur lors de l'envoi de user_info_request:", error)
+                            console.error(
+                                "Erreur lors de l'envoi de user_info_request:",
+                                error
+                            )
                         }
                     } else {
                         // Réessayer dans 200ms
@@ -133,16 +153,30 @@ export const AppContextProvider = ({
                 sendUserInfoRequest()
             }
         }
-    }, [currentUser, pathname])
-
-    // Connexion socket pour login/signup
+    }, [currentUser, pathname]) // Connexion socket pour login/signup
     useEffect(() => {
         if (pathname === "/login" || pathname === "/signup") {
-            if (canalRef.current?.socket && !canalRef.current.socket.connected) {
+            if (
+                canalRef.current?.socket &&
+                !canalRef.current.socket.connected
+            ) {
                 canalRef.current.socket.connect()
             }
         }
     }, [pathname])
+
+    // Authentification du socket quand l'utilisateur est connecté
+    useEffect(() => {
+        if (currentUser && canalRef.current?.socket?.connected) {
+            const token =
+                Cookies.get("token") || localStorage.getItem("auth_token")
+            if (token) {
+                // S'assurer que le socket est authentifié
+                canalRef.current.socket.emit("authenticate", token)
+                console.log("Socket authentifié pour utilisateur connecté")
+            }
+        }
+    }, [currentUser, canalRef.current?.socket?.connected])
 
     const logout = () => {
         // Déconnecter le socket
