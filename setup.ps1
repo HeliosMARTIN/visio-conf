@@ -37,11 +37,24 @@ if ($choice -eq "1") {
     if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
         Write-Color "X Docker Compose manquant." Red
         Read-Host "`nAppuyez sur Entree pour quitter"
-        exit 1
-    }docker-compose down
-    docker-compose up -d --build    if ($LASTEXITCODE -eq 0) {
-        Start-Sleep -Seconds 10
-        docker exec backend node initDb.js        Write-Color "`n** Application lancee avec succes !" Green
+        exit 1    }
+
+    # Arreter les conteneurs existants
+    Write-Color ">> Arret des conteneurs existants..." Yellow
+    docker-compose down
+
+    # Construire et demarrer les conteneurs
+    Write-Color ">> Construction et demarrage des conteneurs..." Yellow
+    docker-compose up -d --build
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Color ">> Attente du demarrage des services..." Yellow
+        Start-Sleep -Seconds 15
+        
+        Write-Color ">> Initialisation de la base de donnees..." Yellow
+        docker exec backend node initDb.js
+        
+        Write-Color "`n** Application lancee avec succes !" Green
         Write-Color "** Frontend: http://localhost:3000" Cyan
         Write-Color "**  Backend: http://localhost:3220" Cyan
         Write-Color "** Connexion suggeree: john.doe@example.com | mdp" Yellow
@@ -91,18 +104,23 @@ else {
         Write-Color "" White
         Write-Color "Alternative : Utilisez Docker (option 1) pour eviter cette configuration." Cyan
         Read-Host "`nAppuyez sur Entree pour quitter"
-        exit 1
-    }# Backend
+        exit 1    }
+
+    # Backend - Installation des dependances
+    Write-Color ">> Installation des dependances du backend..." Yellow
     Set-Location BACKEND
     if (!(Test-Path ".env") -and (Test-Path ".env.example")) {
         Copy-Item ".env.example" ".env"
+        Write-Color "V Fichier .env cree depuis .env.example" Green
     }
     npm install
 
-    # Frontend
+    # Frontend - Installation des dependances
+    Write-Color ">> Installation des dependances du frontend..." Yellow
     Set-Location ../FRONTEND
     if (!(Test-Path ".env.local") -and (Test-Path ".env.example")) {
         Copy-Item ".env.example" ".env.local"
+        Write-Color "V Fichier .env.local cree depuis .env.example" Green
     }
     npm install
 
@@ -110,10 +128,25 @@ else {
     Set-Location ..
 
     # Lancer les services
+    Write-Color ">> Lancement des services..." Yellow
     $scriptDir = Get-Location
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; cd BACKEND; npm start"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; Start-Sleep 5; cd FRONTEND; npm run dev"
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; Start-Sleep 10; cd BACKEND; node initDb.js"    Write-Color "`n** Application en cours de lancement..." Green
+    
+    # Demarrer le backend
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir\BACKEND'; Write-Host 'Demarrage du backend...' -ForegroundColor Green; npm start"
+    
+    # Attendre que le backend soit pret
+    Start-Sleep -Seconds 8
+    
+    # Initialiser la base de donnees
+    Write-Color ">> Initialisation de la base de donnees..." Yellow
+    Set-Location BACKEND
+    node initDb.js
+    Set-Location ..
+    
+    # Demarrer le frontend
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir\FRONTEND'; Write-Host 'Demarrage du frontend...' -ForegroundColor Green; npm run dev"
+    
+    Write-Color "`n** Application en cours de lancement..." Green
     Write-Color "** Frontend: http://localhost:3000" Cyan
     Write-Color "**  Backend: http://localhost:3220" Cyan
     Write-Color "** Connexion suggeree: john.doe@example.com | mdp" Yellow
