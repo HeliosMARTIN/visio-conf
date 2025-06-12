@@ -306,7 +306,6 @@ VERBOSE=true
 
 -   🔁 [Messages Socket.io](MESSAGES_DOCUMENTATION.md)
 -   ⚙️ [Configuration environnement](ENV_SETUP.md)
--   📋 [Spécifications projet](SPECIFICATION.md)
 
 ### 📸 Liens utiles
 
