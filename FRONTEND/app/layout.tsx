@@ -1,13 +1,5 @@
-"use client"
-
+import ClientProviders from "@/components/ClientProviders"
 import "../styles/scrollbar.css"
-import { Providers } from "@/providers"
-import { AppContextProvider } from "@/context/AppContext"
-import { NotificationProvider } from "@/context/NotificationContext"
-import { Provider } from "react-redux"
-import { store } from "@/store/store"
-import LayoutClient from "@/components/layoutClient"
-import { GlobalStyles } from "@/components/GlobalStyles"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -28,16 +20,7 @@ export default function RootLayout({
     return (
         <html lang="fr" suppressHydrationWarning>
             <body>
-                <GlobalStyles />
-                <Provider store={store}>
-                    <Providers>
-                        <AppContextProvider>
-                            <NotificationProvider>
-                                <LayoutClient>{children}</LayoutClient>
-                            </NotificationProvider>
-                        </AppContextProvider>
-                    </Providers>
-                </Provider>
+                <ClientProviders>{children}</ClientProviders>
             </body>
         </html>
     )
