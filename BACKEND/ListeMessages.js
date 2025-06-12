@@ -10,7 +10,6 @@ export const ListeMessagesEmis = [
     "messages_get_request", // { userEmail: string | undefined, otherUserEmail: string }
     "message_send_request", // { userEmail: string, otherUserEmail: string, text: string }
     "upload_request", // { media: string }
-    "update_user_request", // { any field of User }
     "update_user_status_request", // {user_id : ObjectId, action : string}
     "update_user_roles_request", // {user_id : ObjectId, roles : Role._id[]}
     "upload_request", // { media: string }
