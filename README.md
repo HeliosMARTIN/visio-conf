@@ -17,7 +17,33 @@ Application web de visioconférence inspirée de Discord/Teams, développée dan
 
 ## 🚀 Démarrage rapide
 
-### Option 1 : Avec Docker (Recommandé)
+### Option 1 : Script automatique (Recommandé) 🔧
+
+Le script intelligent détecte votre environnement et vous guide dans l'installation :
+
+**Windows PowerShell :**
+
+```powershell
+.\setup.ps1
+```
+
+**Linux/macOS :**
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+**Fonctionnalités du script :**
+
+-   🎯 **Choix interactif** : Docker ou installation locale
+-   🔍 **Détection automatique** des prérequis (Docker, Node.js, MongoDB)
+-   ⚙️ **Installation automatique** de toutes les dépendances
+-   🚀 **Lancement automatique** de l'application
+-   📊 **Initialisation de la base de données** avec des données de test
+-   🛠️ **Gestion d'erreurs** et solutions proposées
+
+### Option 2 : Docker manuel
 
 1. **Prérequis** : Docker et Docker Compose installés
 
@@ -40,7 +66,7 @@ docker-compose up -d
 docker exec -it backend node initDb.js
 ```
 
-### Option 2 : Installation manuelle
+### Option 3 : Installation manuelle
 
 #### Prérequis
 
