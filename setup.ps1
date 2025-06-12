@@ -1,244 +1,122 @@
-# Script de démarrage interactif pour MMI-VisioConf (Windows PowerShell)
-# Ce script propose un choix entre Docker et installation locale
+# Configuration UTF-8 complete pour l'affichage correct des caracteres
+# Forcer la page de code UTF-8 dans la console
+chcp 65001 > $null
 
-Write-Host "🎥 Installation et démarrage de MMI-VisioConf" -ForegroundColor Cyan
-Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Choisissez votre méthode d'installation :" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "1️⃣  Docker (Recommandé - Plus simple)" -ForegroundColor Green
-Write-Host "    ✅ Installation automatique de toutes les dépendances"
-Write-Host "    ✅ MongoDB inclus et configuré"
-Write-Host "    ✅ Environnement isolé et reproductible"
-Write-Host ""
-Write-Host "2️⃣  Installation locale" -ForegroundColor Blue
-Write-Host "    🔧 Nécessite Node.js et MongoDB installés"
-Write-Host "    🔧 Configuration manuelle requise"
-Write-Host "    🔧 Plus de contrôle sur l'environnement"
-Write-Host ""
+# Configuration de l'encodage pour PowerShell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
-do {
-    $choice = Read-Host "Votre choix (1 ou 2)"
-} while ($choice -notmatch "^[12]$")
+# Variables globales pour l'encodage
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+$env:PYTHONIOENCODING = "utf-8"
 
-Write-Host ""
-
-if ($choice -eq "1") {
-    Write-Host "🐳 Installation avec Docker" -ForegroundColor Cyan
-    Write-Host "============================" -ForegroundColor Cyan
-    
-    # Vérifier si Docker est installé
-    try {
-        $dockerVersion = docker --version
-        Write-Host "✅ Docker détecté: $dockerVersion" -ForegroundColor Green
-    } catch {
-        Write-Host "❌ Docker n'est pas installé ou n'est pas démarré" -ForegroundColor Red
-        Write-Host "💡 Installez Docker Desktop depuis https://www.docker.com/products/docker-desktop/" -ForegroundColor Yellow
-        Write-Host "   Puis redémarrez ce script." -ForegroundColor Yellow
-        Read-Host "Appuyez sur Entrée pour continuer..."
-        exit 1
-    }
-    
-    # Vérifier si Docker Compose est disponible
-    try {
-        $composeVersion = docker-compose --version
-        Write-Host "✅ Docker Compose détecté: $composeVersion" -ForegroundColor Green
-    } catch {
-        Write-Host "❌ Docker Compose n'est pas disponible" -ForegroundColor Red
-        exit 1
-    }
-    
-    Write-Host ""
-    Write-Host "🚀 Lancement de l'application avec Docker..." -ForegroundColor Yellow
-    
-    # Arrêter les conteneurs existants (si ils existent)
-    Write-Host "🛑 Arrêt des conteneurs existants..." -ForegroundColor Gray
-    docker-compose down 2>$null
-    
-    # Construire et lancer les conteneurs
-    Write-Host "🔨 Construction et démarrage des conteneurs..." -ForegroundColor Yellow
-    docker-compose up -d --build
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host ""
-        Write-Host "⏳ Attente du démarrage des services..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 10
-        
-        Write-Host "📊 Initialisation de la base de données..." -ForegroundColor Yellow
-        docker exec -it backend node initDb.js
-        
-        Write-Host ""
-        Write-Host "🎉 Installation terminée avec succès !" -ForegroundColor Green
-        Write-Host "=======================================" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "🌐 Votre application est accessible sur :" -ForegroundColor White
-        Write-Host "   Frontend: http://localhost:3000" -ForegroundColor Cyan
-        Write-Host "   Backend API: http://localhost:3220" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "👤 Compte administrateur :" -ForegroundColor White
-        Write-Host "   Email: admin@example.com" -ForegroundColor Yellow
-        Write-Host "   Mot de passe: admin123" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "📋 Commandes utiles :" -ForegroundColor White
-        Write-Host "   Arrêter: docker-compose down" -ForegroundColor Gray
-        Write-Host "   Logs: docker-compose logs -f" -ForegroundColor Gray
-        Write-Host "   Redémarrer: docker-compose restart" -ForegroundColor Gray
-        
-    } else {
-        Write-Host "❌ Erreur lors du démarrage de Docker" -ForegroundColor Red
-        Write-Host "💡 Vérifiez que Docker Desktop est bien démarré" -ForegroundColor Yellow
-        exit 1
-    }
-    
-} else {
-    Write-Host "💻 Installation locale" -ForegroundColor Cyan
-    Write-Host "======================" -ForegroundColor Cyan
-    
-    # Vérifier si Node.js est installé
-    try {
-        $nodeVersion = node --version
-        Write-Host "✅ Node.js détecté: $nodeVersion" -ForegroundColor Green
-    } catch {
-        Write-Host "❌ Node.js n'est pas installé" -ForegroundColor Red
-        Write-Host "💡 Installez Node.js depuis https://nodejs.org/ (version 18+)" -ForegroundColor Yellow
-        Read-Host "Appuyez sur Entrée pour continuer..."
-        exit 1
-    }
-    
-    # Vérifier si MongoDB est disponible
-    Write-Host "🔍 Vérification de MongoDB..." -ForegroundColor Yellow
-    try {
-        # Tenter de se connecter à MongoDB local
-        $mongoTest = mongosh --eval "db.version()" mongodb://localhost:27017/test 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ MongoDB local détecté et accessible" -ForegroundColor Green
-            $mongoLocal = $true
-        } else {
-            throw "MongoDB local non accessible"
-        }
-    } catch {
-        Write-Host "⚠️  MongoDB local non détecté" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "Options MongoDB :" -ForegroundColor White
-        Write-Host "1. Installer MongoDB localement" -ForegroundColor Blue
-        Write-Host "2. Utiliser MongoDB Atlas (cloud)" -ForegroundColor Blue
-        Write-Host "3. Continuer sans MongoDB (à configurer manuellement)" -ForegroundColor Blue
-        Write-Host ""
-        
-        do {
-            $mongoChoice = Read-Host "Votre choix (1, 2 ou 3)"
-        } while ($mongoChoice -notmatch "^[123]$")
-        
-        if ($mongoChoice -eq "1") {
-            Write-Host "💡 Pour installer MongoDB localement :" -ForegroundColor Yellow
-            Write-Host "   1. Téléchargez MongoDB Community depuis: https://www.mongodb.com/try/download/community" -ForegroundColor Gray
-            Write-Host "   2. Installez-le avec les options par défaut" -ForegroundColor Gray
-            Write-Host "   3. Redémarrez ce script" -ForegroundColor Gray
-            Read-Host "Appuyez sur Entrée pour continuer..."
-            exit 1
-        } elseif ($mongoChoice -eq "2") {
-            Write-Host "💡 Pour utiliser MongoDB Atlas :" -ForegroundColor Yellow
-            Write-Host "   1. Créez un compte gratuit sur: https://www.mongodb.com/atlas" -ForegroundColor Gray
-            Write-Host "   2. Créez un cluster gratuit" -ForegroundColor Gray
-            Write-Host "   3. Notez l'URI de connexion" -ForegroundColor Gray
-            Write-Host "   4. Vous devrez modifier le fichier BACKEND/.env après l'installation" -ForegroundColor Gray
-        }
-        $mongoLocal = $false
-    }
-    
-    Write-Host ""
-    Write-Host "📦 Configuration du Backend..." -ForegroundColor Yellow
-    Set-Location BACKEND
-    
-    if (!(Test-Path .env)) {
-        Copy-Item .env.example .env
-        Write-Host "✅ Fichier .env créé pour le Backend" -ForegroundColor Green
-        
-        if (!$mongoLocal) {
-            Write-Host "⚠️  N'oubliez pas de modifier BACKEND/.env avec votre URI MongoDB" -ForegroundColor Yellow
-        }
-    } else {
-        Write-Host "ℹ️  Fichier .env déjà existant pour le Backend" -ForegroundColor Blue
-    }
-    
-    Write-Host "📦 Installation des dépendances Backend..." -ForegroundColor Yellow
-    npm install
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Erreur lors de l'installation des dépendances Backend" -ForegroundColor Red
-        exit 1
-    }
-    
-    Write-Host ""
-    Write-Host "🎨 Configuration du Frontend..." -ForegroundColor Yellow
-    Set-Location ../FRONTEND
-    
-    if (!(Test-Path .env.local)) {
-        Copy-Item .env.example .env.local
-        Write-Host "✅ Fichier .env.local créé pour le Frontend" -ForegroundColor Green
-    } else {
-        Write-Host "ℹ️  Fichier .env.local déjà existant pour le Frontend" -ForegroundColor Blue
-    }
-    
-    Write-Host "📦 Installation des dépendances Frontend..." -ForegroundColor Yellow
-    npm install
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Erreur lors de l'installation des dépendances Frontend" -ForegroundColor Red
-        exit 1
-    }
-    
-    Set-Location ..
-    
-    Write-Host ""
-    Write-Host "🚀 Démarrage de l'application..." -ForegroundColor Yellow
-    
-    # Créer des scripts de démarrage temporaires
-    $backendScript = @"
-Set-Location BACKEND
-Write-Host "🔧 Démarrage du Backend..." -ForegroundColor Yellow
-npm start
-"@
-    
-    $frontendScript = @"
-Start-Sleep -Seconds 5
-Set-Location FRONTEND
-Write-Host "🎨 Démarrage du Frontend..." -ForegroundColor Yellow
-npm run dev
-"@
-    
-    $initScript = @"
-Start-Sleep -Seconds 10
-Set-Location BACKEND
-Write-Host "📊 Initialisation de la base de données..." -ForegroundColor Yellow
-node initDb.js
-Write-Host ""
-Write-Host "🎉 Installation terminée !" -ForegroundColor Green
-Write-Host "=========================" -ForegroundColor Green
-Write-Host ""
-Write-Host "🌐 Votre application est accessible sur :" -ForegroundColor White
-Write-Host "   Frontend: http://localhost:3000" -ForegroundColor Cyan
-Write-Host "   Backend API: http://localhost:3220" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "👤 Compte administrateur :" -ForegroundColor White
-Write-Host "   Email: admin@example.com" -ForegroundColor Yellow
-Write-Host "   Mot de passe: admin123" -ForegroundColor Yellow
-"@
-    
-    # Lancer les services en parallèle
-    Write-Host "🔧 Lancement du Backend..." -ForegroundColor Yellow
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendScript
-    
-    Write-Host "🎨 Lancement du Frontend..." -ForegroundColor Yellow  
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendScript
-    
-    Write-Host "📊 Initialisation de la base de données..." -ForegroundColor Yellow
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $initScript
-    
-    Write-Host ""
-    Write-Host "✅ Tous les services sont en cours de démarrage..." -ForegroundColor Green
-    Write-Host "📱 Frontend sera disponible sur: http://localhost:3000" -ForegroundColor Cyan
-    Write-Host "🔧 Backend sera disponible sur: http://localhost:3220" -ForegroundColor Cyan
+function Write-Color($text, $color = "White") {
+    Write-Host $text -ForegroundColor $color
 }
 
-Read-Host "Appuyez sur Entrée pour fermer cette fenêtre..."
+Write-Color "=== Demarrage de MMI-VisioConf ===" Cyan
+Write-Color "1. Demarrer avec Docker (recommande)" Green
+Write-Color "2. Installation locale" Blue
+
+do {
+    $choice = Read-Host "Choix (1 ou 2)"
+} while ($choice -notmatch '^[12]$')
+
+if ($choice -eq "1") {
+    Write-Color ">> Mode Docker selectionne" Cyan
+    
+    # Verifier Docker
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        Write-Color "X Docker non detecte. Installez Docker Desktop : https://www.docker.com/products/docker-desktop" Red
+        Read-Host "`nAppuyez sur Entree pour quitter"
+        exit 1
+    }
+
+    # Docker Compose
+    if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
+        Write-Color "X Docker Compose manquant." Red
+        Read-Host "`nAppuyez sur Entree pour quitter"
+        exit 1
+    }docker-compose down
+    docker-compose up -d --build    if ($LASTEXITCODE -eq 0) {
+        Start-Sleep -Seconds 10
+        docker exec backend node initDb.js        Write-Color "`n** Application lancee avec succes !" Green
+        Write-Color "** Frontend: http://localhost:3000" Cyan
+        Write-Color "**  Backend: http://localhost:3220" Cyan
+        Write-Color "** Connexion suggeree: john.doe@example.com | mdp" Yellow
+    } else {
+        Write-Color "X Erreur au demarrage avec Docker." Red
+    }
+}
+else {
+    Write-Color ">> Mode installation locale selectionne" Cyan
+    
+    # Verification Node.js
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Color "X Node.js non detecte. Telechargez-le sur https://nodejs.org/" Red
+        Read-Host "`nAppuyez sur Entree pour quitter"
+        exit 1
+    }    # Verification MongoDB et mongosh
+    $mongoAvailable = $false
+    
+    # Essayer mongosh d'abord (nouveau shell MongoDB)
+    if (Get-Command mongosh -ErrorAction SilentlyContinue) {
+        try {
+            & mongosh --eval 'db.stats()' --quiet > $null 2>&1
+            $mongoAvailable = $true
+            Write-Color "V MongoDB et mongosh detectes." Green
+        } catch {
+            Write-Color "!! mongosh detecte mais MongoDB service non demarre." Yellow
+        }
+    }
+    # Essayer mongo (ancien shell) si mongosh ne fonctionne pas
+    elseif (Get-Command mongo -ErrorAction SilentlyContinue) {
+        try {
+            & mongo --eval 'db.stats()' --quiet > $null 2>&1
+            $mongoAvailable = $true
+            Write-Color "V MongoDB detecte (mongo)." Green
+        } catch {
+            Write-Color "!! mongo detecte mais MongoDB service non demarre." Yellow
+        }
+    }
+    
+    if (-not $mongoAvailable) {
+        Write-Color "X MongoDB Shell (mongosh) non detecte." Red
+        Write-Color "Pour l'installation locale, vous devez installer :" Yellow
+        Write-Color "  1. MongoDB Community Server : https://www.mongodb.com/try/download/community" Yellow
+        Write-Color "  2. MongoDB Shell (mongosh) : https://www.mongodb.com/try/download/shell" Yellow
+        Write-Color "  3. Demarrer le service MongoDB" Yellow
+        Write-Color "  4. Ajouter mongosh au PATH" Yellow
+        Write-Color "" White
+        Write-Color "Alternative : Utilisez Docker (option 1) pour eviter cette configuration." Cyan
+        Read-Host "`nAppuyez sur Entree pour quitter"
+        exit 1
+    }# Backend
+    Set-Location BACKEND
+    if (!(Test-Path ".env") -and (Test-Path ".env.example")) {
+        Copy-Item ".env.example" ".env"
+    }
+    npm install
+
+    # Frontend
+    Set-Location ../FRONTEND
+    if (!(Test-Path ".env.local") -and (Test-Path ".env.example")) {
+        Copy-Item ".env.example" ".env.local"
+    }
+    npm install
+
+    # Retour au dossier racine
+    Set-Location ..
+
+    # Lancer les services
+    $scriptDir = Get-Location
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; cd BACKEND; npm start"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; Start-Sleep 5; cd FRONTEND; npm run dev"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir'; Start-Sleep 10; cd BACKEND; node initDb.js"    Write-Color "`n** Application en cours de lancement..." Green
+    Write-Color "** Frontend: http://localhost:3000" Cyan
+    Write-Color "**  Backend: http://localhost:3220" Cyan
+    Write-Color "** Connexion suggeree: john.doe@example.com | mdp" Yellow
+}
+
+Read-Host "`nAppuyez sur Entree pour quitter"
