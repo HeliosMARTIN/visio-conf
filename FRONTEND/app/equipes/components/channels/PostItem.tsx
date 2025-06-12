@@ -81,12 +81,10 @@ export default function PostItem({
     // Ajout d'un état local pour le nombre de réponses, synchronisé avec post.responseCount
     const [responseCount, setResponseCount] = useState<number>(
         post.responseCount || 0
-    )
-
-    // Synchronise les réponses locales et le count avec les props à chaque changement
+    ) // Synchronise les réponses locales et le count avec les props à chaque changement
     useEffect(() => {
         setResponses(post.responses || [])
-        if (post.responses.length > 0) setResponseCount(post.responseCount++)
+        setResponseCount(post.responses?.length || 0)
     }, [post.responses])
 
     return (
