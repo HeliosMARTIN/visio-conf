@@ -18,6 +18,7 @@ import LocalFileService from "./services/LocalFileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
 import fileRoutes from "./routes/files.js"
+import User from "./models/user.js"
 
 dotenv.config()
 
@@ -143,8 +144,23 @@ new TeamsService(controleur, "TeamsService")
 main().catch((err) => console.error("Error during startup:", err))
 
 async function main() {
-    await mongoose.connect(process.env.MONGO_URI, {
-        user: process.env.MONGO_USER,
-        pass: process.env.MONGO_PASSWORD,
-    })
+    try {
+        // Connexion MongoDB simplifiée
+        const mongoOptions = {}
+
+        // Si des credentials sont fournis, les utiliser
+        if (process.env.MONGO_USER && process.env.MONGO_PASSWORD) {
+            mongoOptions.user = process.env.MONGO_USER
+            mongoOptions.pass = process.env.MONGO_PASSWORD
+        }
+
+        await mongoose.connect(process.env.MONGO_URI, mongoOptions)
+        console.log("✅ Connexion MongoDB établie avec succès")
+    } catch (error) {
+        console.error("❌ Erreur de connexion MongoDB:", error.message)
+        console.error(
+            "💡 Assurez-vous que MongoDB est démarré et que l'URI est correcte dans votre fichier .env"
+        )
+        process.exit(1)
+    }
 }
