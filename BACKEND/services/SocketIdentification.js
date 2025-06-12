@@ -1,4 +1,4 @@
-import User from "../models/user.js"
+import User from "../models/user.js";
 
 /**
  * Service responsable de la gestion des associations entre utilisateurs et sockets WebSocket
@@ -9,13 +9,15 @@ class SocketIdentificationService {
     constructor() {
         // Structure de données pour stocker les associations socket-utilisateur
         // socketId -> userInfo
-        this.socketToUser = new Map()
+        this.socketToUser = new Map();
 
         // Structure de données pour stocker les associations utilisateur-socket
         // userId -> socketId
-        this.userToSocket = new Map()
+        this.userToSocket = new Map();
 
-        this.verbose = false // Activer pour plus de logs temporairement
+        this.verbose = false; // Activer pour plus de logs temporairement
+        this.reconnectingSockets = new Map(); // Pour suivre les sockets en reconnexion
+        this.pendingAuthentications = new Map(); // Nouveau: pour suivre les authentifications en cours
     }
 
     /**
@@ -29,11 +31,17 @@ class SocketIdentificationService {
                 if (this.verbose)
                     console.log(
                         "INFO (SocketIdentificationService): socketId non fourni"
-                    )
-                return null
+                    );
+                return null;
             }
 
-            let userInfo = this.socketToUser.get(socketId)
+            // Vérifier si l'authentification est en cours
+            if (this.pendingAuthentications.has(socketId)) {
+                console.log(`Socket ${socketId} en cours d'authentification`);
+                return null;
+            }
+
+            let userInfo = this.socketToUser.get(socketId);
 
             // Si userInfo absent ou incomplet, tente de charger depuis la base
             if (
@@ -42,32 +50,11 @@ class SocketIdentificationService {
                 !userInfo.uuid ||
                 !userInfo.email
             ) {
-                // Cherche l'userId via userToSocket
-                let userId = null
-                for (const [uid, sid] of this.userToSocket.entries()) {
-                    if (sid === socketId) {
-                        userId = uid
-                        break
-                    }
-                }
-                if (userId) {
-                    userInfo = await User.findById(
-                        userId,
-                        "uuid firstname lastname email picture phone job desc roles disturb_status date_create last_connection"
-                    )
-                        .populate("roles", "role_label")
-                        .lean()
-                    if (userInfo) {
-                        this.socketToUser.set(socketId, userInfo)
-                        console.log(
-                            `DEBUG (SocketIdentificationService): Utilisateur rechargé depuis DB pour socket ${socketId}:`,
-                            {
-                                uuid: userInfo.uuid,
-                                email: userInfo.email,
-                                _id: userInfo._id,
-                            }
-                        )
-                    }
+                const user = await User.findOne({ socket_id: socketId });
+                if (user) {
+                    userInfo = user.toObject();
+                    this.socketToUser.set(socketId, userInfo);
+                    this.userToSocket.set(user._id, socketId);
                 }
             }
             if (this.verbose) {
@@ -79,27 +66,27 @@ class SocketIdentificationService {
                             email: userInfo.email,
                             _id: userInfo._id,
                         }
-                    )
+                    );
                 } else {
                     console.log(
                         `INFO (SocketIdentificationService): Aucun utilisateur trouvé pour le socket ${socketId}`
-                    )
+                    );
                     console.log(
                         `DEBUG (SocketIdentificationService): État des Maps - socketToUser.size=${this.socketToUser.size}, userToSocket.size=${this.userToSocket.size}`
-                    )
+                    );
                     console.log(
                         `DEBUG (SocketIdentificationService): userToSocket entries:`,
                         Array.from(this.userToSocket.entries())
-                    )
+                    );
                 }
             }
 
-            return userInfo || null
+            return userInfo || null;
         } catch (error) {
             console.error(
                 `ERREUR (SocketIdentificationService): Impossible de récupérer l'utilisateur - ${error.message}`
-            )
-            return null
+            );
+            return null;
         }
     }
 
@@ -109,95 +96,65 @@ class SocketIdentificationService {
      * @param {string} socketId - Le nouvel identifiant de socket WebSocket
      * @param {Object} userInfo - Les informations de l'utilisateur (optionnel)
      * @returns {Object|null} - Les informations de l'utilisateur mises à jour ou null en cas d'erreur
-     */ async updateUserSocket(userId, socketId, userInfo = null) {
+     */
+    async updateUserSocket(userId, socketId, userInfo = null) {
         try {
             if (!userId || !socketId) {
                 console.error(
                     "ERREUR (SocketIdentificationService): userId et socketId sont requis"
-                )
-                return null
+                );
+                return null;
             }
 
-            console.log(
-                `DEBUG (SocketIdentificationService): Mise à jour socket pour user ${userId} avec socket ${socketId}`
-            )
+            // Marquer l'authentification comme en cours
+            this.pendingAuthentications.set(socketId, true);
 
-            let updatedUserInfo = userInfo
-            if (!updatedUserInfo) {
-                // Cherche l'ancien socket pour ce user
-                const oldSocketId = this.userToSocket.get(userId)
-                console.log(
-                    `DEBUG (SocketIdentificationService): Ancien socket pour user ${userId}:`,
-                    oldSocketId
-                )
-                console.log(
-                    "DEBUG (SocketIdentificationService): userToSocket Map:",
-                    Array.from(this.userToSocket.entries())
-                )
-
-                if (oldSocketId) {
-                    updatedUserInfo = await this.getUserInfoBySocketId(
-                        oldSocketId
-                    )
-                }
-                // Si toujours rien, charger depuis la DB
-                if (!updatedUserInfo) {
-                    updatedUserInfo = await User.findById(userId).lean()
-                    console.log(
-                        `DEBUG (SocketIdentificationService): Chargé depuis DB pour ${userId}:`,
-                        updatedUserInfo ? "trouvé" : "non trouvé"
-                    )
-                }
-                // Si toujours rien, objet minimal
-                if (!updatedUserInfo) {
-                    updatedUserInfo = { _id: userId }
-                    console.log(
-                        `DEBUG (SocketIdentificationService): Objet minimal créé pour ${userId}`
-                    )
-                }
-            }
-
-            // Si l'utilisateur avait déjà un socket, le supprimer
-            if (this.userToSocket.has(userId)) {
-                const oldSocketId = this.userToSocket.get(userId)
-                this.socketToUser.delete(oldSocketId)
-                console.log(
-                    `DEBUG (SocketIdentificationService): Supprimé ancien socket ${oldSocketId} pour user ${userId}`
-                )
-            } // Mettre à jour les associations
-            this.userToSocket.set(userId, socketId)
-            this.socketToUser.set(socketId, updatedUserInfo)
-
-            console.log(
-                `DEBUG (SocketIdentificationService): Socket mis à jour avec succès pour l'utilisateur ${userId}. Associations: userToSocket=${this.userToSocket.size}, socketToUser=${this.socketToUser.size}`
-            )
-            console.log(
-                `DEBUG (SocketIdentificationService): UserInfo stocké:`,
-                JSON.stringify(
-                    {
-                        _id: updatedUserInfo._id,
-                        uuid: updatedUserInfo.uuid,
-                        email: updatedUserInfo.email,
-                        firstname: updatedUserInfo.firstname,
-                        lastname: updatedUserInfo.lastname,
+            // Mettre à jour la base de données
+            await User.findOneAndUpdate(
+                { _id: userId },
+                {
+                    $set: {
+                        socket_id: socketId,
+                        last_connection: new Date(),
                     },
-                    null,
-                    2
-                )
-            )
+                }
+            );
 
-            if (this.verbose) {
-                console.log(
-                    `INFO (SocketIdentificationService): Socket mis à jour pour l'utilisateur ${userId}`
-                )
+            // Mettre à jour les Maps
+            if (this.userToSocket.has(userId)) {
+                const oldSocketId = this.userToSocket.get(userId);
+                this.socketToUser.delete(oldSocketId);
             }
 
-            return updatedUserInfo
+            let updatedUserInfo = userInfo;
+            if (!updatedUserInfo) {
+                updatedUserInfo = await User.findById(userId).lean();
+            }
+
+            if (!updatedUserInfo) {
+                console.error(
+                    `Utilisateur ${userId} non trouvé lors de la mise à jour du socket`
+                );
+                this.pendingAuthentications.delete(socketId);
+                return null;
+            }
+
+            this.userToSocket.set(userId, socketId);
+            this.socketToUser.set(socketId, updatedUserInfo);
+
+            // Nettoyer le statut d'authentification après un court délai
+            setTimeout(() => {
+                this.pendingAuthentications.delete(socketId);
+            }, 5000);
+
+            console.log(
+                `Socket ${socketId} mis à jour pour l'utilisateur ${userId}`
+            );
+            return updatedUserInfo;
         } catch (error) {
-            console.error(
-                `ERREUR (SocketIdentificationService): Impossible de mettre à jour le socket - ${error.message}`
-            )
-            return null
+            console.error("Erreur lors de la mise à jour du socket:", error);
+            this.pendingAuthentications.delete(socketId);
+            return null;
         }
     }
 
@@ -208,13 +165,13 @@ class SocketIdentificationService {
      */
     async isUserConnected(userId) {
         try {
-            if (!userId) return false
-            return this.userToSocket.has(userId)
+            if (!userId) return false;
+            return this.userToSocket.has(userId);
         } catch (error) {
             console.error(
                 `ERREUR (SocketIdentificationService): Impossible de vérifier la connexion - ${error.message}`
-            )
-            return false
+            );
+            return false;
         }
     }
 
@@ -224,20 +181,20 @@ class SocketIdentificationService {
      */
     async getConnectedUsers() {
         try {
-            const connectedUsers = Array.from(this.socketToUser.values())
+            const connectedUsers = Array.from(this.socketToUser.values());
 
             if (this.verbose) {
                 console.log(
                     `INFO (SocketIdentificationService): ${connectedUsers.length} utilisateurs connectés trouvés`
-                )
+                );
             }
 
-            return connectedUsers
+            return connectedUsers;
         } catch (error) {
             console.error(
                 `ERREUR (SocketIdentificationService): Impossible de récupérer les utilisateurs connectés - ${error.message}`
-            )
-            return []
+            );
+            return [];
         }
     }
 
@@ -248,16 +205,55 @@ class SocketIdentificationService {
      */
     async getUserSocketId(userId) {
         try {
-            if (!userId) return null
-            return this.userToSocket.get(userId) || null
+            if (!userId) return null;
+            return this.userToSocket.get(userId) || null;
         } catch (error) {
             console.error(
                 `ERREUR (SocketIdentificationService): Impossible de récupérer le socket ID - ${error.message}`
-            )
-            return null
+            );
+            return null;
+        }
+    }
+
+    async removeUserSocket(socketId) {
+        try {
+            // Ne pas supprimer si l'authentification est en cours
+            if (this.pendingAuthentications.has(socketId)) {
+                console.log(
+                    `Socket ${socketId} en cours d'authentification, suppression annulée`
+                );
+                return true;
+            }
+
+            const userInfo = this.socketToUser.get(socketId);
+            if (!userInfo) {
+                console.log(
+                    `Aucun utilisateur trouvé pour le socket ${socketId}`
+                );
+                return true;
+            }
+
+            // Supprimer des Maps
+            this.socketToUser.delete(socketId);
+            this.userToSocket.delete(userInfo._id);
+            this.pendingAuthentications.delete(socketId);
+
+            // Mettre à jour la base de données
+            await User.findOneAndUpdate(
+                { _id: userInfo._id },
+                { $set: { socket_id: "none" } }
+            );
+
+            console.log(
+                `Socket ${socketId} nettoyé pour l'utilisateur ${userInfo._id}`
+            );
+            return true;
+        } catch (error) {
+            console.error("Erreur lors de la suppression du socket:", error);
+            return false;
         }
     }
 }
 
 // Exporte une instance singleton du service
-export default new SocketIdentificationService()
+export default new SocketIdentificationService();

@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useRef } from "react"
-import { Discussion } from "@/types/Discussion"
-import { User } from "@/types/User"
-import { Message } from "@/types/Message"
-import { formatDistanceToNow } from "date-fns"
-import { fr } from "date-fns/locale"
-import { useAppContext } from "@/context/AppContext"
-import { v4 as uuidv4 } from "uuid"
+import React, { useState, useEffect, useRef } from "react";
+import { Discussion } from "@/types/Discussion";
+import { User } from "@/types/User";
+import { Message } from "@/types/Message";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useAppContext } from "@/context/AppContext";
+import { v4 as uuidv4 } from "uuid";
 
 interface ChatWindowProps {
-    discussion?: Discussion
-    messages: Message[]
-    currentUser: User
+    discussion?: Discussion;
+    messages: Message[];
+    currentUser: User;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -20,44 +20,54 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     messages,
     currentUser,
 }) => {
-    const [newMessage, setNewMessage] = useState("")
-    const [localMessages, setLocalMessages] = useState<Message[]>([])
-    const { controleur } = useAppContext()
-    const nomDInstance = "ChatWindow"
-    const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [newMessage, setNewMessage] = useState("");
+    const [localMessages, setLocalMessages] = useState<Message[]>([]);
+    const { controleur } = useAppContext();
+    const nomDInstance = "ChatWindow";
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const listeMessageEmis = ["message_send_request", "messages_get_request"]
-    const listeMessageRecus = ["message_send_response", "messages_get_response"]
+    const listeMessageEmis = ["message_send_request", "messages_get_request"];
+    const listeMessageRecus = [
+        "message_send_response",
+        "messages_get_response",
+    ];
 
     // Initialiser les messages locaux quand les messages props changent
     useEffect(() => {
-        setLocalMessages(messages)
-        scrollToBottom()
-    }, [messages])
+        setLocalMessages(messages);
+        scrollToBottom();
+    }, [messages]);
 
     // Scroll to bottom when localMessages changes
     useEffect(() => {
-        scrollToBottom()
-    }, [localMessages])
+        scrollToBottom();
+    }, [localMessages]);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
     const isCurrentUserMessage = (message: Message): boolean => {
-        const senderId = message.message_sender._id
-
-        const currentUserId = currentUser.id
-
-        // Si l'email est disponible, c'est la méthode la plus fiable pour comparer
+        // Vérification stricte avec l'email
         if (message.message_sender.email && currentUser.email) {
-            return message.message_sender.email === currentUser.email
+            return (
+                message.message_sender.email.toLowerCase() ===
+                currentUser.email.toLowerCase()
+            );
         }
 
-        // Sinon, essayer les différents IDs
-        return senderId === currentUserId
-    }
+        // Vérification avec l'ID
+        if (message.message_sender._id && currentUser.id) {
+            return (
+                message.message_sender._id.toString() ===
+                currentUser.id.toString()
+            );
+        }
+
+        // Fallback sur l'ID si disponible
+        return message.message_sender.id === currentUser.id;
+    };
 
     const handler = {
         nomDInstance,
@@ -67,10 +77,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     console.error(
                         "Erreur lors de l'envoi du message:",
                         msg.message_send_response.error
-                    )
+                    );
                 } else {
                     // Rafraîchir les messages après un envoi réussi
-                    fetchMessages()
+                    fetchMessages();
 
                     // Déclencher l'événement pour mettre à jour la liste des discussions
                     if (discussion) {
@@ -83,24 +93,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                         new Date().toISOString(),
                                 },
                             },
-                        })
-                        document.dispatchEvent(event)
+                        });
+                        document.dispatchEvent(event);
                     }
                 }
             }
 
             if (msg.messages_get_response) {
                 if (msg.messages_get_response.etat) {
-                    setLocalMessages(msg.messages_get_response.messages || [])
+                    setLocalMessages(msg.messages_get_response.messages || []);
                 }
             }
         },
-    }
+    };
 
     useEffect(() => {
         // Register handler when component mounts
         if (controleur) {
-            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            controleur.inscription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            );
         }
 
         // Unregister handler when component unmounts
@@ -110,33 +124,33 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     handler,
                     listeMessageEmis,
                     listeMessageRecus
-                )
+                );
             }
-        }
-    }, [controleur])
+        };
+    }, [controleur]);
 
     const fetchMessages = () => {
-        if (!discussion || !controleur) return
+        if (!discussion || !controleur) return;
 
         const message = {
             messages_get_request: {
                 convId: discussion.discussion_uuid,
             },
-        }
-        controleur.envoie(handler, message)
-    }
+        };
+        controleur.envoie(handler, message);
+    };
 
     if (!discussion) {
-        return null
+        return null;
     }
 
     const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!newMessage.trim() || !controleur || !currentUser) return
-        console.log("Message sender:", currentUser)
+        e.preventDefault();
+        if (!newMessage.trim() || !controleur || !currentUser) return;
+        console.log("Message sender:", currentUser);
 
-        const messageUuid = uuidv4()
-        const currentDate = new Date()
+        const messageUuid = uuidv4();
+        const currentDate = new Date();
 
         // Créer un message temporaire pour l'affichage immédiat
         const tempMessage: Message = {
@@ -153,10 +167,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             },
             message_date_create: currentDate.toISOString(),
             message_status: "sent",
-        }
+        };
 
         // Ajouter le message temporaire à l'état local
-        setLocalMessages((prev) => [...prev, tempMessage])
+        setLocalMessages((prev) => [...prev, tempMessage]);
 
         const message = {
             message_send_request: {
@@ -166,15 +180,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 message_content: newMessage.trim(),
                 message_date_create: currentDate.toISOString(),
             },
-        }
+        };
 
         try {
-            controleur.envoie(handler, message)
-            setNewMessage("")
+            controleur.envoie(handler, message);
+            setNewMessage("");
         } catch (error) {
-            console.error("Erreur lors de l'envoi du message:", error)
+            console.error("Erreur lors de l'envoi du message:", error);
         }
-    }
+    };
 
     return (
         <div className="chat-window">
@@ -197,11 +211,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             <span className="sender-name">
                                 {isCurrentUserMessage(message)
                                     ? "Vous"
-                                    : `${
-                                          message.message_sender.firstname || ""
-                                      } ${
-                                          message.message_sender.lastname || ""
-                                      }`}
+                                    : `${message.message_sender.firstname} ${message.message_sender.lastname}`}
                             </span>
                             <span className="message-time">
                                 {formatDistanceToNow(
@@ -228,7 +238,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 <button type="submit">Envoyer</button>
             </form>
         </div>
-    )
-}
+    );
+};
 
-export default ChatWindow
+export default ChatWindow;

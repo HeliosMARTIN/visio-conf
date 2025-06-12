@@ -1,5 +1,5 @@
-import mongoose from "mongoose"
-const Schema = mongoose.Schema
+import mongoose from "mongoose";
+const Schema = mongoose.Schema;
 
 const discussionSchema = new Schema({
     discussion_uuid: { type: String, required: true },
@@ -59,16 +59,16 @@ const discussionSchema = new Schema({
             },
         },
     ],
-})
+});
 
 // virtuals
 discussionSchema.virtual("discussion_members_count").get(function () {
-    return this.discussion_members.length
-})
+    return this.discussion_members.length;
+});
 
 discussionSchema.virtual("discussion_messages_count").get(function () {
-    return this.discussion_messages.length
-})
+    return this.discussion_messages.length;
+});
 
 discussionSchema.virtual("info").get(function () {
     return {
@@ -81,12 +81,12 @@ discussionSchema.virtual("info").get(function () {
         discussion_date_create: this.discussion_date_create,
         discussion_members_count: this.discussion_members_count,
         discussion_messages_count: this.discussion_messages_count,
-    }
-})
+    };
+});
 
 discussionSchema.methods.findLastMessage = function () {
-    return this.discussion_messages[this.discussion_messages.length - 1]
-}
+    return this.discussion_messages[this.discussion_messages.length - 1];
+};
 
 async function findManyByUser(user) {
     return await this.model("Discussion")
@@ -102,7 +102,7 @@ async function findManyByUser(user) {
             path: "discussion_messages.message_sender",
             model: "User",
             select: "firstname lastname picture socket_id uuid",
-        })
+        });
 }
 
 async function findPopulateMembersByDiscussionId(discussion_uuid) {
@@ -119,9 +119,9 @@ async function findPopulateMembersByDiscussionId(discussion_uuid) {
             path: "discussion_messages.message_sender",
             model: "User",
             select: "firstname lastname picture socket_id uuid is_online",
-        })
+        });
 }
 
-const Discussion = mongoose.model("Discussion", discussionSchema)
-export default Discussion
-export { findManyByUser, findPopulateMembersByDiscussionId }
+const Discussion = mongoose.model("Discussion", discussionSchema);
+export default Discussion;
+export { findManyByUser, findPopulateMembersByDiscussionId };

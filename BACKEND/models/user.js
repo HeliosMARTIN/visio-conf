@@ -1,12 +1,12 @@
-import mongoose from "mongoose"
-const Schema = mongoose.Schema
-const ObjectId = Schema.Types.ObjectId
+import mongoose from "mongoose";
+const Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 
 // Default values
-const DEFAULT_USER_PICTURE = "default_profile_picture.png"
-const DEFAULT_ROLE = ["user"]
-const DEFAULT_STATUS = "waiting"
-const DEFAULT_DISTURB_STATUS = "available"
+const DEFAULT_USER_PICTURE = "default_profile_picture.png";
+const DEFAULT_ROLE = ["user"];
+const DEFAULT_STATUS = "waiting";
+const DEFAULT_DISTURB_STATUS = "available";
 
 const UserSchema = new Schema({
     uuid: { type: String, required: true },
@@ -64,7 +64,7 @@ const UserSchema = new Schema({
             description: `List of roles id created by admin in the roles collection`,
         },
     ],
-})
+});
 
-const User = mongoose.model("User", UserSchema)
-export default User
+const User = mongoose.model("User", UserSchema);
+export default User;
