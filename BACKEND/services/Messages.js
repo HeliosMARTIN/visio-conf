@@ -422,7 +422,7 @@ class MessagesService {
           model: "User",
           select: "socket_id",
         });
-        if (conv == nul) throw new Error("Discussion non trouvée");
+        if (conv == null) throw new Error("Discussion non trouvée");
 
         // Extraire tous les socket_id des membres
         const socketIds = conv.discussion_members

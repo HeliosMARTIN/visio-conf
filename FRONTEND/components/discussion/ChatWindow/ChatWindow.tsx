@@ -53,17 +53,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
     }, [])
 
-    // Marquer automatiquement les messages comme lus
-    useEffect(() => {
-        if (discussion && isVisible && localMessages.length > 0) {
-            // Déclencher la mise à jour du statut de lecture après un court délai
-            const timer = setTimeout(() => {
-                markMessagesAsRead()
-            }, 1000) // Attendre 1 seconde avant de marquer comme lu
+    // // Marquer automatiquement les messages comme lus
+    // useEffect(() => {
+    //     if (discussion && isVisible && localMessages.length > 0) {
+    //         // Déclencher la mise à jour du statut de lecture après un court délai
+    //         const timer = setTimeout(() => {
+    //             markMessagesAsRead()
+    //         }, 1000) // Attendre 1 seconde avant de marquer comme lu
 
-            return () => clearTimeout(timer)
-        }
-    }, [discussion, localMessages, isVisible])
+    //         return () => clearTimeout(timer)
+    //     }
+    // }, [discussion, localMessages, isVisible])
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
