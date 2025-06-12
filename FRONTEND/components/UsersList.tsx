@@ -11,12 +11,14 @@ interface UsersListProps {
   users: User[];
   currentUserEmail: string;
   isLoading?: boolean;
+  onMessageUser?: (user: User) => void;
 }
 
 export default function UsersList({
   users,
   currentUserEmail,
   isLoading = false,
+  onMessageUser,
 }: UsersListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
@@ -82,6 +84,7 @@ export default function UsersList({
                       <UserInfo
                         user={user}
                         currentUserEmail={currentUserEmail}
+                        onMessageUser={onMessageUser}
                       />
                     </motion.div>
                   ))
