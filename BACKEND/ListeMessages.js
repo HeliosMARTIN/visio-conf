@@ -67,6 +67,7 @@ export const ListeMessagesEmis = [
     "team_members_request", // { teamId: string }
     "team_add_member_request", // { teamId: string, userId: string }
     "team_remove_member_request", // { teamId: string, userId: string }
+    "all_teams_request", // No data
 ]
 
 /**
@@ -139,4 +140,5 @@ export const ListeMessagesRecus = [
     "team_members_response", // { etat: boolean, teamId?: string, members?: TeamMember[], error?: string }
     "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
     "team_remove_member_response", // { etat: boolean, teamId?: string, userId?: string, error?: string }
+    "all_teams_response", // No data
 ]

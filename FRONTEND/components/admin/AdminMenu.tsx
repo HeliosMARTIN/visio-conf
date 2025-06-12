@@ -54,7 +54,6 @@ export default function AdminMenu({
             subOption : [
                 { label: "Lister", condition: userPerms.includes("admin_demande_liste_equipes") },
                 { label: "Créer", condition: userPerms.includes("admin_ajouter_equipe") },
-                { label: "Dupliquer", condition: userPerms.includes("admin_dupliquer_equipe")},
                 { label: "Modifier", condition: userPerms.includes("admin_modifier_equipe") },
                 { label: "Supprimer", condition: userPerms.includes("admin_supprimer_equipe") },
             ],
