@@ -220,6 +220,10 @@ const initializePermissions = async () => {
             permission_label: "Ajouter un utilisateur",
         },
         {
+            permission_uuid: "admin_desactiver_utilisateur",
+            permission_label: "Désactive un utilisateur",
+        },
+        {
             permission_uuid: "admin_demande_utilisateur_details",
             permission_label: "Détails de l'utilisateur",
         },
@@ -248,8 +252,36 @@ const initializePermissions = async () => {
             permission_label: "Lister les permissions",
         },
         {
+            permission_uuid: "admin_ajouter_permission",
+            permission_label: "Créer les permissions",
+        },
+        {
+            permission_uuid: "admin_modifier_permission",
+            permission_label: "Modifier les permissions",
+        },
+        {
+            permission_uuid: "admin_demande_liste_equipes",
+            permission_label: "Lister les équipes",
+        },
+        {
+            permission_uuid: "admin_ajouter_equipe",
+            permission_label: "Créer les équipes",
+        },
+        {
+            permission_uuid: "admin_modifier_equipe",
+            permission_label: "Modifier les équipes",
+        },
+        {
+            permission_uuid: "admin_supprimer_equipe",
+            permission_label: "Supprimer les équipes",
+        },
+        {
             permission_uuid: "admin_ajouter_role",
             permission_label: "Ajouter un rôle",
+        },
+        {
+            permission_uuid: "admin_dupliquer_role",
+            permission_label: "Dupliquer un rôle",
         },
         {
             permission_uuid: "admin_demande_role_details",
@@ -369,7 +401,7 @@ const initializePermissions = async () => {
             permission_label: "Utilisateurs connectés",
             permission_default: true,
         },
-    ]
+    ];
     await Permission.deleteMany({})
     const permissionIds = {}
     for (const permission of permissions) {
