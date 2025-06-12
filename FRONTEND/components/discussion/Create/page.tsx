@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { useAppContext } from "@/context/AppContext"
-import { X, CirclePlus, Send } from "lucide-react"
-import { User } from "@/types/User"
-import { getProfilePictureUrl } from "@/utils/fileHelpers"
-import { generateUUID } from "@/utils/uuid"
+import React, { useState, useEffect } from "react";
+import { useAppContext } from "@/context/AppContext";
+import { X, CirclePlus, Send } from "lucide-react";
+import { User } from "@/types/User";
+import { getProfilePictureUrl } from "@/utils/fileHelpers";
+import { generateUUID } from "@/utils/uuid";
 
 interface CreateDiscussionProps {
-    onDiscussionCreated: () => void
-    searchResults: User[]
-    controleur: any
-    handler: any
+    onDiscussionCreated: () => void;
+    searchResults: User[];
+    controleur: any;
+    handler: any;
 }
 
 export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
@@ -20,93 +20,94 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
     controleur,
     handler,
 }) => {
-    const [isCreating, setIsCreating] = useState(false)
-    const { currentUser } = useAppContext()
-    const [searchQuery, setSearchQuery] = useState("")
-    const [selectedUsers, setSelectedUsers] = useState<User[]>([])
-    const [message, setMessage] = useState("")
-    const [error, setError] = useState("")
+    const [isCreating, setIsCreating] = useState(false);
+    const { currentUser } = useAppContext();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
 
     const filteredSearchResults = searchResults.filter((user) => {
         // Compatibilité avec les deux types d'ID
-        const currentUserId = currentUser?.id
-        const userId = user.id
+        const currentUserId = currentUser?.id;
+        const userId = user.id;
 
-        const isCurrentUser = userId === currentUserId
+        const isCurrentUser = userId === currentUserId;
         const isAlreadySelected = selectedUsers.some(
             (selectedUser) => selectedUser.id && selectedUser.id === userId
-        )
+        );
 
-        return !isCurrentUser && !isAlreadySelected
-    })
+        return !isCurrentUser && !isAlreadySelected;
+    });
 
     const searchUsers = (query: string) => {
-        if (!query.trim() || !controleur) return
+        if (!query.trim() || !controleur) return;
         const message = {
             users_search_request: query,
-        }
-        controleur.envoie(handler, message)
-    }
+        };
+        controleur.envoie(handler, message);
+    };
 
     useEffect(() => {
         const debounceTimeout = setTimeout(() => {
             if (searchQuery.length >= 1) {
-                searchUsers(searchQuery)
+                searchUsers(searchQuery);
             }
-        }, 300)
-        return () => clearTimeout(debounceTimeout)
-    }, [searchQuery])
+        }, 300);
+        return () => clearTimeout(debounceTimeout);
+    }, [searchQuery]);
 
     const handleUserSelect = (user: User) => {
-        setSelectedUsers([...selectedUsers, user])
-        setSearchQuery("")
-    }
+        setSelectedUsers([...selectedUsers, user]);
+        setSearchQuery("");
+    };
 
     const removeSelectedUser = (userId: string) => {
-        setSelectedUsers(selectedUsers.filter((user) => user.id !== userId))
-    }
+        setSelectedUsers(selectedUsers.filter((user) => user.id !== userId));
+    };
 
     const handleCreateDiscussion = async () => {
         if (!currentUser || selectedUsers.length === 0 || !message.trim()) {
             setError(
                 "Veuillez sélectionner au moins un utilisateur et écrire un message"
-            )
-            return
+            );
+            return;
         }
 
         try {
-            setIsCreating(true)
+            setIsCreating(true);
+            setError("");
 
-            // Compatibilité avec les deux types d'ID
-            const currentUserId = currentUser.email
-
-            const otherUserIds = selectedUsers.map((user) => user.email)
+            const discussionUuid = generateUUID();
+            const messageUuid = generateUUID();
+            const currentDate = new Date().toISOString();
 
             const message_request = {
                 message_send_request: {
-                    userEmail: currentUserId,
-                    otherUserEmail: otherUserIds,
-                    text: message,
-                    discussion_creator: currentUserId,
-                    discussion_uuid: generateUUID(),
-                    message_content: message,
-                    message_uuid: generateUUID(),
-                    message_date_create: new Date().toISOString(),
+                    userEmail: currentUser.email,
+                    otherUserEmail: selectedUsers.map((user) => user.email),
+                    discussion_uuid: discussionUuid,
+                    message_uuid: messageUuid,
+                    message_content: message.trim(),
+                    message_date_create: currentDate,
+                    discussion_creator: currentUser.id || currentUser._id,
                 },
-            }
+            };
 
-            controleur.envoie(handler, message_request)
+            console.log("Creating discussion with request:", message_request);
+            controleur.envoie(handler, message_request);
 
-            onDiscussionCreated()
-            setMessage("")
-            setSelectedUsers([])
+            // Ne pas réinitialiser immédiatement, attendre la réponse
+            // onDiscussionCreated sera appelé après la réponse du serveur
         } catch (error) {
-            console.error("Erreur lors de la création de la discussion:", error)
-            setError("Erreur lors de la création de la discussion")
-        } finally {
-            setIsCreating(false)
+            console.error(
+                "Erreur lors de la création de la discussion:",
+                error
+            );
+            setError("Erreur lors de la création de la discussion");
+            setIsCreating(false);
         }
-    }
+    };
 
     return (
         <div className="create-discussion">
@@ -191,5 +192,5 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                 </button>
             </div>
         </div>
-    )
-}
+    );
+};

@@ -110,28 +110,20 @@ class SocketIdentificationService {
             this.pendingAuthentications.set(socketId, true);
 
             // Mettre à jour la base de données
-            await User.findOneAndUpdate(
+            const updatedUser = await User.findOneAndUpdate(
                 { _id: userId },
                 {
                     $set: {
                         socket_id: socketId,
                         last_connection: new Date(),
+                        is_online: true,
+                        disturb_status: "available",
                     },
-                }
+                },
+                { new: true }
             );
 
-            // Mettre à jour les Maps
-            if (this.userToSocket.has(userId)) {
-                const oldSocketId = this.userToSocket.get(userId);
-                this.socketToUser.delete(oldSocketId);
-            }
-
-            let updatedUserInfo = userInfo;
-            if (!updatedUserInfo) {
-                updatedUserInfo = await User.findById(userId).lean();
-            }
-
-            if (!updatedUserInfo) {
+            if (!updatedUser) {
                 console.error(
                     `Utilisateur ${userId} non trouvé lors de la mise à jour du socket`
                 );
@@ -139,6 +131,13 @@ class SocketIdentificationService {
                 return null;
             }
 
+            // Mettre à jour les Maps
+            if (this.userToSocket.has(userId)) {
+                const oldSocketId = this.userToSocket.get(userId);
+                this.socketToUser.delete(oldSocketId);
+            }
+
+            let updatedUserInfo = userInfo || updatedUser.toObject();
             this.userToSocket.set(userId, socketId);
             this.socketToUser.set(socketId, updatedUserInfo);
 
@@ -148,7 +147,7 @@ class SocketIdentificationService {
             }, 5000);
 
             console.log(
-                `Socket ${socketId} mis à jour pour l'utilisateur ${userId}`
+                `Socket ${socketId} mis à jour pour l'utilisateur ${userId} (${updatedUser.firstname} ${updatedUser.lastname})`
             );
             return updatedUserInfo;
         } catch (error) {
@@ -199,17 +198,51 @@ class SocketIdentificationService {
     }
 
     /**
-     * Récupère le socket ID d'un utilisateur spécifique
+     * Récupère l'identifiant de socket d'un utilisateur
      * @param {string} userId - L'identifiant de l'utilisateur
-     * @returns {string|null} - L'identifiant du socket ou null
+     * @returns {string|null} - L'identifiant du socket ou null si non trouvé
      */
     async getUserSocketId(userId) {
         try {
-            if (!userId) return null;
-            return this.userToSocket.get(userId) || null;
+            if (!userId) {
+                if (this.verbose)
+                    console.log(
+                        "INFO (SocketIdentificationService): userId non fourni"
+                    );
+                return null;
+            }
+
+            // Vérifier d'abord dans la Map
+            let socketId = this.userToSocket.get(userId);
+
+            // Si non trouvé dans la Map, chercher dans la base de données
+            if (!socketId) {
+                const user = await User.findById(userId);
+                if (user && user.socket_id) {
+                    socketId = user.socket_id;
+                    // Mettre à jour la Map
+                    this.userToSocket.set(userId, socketId);
+                    this.socketToUser.set(socketId, user.toObject());
+                }
+            }
+
+            if (this.verbose) {
+                if (socketId) {
+                    console.log(
+                        `INFO (SocketIdentificationService): Socket trouvé pour l'utilisateur ${userId}: ${socketId}`
+                    );
+                } else {
+                    console.log(
+                        `INFO (SocketIdentificationService): Aucun socket trouvé pour l'utilisateur ${userId}`
+                    );
+                }
+            }
+
+            // Retourner null si aucun socket n'est trouvé
+            return socketId || null;
         } catch (error) {
             console.error(
-                `ERREUR (SocketIdentificationService): Impossible de récupérer le socket ID - ${error.message}`
+                `ERREUR (SocketIdentificationService): Impossible de récupérer le socket - ${error.message}`
             );
             return null;
         }

@@ -9,6 +9,7 @@ class MessagesService {
     listeDesMessagesEmis = [
         "messages_get_response",
         "message_send_response",
+        "message_received",
         "discuss_list_response",
         "users_search_response",
         "discuss_remove_member_response",
@@ -51,6 +52,17 @@ class MessagesService {
             );
             console.log(mesg);
         }
+
+        // Ignorer les message_received qui sont renvoyés par le client
+        if (mesg.message_received) {
+            if (this.controleur.verboseall || this.verbose) {
+                console.log(
+                    "INFO (MessagesService): Ignoring echoed message_received"
+                );
+            }
+            return;
+        }
+
         // CAS : DEMANDE DE LA LISTE DES MESSAGES D'UNE DISCUSSION
         if (mesg.messages_get_request) {
             try {
@@ -102,14 +114,28 @@ class MessagesService {
                 const {
                     userEmail,
                     otherUserEmail,
-                    discussion_creator,
                     discussion_uuid,
-                    message_content,
                     message_uuid,
+                    message_content,
                     message_date_create,
+                    discussion_creator,
                 } = mesg.message_send_request;
 
-                let responseMessage;
+                console.log("Processing message send request:", {
+                    userEmail,
+                    otherUserEmail,
+                    discussion_uuid,
+                    message_uuid,
+                    discussion_creator,
+                });
+
+                // Récupérer l'expéditeur
+                const sender = await User.findOne({ email: userEmail });
+                if (!sender) {
+                    throw new Error("Expéditeur non trouvé");
+                }
+
+                let discussion;
 
                 // Cas d'une nouvelle discussion
                 if (otherUserEmail) {
@@ -118,42 +144,23 @@ class MessagesService {
                         ? otherUserEmail
                         : [otherUserEmail];
 
-                    // Déterminer si c'est une discussion 1-1
-                    const isOneToOne = otherEmails.length === 1;
-
-                    // Construire la liste des emails pour la recherche
-                    const discussionEmails = [userEmail, ...otherEmails];
-
-                    console.log("Creating discussion:", {
-                        isOneToOne,
-                        discussionEmails,
-                        discussionType: isOneToOne ? "direct" : "group",
-                    });
-
                     // Récupérer tous les utilisateurs
                     const users = await User.find({
-                        email: { $in: discussionEmails },
+                        email: { $in: [userEmail, ...otherEmails] },
                     });
-
                     if (!users || users.length === 0) {
                         throw new Error(
                             "Aucun utilisateur trouvé avec les emails fournis"
                         );
                     }
 
-                    // Trouver l'expéditeur
-                    const sender = users.find((u) => u.email === userEmail);
-                    if (!sender) {
-                        throw new Error("L'expéditeur n'a pas été trouvé");
-                    }
-
-                    // Créer la nouvelle discussion avec le message correctement formaté
-                    const newDiscussion = {
+                    // Créer la nouvelle discussion
+                    discussion = new Discussion({
                         discussion_uuid: discussion_uuid,
                         discussion_creator: sender._id,
                         discussion_members: users.map((user) => user._id),
-                        discussion_type: isOneToOne ? "direct" : "group",
-                        discussion_name: isOneToOne ? null : "Nouveau groupe",
+                        discussion_type:
+                            otherEmails.length === 1 ? "direct" : "group",
                         discussion_messages: [
                             {
                                 message_uuid: message_uuid,
@@ -164,74 +171,24 @@ class MessagesService {
                                 message_status: "sent",
                             },
                         ],
-                    };
-
-                    // Sauvegarder la discussion
-                    const savedDiscussion = await Discussion.create(
-                        newDiscussion
-                    );
-
-                    // Récupérer les socket IDs
-                    const socketIdPromises =
-                        savedDiscussion.discussion_members.map(
-                            async (userId) => {
-                                return await SocketIdentificationService.getUserSocketId(
-                                    userId.toString()
-                                );
-                            }
-                        );
-                    const socketIds = (
-                        await Promise.all(socketIdPromises)
-                    ).filter(Boolean);
-
-                    responseMessage = {
-                        message_send_response: {
-                            etat: true,
-                            discussion: {
-                                ...savedDiscussion.toObject(),
-                                discussion_messages:
-                                    savedDiscussion.discussion_messages.map(
-                                        (msg) => ({
-                                            ...msg.toObject(),
-                                            message_sender: {
-                                                _id: sender._id,
-                                                firstname: sender.firstname,
-                                                lastname: sender.lastname,
-                                                email: sender.email,
-                                                picture: sender.picture,
-                                            },
-                                        })
-                                    ),
-                            },
-                        },
-                        id: socketIds,
-                    };
-                }
-                // Cas d'un message dans une discussion existante
-                else {
-                    const discussion = await Discussion.findOne({
-                        discussion_uuid,
-                    }).populate({
-                        path: "discussion_members",
-                        model: "User",
-                        select: "_id email socket_id firstname lastname picture",
                     });
 
+                    await discussion.save();
+                    console.log(
+                        "New discussion created:",
+                        discussion.discussion_uuid
+                    );
+                } else {
+                    // Cas d'un message dans une discussion existante
+                    discussion = await Discussion.findOne({ discussion_uuid });
                     if (!discussion) {
                         throw new Error("Discussion non trouvée");
                     }
 
-                    const sender = await User.findOne({ email: userEmail });
-                    if (!sender) {
-                        throw new Error("Utilisateur non trouvé");
-                    }
-
                     // Vérifier si l'utilisateur est membre
                     const isMember = discussion.discussion_members.some(
-                        (member) =>
-                            member._id.toString() === sender._id.toString()
+                        (member) => member.toString() === sender._id.toString()
                     );
-
                     if (!isMember) {
                         throw new Error(
                             "Utilisateur non autorisé à envoyer des messages dans cette discussion"
@@ -239,58 +196,112 @@ class MessagesService {
                     }
 
                     // Ajouter le nouveau message
-                    const newMessage = {
-                        message_uuid,
+                    discussion.discussion_messages.push({
+                        message_uuid: message_uuid,
                         message_sender: sender._id,
-                        message_content,
+                        message_content: message_content,
                         message_date_create: message_date_create || new Date(),
                         message_status: "sent",
-                    };
+                    });
 
-                    discussion.discussion_messages.push(newMessage);
                     await discussion.save();
+                }
 
-                    // Récupérer les socket IDs
-                    const socketIdPromises = discussion.discussion_members.map(
-                        async (member) => {
-                            return await SocketIdentificationService.getUserSocketId(
-                                member._id.toString()
+                // Récupérer les socket IDs des membres
+                console.log(
+                    "Discussion members:",
+                    discussion.discussion_members
+                );
+                const socketIdPromises = discussion.discussion_members.map(
+                    async (userId) => {
+                        const socketId =
+                            await SocketIdentificationService.getUserSocketId(
+                                userId.toString()
                             );
-                        }
-                    );
-                    const socketIds = (
-                        await Promise.all(socketIdPromises)
-                    ).filter(Boolean);
+                        console.log(`Socket ID for user ${userId}:`, socketId);
+                        return socketId;
+                    }
+                );
+                const socketIds = (await Promise.all(socketIdPromises)).filter(
+                    (id) => id !== null && id !== "none"
+                );
+                console.log("Valid socket IDs:", socketIds);
 
-                    responseMessage = {
-                        message_send_response: {
-                            etat: true,
+                // Préparer le message pour la réponse
+                const populatedDiscussion = await discussion.populate({
+                    path: "discussion_messages.message_sender",
+                    model: "User",
+                    select: "firstname lastname email picture",
+                });
+
+                const lastMessage =
+                    populatedDiscussion.discussion_messages[
+                        populatedDiscussion.discussion_messages.length - 1
+                    ];
+
+                // Envoyer la confirmation à l'expéditeur avec le message complet
+                const message = {
+                    message_send_response: {
+                        etat: true,
+                        message: {
+                            ...lastMessage.toObject(),
+                            message_sender: {
+                                _id: lastMessage.message_sender._id,
+                                firstname: lastMessage.message_sender.firstname,
+                                lastname: lastMessage.message_sender.lastname,
+                                email: lastMessage.message_sender.email,
+                                picture: lastMessage.message_sender.picture,
+                            },
+                        },
+                    },
+                    id: [mesg.id],
+                };
+                console.log("Sending message to sender:", message);
+                this.controleur.envoie(this, message);
+
+                // Filtrer les socket IDs pour exclure l'expéditeur
+                const otherMemberSocketIds = socketIds.filter(
+                    (id) => id !== mesg.id
+                );
+                console.log("Other member socket IDs:", otherMemberSocketIds);
+
+                // Envoyer le message aux autres membres seulement s'il y a des socket IDs valides
+                if (otherMemberSocketIds.length > 0) {
+                    const messageReceived = {
+                        message_received: {
                             message: {
-                                ...newMessage,
+                                ...lastMessage.toObject(),
                                 message_sender: {
-                                    _id: sender._id,
-                                    firstname: sender.firstname,
-                                    lastname: sender.lastname,
-                                    email: sender.email,
-                                    picture: sender.picture,
+                                    _id: lastMessage.message_sender._id,
+                                    firstname:
+                                        lastMessage.message_sender.firstname,
+                                    lastname:
+                                        lastMessage.message_sender.lastname,
+                                    email: lastMessage.message_sender.email,
+                                    picture: lastMessage.message_sender.picture,
                                 },
                             },
                         },
-                        id: socketIds,
+                        id: otherMemberSocketIds,
                     };
+                    console.log(
+                        "Sending message to other members:",
+                        messageReceived
+                    );
+                    this.controleur.envoie(this, messageReceived);
+                } else {
+                    console.log("No valid socket IDs found for other members");
                 }
-
-                this.controleur.envoie(this, responseMessage);
             } catch (error) {
                 console.error("Erreur lors de l'envoi du message:", error);
-                const errorMessage = {
+                const message = {
                     message_send_response: {
                         etat: false,
                         error: error.message,
                     },
                     id: [mesg.id],
                 };
-                this.controleur.envoie(this, errorMessage);
+                this.controleur.envoie(this, message);
             }
         }
         if (mesg.discuss_list_request) {
@@ -371,7 +382,7 @@ class MessagesService {
                 const message = {
                     discuss_list_response: {
                         etat: true,
-                        messages: formattedDiscussions,
+                        discussList: formattedDiscussions,
                     },
                     id: [mesg.id],
                 };

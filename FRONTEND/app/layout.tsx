@@ -1,27 +1,33 @@
-import type { Metadata } from "next"
-import "./globals.css"
-import "../styles/scrollbar.css"
+"use client";
 
-import { AppContextProvider } from "@/context/AppContext"
-import LayoutClient from "@/components/layoutClient"
-
-export const metadata: Metadata = {
-    title: "VisioConf",
-    description: "VisioConf 2024 - 2025",
-}
+import "../styles/scrollbar.css";
+import { Providers } from "@/providers";
+import { AppContextProvider } from "@/context/AppContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { Provider } from "react-redux";
+import { store } from "@/store/store";
+import LayoutClient from "@/components/layoutClient";
+import { GlobalStyles } from "@/components/GlobalStyles";
 
 export default function RootLayout({
     children,
-}: Readonly<{
-    children: React.ReactNode
-}>) {
+}: {
+    children: React.ReactNode;
+}) {
     return (
-        <html lang="fr">
+        <html lang="fr" suppressHydrationWarning>
             <body>
-                <AppContextProvider>
-                    <LayoutClient>{children}</LayoutClient>
-                </AppContextProvider>
+                <GlobalStyles />
+                <Provider store={store}>
+                    <Providers>
+                        <AppContextProvider>
+                            <NotificationProvider>
+                                <LayoutClient>{children}</LayoutClient>
+                            </NotificationProvider>
+                        </AppContextProvider>
+                    </Providers>
+                </Provider>
             </body>
         </html>
-    )
+    );
 }
