@@ -13,24 +13,22 @@ class TeamsService {
         "team_create_response",
         "team_update_response",
         "team_delete_response",
-        "team_join_response",
         "team_leave_response",
         "team_members_response",
         "team_add_member_response",
         "team_remove_member_response",
-        "all_teams_response"
+        "all_teams_response",
     ]
     listeDesMessagesRecus = [
         "teams_list_request",
         "team_create_request",
         "team_update_request",
         "team_delete_request",
-        "team_join_request",
         "team_leave_request",
         "team_members_request",
         "team_add_member_request",
         "team_remove_member_request",
-        "all_teams_request"
+        "all_teams_request",
     ]
 
     constructor(c, nom) {
@@ -76,10 +74,6 @@ class TeamsService {
             await this.handleTeamDelete(mesg)
         }
 
-        if (mesg.team_join_request) {
-            await this.handleTeamJoin(mesg)
-        }
-
         if (mesg.team_leave_request) {
             await this.handleTeamLeave(mesg)
         }
@@ -95,8 +89,8 @@ class TeamsService {
             await this.handleTeamRemoveMember(mesg)
         }
 
-        if(mesg.all_teams_request){
-            await this.getAllTeams(mesg);
+        if (mesg.all_teams_request) {
+            await this.getAllTeams(mesg)
         }
     }
 
@@ -452,93 +446,6 @@ class TeamsService {
         } catch (error) {
             const message = {
                 team_delete_response: {
-                    etat: false,
-                    error: error.message,
-                },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-    }
-
-    async handleTeamJoin(mesg) {
-        try {
-            const { teamId, inviteCode } = mesg.team_join_request
-
-            // Get user info from socket ID
-            const socketId = mesg.id
-            const userInfo =
-                await SocketIdentificationService.getUserInfoBySocketId(
-                    socketId
-                )
-
-            if (!userInfo) {
-                throw new Error("Utilisateur non authentifié")
-            }
-
-            // Check if team exists
-            const team = await Team.findById(teamId)
-
-            if (!team) {
-                throw new Error("Équipe non trouvée")
-            }
-
-            // Check if user is already a member
-            const existingMember = await TeamMember.findOne({
-                teamId,
-                userId: userInfo._id,
-            })
-
-            if (existingMember) {
-                throw new Error("Vous êtes déjà membre de cette équipe")
-            }
-
-            // Add user as member
-            const member = new TeamMember({
-                teamId,
-                userId: userInfo._id,
-                role: "member",
-                joinedAt: new Date(),
-            })
-
-            await member.save()
-
-            // Add user to all public channels in the team
-            const publicChannels = await Channel.find({
-                teamId,
-                isPublic: true,
-            })
-
-            for (const channel of publicChannels) {
-                const channelMember = new ChannelMember({
-                    channelId: channel._id,
-                    userId: userInfo._id,
-                    role: "member",
-                    joinedAt: new Date(),
-                })
-
-                await channelMember.save()
-            }
-
-            const message = {
-                team_join_response: {
-                    etat: true,
-                    teamId,
-                    member: {
-                        id: member._id,
-                        teamId: member.teamId,
-                        userId: member.userId,
-                        role: member.role,
-                        joinedAt: member.joinedAt,
-                    },
-                },
-                id: [mesg.id],
-            }
-
-            this.controleur.envoie(this, message)
-        } catch (error) {
-            const message = {
-                team_join_response: {
                     etat: false,
                     error: error.message,
                 },
@@ -904,30 +811,30 @@ class TeamsService {
         }
     }
 
-    async getAllTeams(mesg){
+    async getAllTeams(mesg) {
         try {
             const teams = await Team.aggregate([
-            {
-                $lookup: {
-                from: 'teammembers',
-                localField: '_id',
-                foreignField: 'teamId',
-                as: 'members'
-                }
-            },
-            {
-                $project: {
-                _id: 1,
-                name: 1,
-                numberOfParticipants: { $size: '$members' }
-                }
-            }
-            ]);
-            
+                {
+                    $lookup: {
+                        from: "teammembers",
+                        localField: "_id",
+                        foreignField: "teamId",
+                        as: "members",
+                    },
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        name: 1,
+                        numberOfParticipants: { $size: "$members" },
+                    },
+                },
+            ])
+
             const message = {
                 all_teams_response: {
                     etat: true,
-                    teams
+                    teams,
                 },
                 id: [mesg.id],
             }
