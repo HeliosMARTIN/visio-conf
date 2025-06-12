@@ -14,7 +14,6 @@ class ChannelsService {
         "channel_create_response",
         "channel_update_response",
         "channel_delete_response",
-        "channel_join_response",
         "channel_leave_response",
         "channel_members_response",
         "channel_add_member_response",
@@ -28,7 +27,6 @@ class ChannelsService {
         "channel_create_request",
         "channel_update_request",
         "channel_delete_request",
-        "channel_join_request",
         "channel_leave_request",
         "channel_members_request",
         "channel_add_member_request",
@@ -79,10 +77,6 @@ class ChannelsService {
 
         if (mesg.channel_delete_request) {
             await this.handleChannelDelete(mesg)
-        }
-
-        if (mesg.channel_join_request) {
-            await this.handleChannelJoin(mesg)
         }
 
         if (mesg.channel_leave_request) {
@@ -418,83 +412,6 @@ class ChannelsService {
         } catch (error) {
             const message = {
                 channel_delete_response: {
-                    etat: false,
-                    error: error.message,
-                },
-                id: [mesg.id],
-            }
-            this.controleur.envoie(this, message)
-        }
-    }
-
-    async handleChannelJoin(mesg) {
-        try {
-            const { channelId } = mesg.channel_join_request
-
-            // Get user info from socket ID
-            const socketId = mesg.id
-            const userInfo =
-                await SocketIdentificationService.getUserInfoBySocketId(
-                    socketId
-                )
-
-            if (!userInfo) {
-                throw new Error("Utilisateur non authentifié")
-            }
-
-            // Check if channel exists and is public
-            const channel = await Channel.findById(channelId)
-
-            if (!channel) {
-                throw new Error("Canal non trouvé")
-            }
-
-            if (!channel.isPublic) {
-                throw new Error(
-                    "Vous ne pouvez pas rejoindre un canal privé sans invitation"
-                )
-            }
-
-            // Check if user is already a member
-            const existingMember = await ChannelMember.findOne({
-                channelId,
-                userId: userInfo._id,
-            })
-
-            if (existingMember) {
-                throw new Error("Vous êtes déjà membre de ce canal")
-            }
-
-            // Add user as member
-            const member = new ChannelMember({
-                channelId,
-                userId: userInfo._id,
-                role: "member",
-                joinedAt: new Date(),
-            })
-
-            await member.save()
-
-            const message = {
-                channel_join_response: {
-                    etat: true,
-                    channelId,
-                    member: {
-                        id: member._id,
-                        _id: member._id,
-                        channelId: member.channelId,
-                        userId: member.userId,
-                        role: member.role,
-                        joinedAt: member.joinedAt,
-                    },
-                },
-                id: [mesg.id],
-            }
-
-            this.controleur.envoie(this, message)
-        } catch (error) {
-            const message = {
-                channel_join_response: {
                     etat: false,
                     error: error.message,
                 },

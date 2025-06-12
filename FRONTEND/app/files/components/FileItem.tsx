@@ -22,9 +22,8 @@ import {
     Share2,
     Move,
 } from "lucide-react"
-import { formatFileSize, formatDate, getLink } from "../../../utils/fileHelpers"
+import { formatFileSize, formatDate } from "../../../utils/fileHelpers"
 import { useAppContext } from "@/context/AppContext"
-import Cookies from "js-cookie"
 
 interface FileItemProps {
     file: FileItemType
@@ -47,8 +46,6 @@ export default function FileItem({
     onRename,
     onMove,
     onShare,
-    userTeams = [],
-    onShareToTeam,
     isSharedView = false,
 }: FileItemProps) {
     const [isHovered, setIsHovered] = useState(false)

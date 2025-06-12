@@ -47,7 +47,6 @@ export const ListeMessagesEmis = [
     "channel_create_request", // { name: string, teamId: string, isPublic: boolean, members?: string[] }
     "channel_update_request", // { id: string, name?: string, isPublic?: boolean }
     "channel_delete_request", // { channelId: string }
-    "channel_join_request", // { channelId: string }
     "channel_leave_request", // { channelId: string }
     "channel_members_request", // { channelId: string }
     "channel_add_member_request", // { channelId: string, userId: string }
@@ -61,7 +60,6 @@ export const ListeMessagesEmis = [
     "team_create_request", // { name: string, description?: string, picture?: string, members?: string[] }
     "team_update_request", // { teamId: string, name?: string, description?: string, picture?: string }
     "team_delete_request", // { teamId: string }
-    "team_join_request", // { teamId: string }
     "team_leave_request", // { teamId: string }
     "team_members_request", // { teamId: string }
     "team_add_member_request", // { teamId: string, userId: string }
@@ -120,7 +118,6 @@ export const ListeMessagesRecus = [
     "channel_create_response", // { etat: boolean, channel?: Channel, error?: string }
     "channel_update_response", // { etat: boolean, channel?: Channel, error?: string }
     "channel_delete_response", // { etat: boolean, channelId?: string, error?: string }
-    "channel_join_response", // { etat: boolean, channelId?: string, member?: ChannelMember, error?: string }
     "channel_leave_response", // { etat: boolean, channelId?: string, error?: string }
     "channel_members_response", // { etat: boolean, channelId?: string, members?: ChannelMember[], error?: string }
     "channel_add_member_response", // { etat: boolean, channelId?: string, member?: ChannelMember, error?: string }
@@ -134,7 +131,6 @@ export const ListeMessagesRecus = [
     "team_create_response", // { etat: boolean, team?: Team, error?: string }
     "team_update_response", // { etat: boolean, team?: Team, error?: string }
     "team_delete_response", // { etat: boolean, teamId?: string, error?: string }
-    "team_join_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
     "team_leave_response", // { etat: boolean, teamId?: string, error?: string }
     "team_members_response", // { etat: boolean, teamId?: string, members?: TeamMember[], error?: string }
     "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
