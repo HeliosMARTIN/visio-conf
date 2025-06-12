@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import styles from "./TeamDisplay.module.css"
 import router from "next/router";
 import { Pencil, Trash2, Copy } from "lucide-react";
-import { Role } from "@/types/Role";
 import TeamListDisplay from "./TeamListDisplay";
-// import addUpdateTeam from "./addUpdateTeam";
 import CustomSnackBar from "../../SnackBar";
 import { AllTeam } from "@/types/Team";
 import AddUpdateTeam from "./AddUpdateTeam";
