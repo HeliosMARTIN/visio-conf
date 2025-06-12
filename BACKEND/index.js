@@ -18,6 +18,7 @@ import LocalFileService from "./services/LocalFileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
 import fileRoutes from "./routes/files.js"
+import User from "./models/user.js"
 
 dotenv.config()
 
