@@ -25,23 +25,32 @@ do {
 
 if ($choice -eq "1") {
     Write-Color ">> Mode Docker selectionne" Cyan
-    
-    # Verifier Docker
+      # Verifier Docker
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
         Write-Color "X Docker non detecte. Installez Docker Desktop : https://www.docker.com/products/docker-desktop" Red
-        Read-Host "`nAppuyez sur Entree pour quitter"
         exit 1
     }
 
     # Docker Compose
-    if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
-        Write-Color "X Docker Compose manquant." Red
-        Read-Host "`nAppuyez sur Entree pour quitter"
-        exit 1    }
-
-    # Arreter les conteneurs existants
+    if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {        Write-Color "X Docker Compose manquant." Red
+        exit 1
+    }    # Arreter les conteneurs existants
     Write-Color ">> Arret des conteneurs existants..." Yellow
-    docker-compose down
+    docker-compose down 2>$null
+
+    # Vérifier que Docker Desktop fonctionne
+    Write-Color ">> Verification de Docker Desktop..." Yellow
+    try {
+        docker info >$null 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Color "X Docker Desktop ne semble pas fonctionner correctement." Red
+            Write-Color ">> Assurez-vous que Docker Desktop est lance et que le partage de fichiers est active." Yellow
+            exit 1
+        }
+    } catch {
+        Write-Color "X Impossible de communiquer avec Docker." Red
+        exit 1
+    }
 
     # Construire et demarrer les conteneurs
     Write-Color ">> Construction et demarrage des conteneurs..." Yellow
@@ -64,13 +73,13 @@ if ($choice -eq "1") {
 }
 else {
     Write-Color ">> Mode installation locale selectionne" Cyan
-    
-    # Verification Node.js
+      # Verification Node.js
     if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
         Write-Color "X Node.js non detecte. Telechargez-le sur https://nodejs.org/" Red
-        Read-Host "`nAppuyez sur Entree pour quitter"
         exit 1
-    }    # Verification MongoDB et mongosh
+    }
+    
+    # Verification MongoDB et mongosh
     $mongoAvailable = $false
     
     # Essayer mongosh d'abord (nouveau shell MongoDB)
@@ -99,12 +108,11 @@ else {
         Write-Color "Pour l'installation locale, vous devez installer :" Yellow
         Write-Color "  1. MongoDB Community Server : https://www.mongodb.com/try/download/community" Yellow
         Write-Color "  2. MongoDB Shell (mongosh) : https://www.mongodb.com/try/download/shell" Yellow
-        Write-Color "  3. Demarrer le service MongoDB" Yellow
-        Write-Color "  4. Ajouter mongosh au PATH" Yellow
+        Write-Color "  3. Demarrer le service MongoDB" Yellow        Write-Color "  4. Ajouter mongosh au PATH" Yellow
         Write-Color "" White
         Write-Color "Alternative : Utilisez Docker (option 1) pour eviter cette configuration." Cyan
-        Read-Host "`nAppuyez sur Entree pour quitter"
-        exit 1    }
+        exit 1
+    }
 
     # Backend - Installation des dependances
     Write-Color ">> Installation des dependances du backend..." Yellow
@@ -145,11 +153,8 @@ else {
     
     # Demarrer le frontend
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptDir\FRONTEND'; Write-Host 'Demarrage du frontend...' -ForegroundColor Green; npm run dev"
-    
-    Write-Color "`n** Application en cours de lancement..." Green
+      Write-Color "`n** Application en cours de lancement..." Green
     Write-Color "** Frontend: http://localhost:3000" Cyan
     Write-Color "**  Backend: http://localhost:3220" Cyan
     Write-Color "** Connexion suggeree: john.doe@example.com | mdp" Yellow
 }
-
-Read-Host "`nAppuyez sur Entree pour quitter"
