@@ -9,7 +9,7 @@ Application web de visioconférence inspirée de Discord/Teams, développée dan
 ### 🏗️ Architecture
 
 -   **Frontend** (`FRONTEND/`) : Interface utilisateur avec Next.js + TypeScript
--   **Backend** (`BACKEND/`) : API REST + WebSocket avec Express.js et Socket.io
+-   **Backend** (`BACKEND/`) : Controller + WebSocket avec Express.js et Socket.io
 -   **Base de données** : MongoDB pour la persistance des données
 -   **Stockage** : Système de fichiers local pour les uploads
 
