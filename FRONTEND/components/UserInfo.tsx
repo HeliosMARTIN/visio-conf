@@ -8,9 +8,14 @@ import { Mail, Phone, MessageCircle } from "lucide-react";
 interface UserInfoProps {
   user: User;
   currentUserEmail: string;
+  onMessageUser?: (user: User) => void;
 }
 
-export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
+export default function UserInfo({
+  user,
+  currentUserEmail,
+  onMessageUser,
+}: UserInfoProps) {
   const [isHovered, setIsHovered] = useState(false);
   const isCurrentUser = user.email === currentUserEmail;
 
@@ -45,6 +50,12 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
   };
 
   const avatarColor = getColorFromName(fullName);
+
+  const handleMessageClick = () => {
+    if (onMessageUser) {
+      onMessageUser(user);
+    }
+  };
 
   return (
     <motion.li
@@ -84,7 +95,11 @@ export default function UserInfo({ user, currentUserEmail }: UserInfoProps) {
         animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
         transition={{ duration: 0.2 }}
       >
-        <button className={styles.actionButton} aria-label="Message">
+        <button
+          className={styles.actionButton}
+          aria-label="Message"
+          onClick={handleMessageClick}
+        >
           <MessageCircle size={18} />
           <span>Message</span>
         </button>
