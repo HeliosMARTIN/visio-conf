@@ -6,8 +6,8 @@ import { Discussion } from "@/types/Discussion";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import "./DiscussList.css";
-import { FilePlus2 } from "lucide-react"
-import { get } from "http";
+import { FilePlus2 } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 // Modifier d'abord l'interface pour accepter l'email
 interface DiscussionsListProps {
@@ -28,76 +28,108 @@ const DiscussionsList: React.FC<DiscussionsListProps> = ({
     onSelectDiscussion,
     selectedDiscussionId,
     onNewDiscussClick,
-    removeDiscussion
+    removeDiscussion,
 }) => {
+    const { controleur } = useAppContext();
+    const nomDInstance = "DiscussionsList";
+
+    const handler = {
+        nomDInstance,
+        traitementMessage: (msg: any) => {
+            if (msg.discuss_remove_member_response) {
+                if (!msg.discuss_remove_member_response.etat) {
+                    console.error(
+                        "Erreur lors de la suppression:",
+                        msg.discuss_remove_member_response.error
+                    );
+                }
+            }
+        },
+    };
+
+    useEffect(() => {
+        if (controleur) {
+            controleur.inscription(
+                handler,
+                ["discuss_remove_member_response"],
+                []
+            );
+        }
+        return () => {
+            if (controleur) {
+                controleur.desincription(
+                    handler,
+                    ["discuss_remove_member_response"],
+                    []
+                );
+            }
+        };
+    }, [controleur]);
+
     console.log("Rendering DiscussionsList", discussions);
     const getDiscussionName = (discussion: Discussion): string => {
         // Initial debug logs
-        console.log('=== GetDiscussionName Debug ===');
-        console.log('Discussion:', discussion);
-        console.log('CurrentUserId:', currentUserId);
+        console.log("=== GetDiscussionName Debug ===");
+        console.log("Discussion:", discussion);
+        console.log("CurrentUserId:", currentUserId);
 
         // Vérification de sécurité
         if (!discussion || !discussion.discussion_members) {
-            console.log('Discussion or members missing:', { discussion });
+            console.log("Discussion or members missing:", { discussion });
             return "Discussion sans nom";
         }
 
-        if (discussion.discussion_type === "group" && discussion.discussion_name) {
-            console.log('Group discussion with name:', discussion.discussion_name);
+        // Si c'est une discussion de groupe avec un nom, utiliser ce nom
+        if (
+            discussion.discussion_type === "group" &&
+            discussion.discussion_name
+        ) {
+            console.log(
+                "Group discussion with name:",
+                discussion.discussion_name
+            );
             return discussion.discussion_name;
         }
 
-        // Vérification que discussion_members est un tableau
-        if (!Array.isArray(discussion.discussion_members)) {
-            console.log('Discussion members is not an array:', discussion.discussion_members);
-            return "Discussion sans nom";
+        // Pour une discussion 1-1, n'afficher que le nom de l'autre personne
+        if (discussion.discussion_type === "direct") {
+            const otherMember = discussion.discussion_members.find(
+                (member) => member._id !== currentUserId
+            );
+            if (otherMember) {
+                return `${otherMember.firstname} ${otherMember.lastname}`;
+            }
         }
 
-        console.log('Discussion members:', discussion.discussion_members);
-
+        // Fallback pour les autres cas
         const otherMembers = discussion.discussion_members
-        .filter(member => {
-            console.log('Filtering member:', {
-                member,
-                memberId: member._id,
-                currentUserId,
-                isOtherMember: member._id !== currentUserId
-            });
-            return member && member._id !== currentUserId;
-        })
-        .map(member => {
-            console.log('Mapping member name:', `${member.firstname} ${member.lastname}`);
-            return `${member.firstname} ${member.lastname}`;
-        })
-        .join(", ");
+            .filter((member) => member && member._id !== currentUserId)
+            .map((member) => `${member.firstname} ${member.lastname}`)
+            .join(", ");
 
-        console.log('Final other members:', otherMembers);
         return otherMembers || "Discussion sans nom";
     };
     const formatDate = (dateString: string): string => {
         try {
             return formatDistanceToNow(new Date(dateString), {
                 addSuffix: false,
-                locale: fr
+                locale: fr,
             });
-            
         } catch (error) {
             return "";
         }
     };
-    
 
     if (!Array.isArray(discussions)) {
         return <p className="no-discussions">Aucune discussion disponible.</p>;
     }
 
-
-
     const customMenuRef = useRef<HTMLDivElement>(null);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [isMenuVisible, setIsMenuVisible] = useState(false);
-    const [selectedMenuDiscussionId, setSelectedMenuDiscussionId] = useState<string | null>(null);
+    const [selectedMenuDiscussionId, setSelectedMenuDiscussionId] = useState<
+        string | null
+    >(null);
 
     useEffect(() => {
         const handleClick = () => setIsMenuVisible(false);
@@ -112,34 +144,72 @@ const DiscussionsList: React.FC<DiscussionsListProps> = ({
         setIsMenuVisible(true);
     };
 
+    const handleRemoveDiscussion = async (discussionId: string) => {
+        if (!controleur || !currentUserId) return;
+
+        const message = {
+            discuss_remove_member_request: [currentUserId, discussionId],
+        };
+
+        try {
+            controleur.envoie(handler, message);
+            // Retirer immédiatement la discussion de la liste locale
+            removeDiscussion(discussionId);
+            // Si la discussion sélectionnée est celle qu'on supprime, la désélectionner
+            if (selectedDiscussionId === discussionId) {
+                onSelectDiscussion("");
+            }
+        } catch (error) {
+            console.error(
+                "Erreur lors de la suppression de la discussion:",
+                error
+            );
+        }
+    };
+
     return (
         <div className="discussions-list">
             {isMenuVisible && (
                 <div
                     className="custom-menu"
                     ref={customMenuRef}
-                    style={{ top: `${menuPosition.y}px`, left: `${menuPosition.x}px`, position: 'absolute', display: 'block', zIndex: 1000 }}
+                    style={{
+                        top: `${menuPosition.y}px`,
+                        left: `${menuPosition.x}px`,
+                        position: "absolute",
+                        display: "block",
+                        zIndex: 1000,
+                    }}
                 >
-                    <button onClick={() => {
-                        if (selectedMenuDiscussionId) {
-                            removeDiscussion(selectedMenuDiscussionId);
-                        }
-                        setIsMenuVisible(false);
-                    }}>
-                        Supprimer la conversation
+                    <button
+                        onClick={() => {
+                            if (selectedMenuDiscussionId) {
+                                handleRemoveDiscussion(
+                                    selectedMenuDiscussionId
+                                );
+                            }
+                            setIsMenuVisible(false);
+                        }}
+                    >
+                        Quitter la conversation
                     </button>
                 </div>
             )}
-            <h1>Messages <span>({discussions.length})</span></h1>
+            <h1>
+                Messages <span>({discussions.length})</span>
+            </h1>
             <div className="search-bar">
-                <input placeholder="Rechercher une conversation..." type="text" /> 
-                <FilePlus2 
-                    className="new-discuss" 
-                    strokeWidth={1.5} 
-                    color="#636363" 
-                    size={26} 
+                <input
+                    placeholder="Rechercher une conversation..."
+                    type="text"
+                />
+                <FilePlus2
+                    className="new-discuss"
+                    strokeWidth={1.5}
+                    color="#636363"
+                    size={26}
                     onClick={onNewDiscussClick}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                 />
             </div>
             <div>
@@ -147,24 +217,39 @@ const DiscussionsList: React.FC<DiscussionsListProps> = ({
                     discussions.map((discussion) => (
                         <div
                             key={discussion?.discussion_uuid || Math.random()}
-                            className={`discussion-item ${selectedDiscussionId === discussion?.discussion_uuid ? 'selected' : ''}`}
-                            onClick={() => discussion?.discussion_uuid && onSelectDiscussion(discussion.discussion_uuid)}
-                            onContextMenu={(e) => handleContextMenu(e, discussion.discussion_uuid)}
+                            className={`discussion-item ${
+                                selectedDiscussionId ===
+                                discussion?.discussion_uuid
+                                    ? "selected"
+                                    : ""
+                            }`}
+                            onClick={() =>
+                                discussion?.discussion_uuid &&
+                                onSelectDiscussion(discussion.discussion_uuid)
+                            }
+                            onContextMenu={(e) =>
+                                handleContextMenu(e, discussion.discussion_uuid)
+                            }
                         >
-                            <img src="/images/default_profile_picture.png" alt="" />
+                            <img
+                                src="/images/default_profile_picture.png"
+                                alt=""
+                            />
                             <div className="discussion-item-content">
                                 <div className="discussion-header">
                                     <h3>{getDiscussionName(discussion)}</h3>
                                     {discussion?.last_message && (
                                         <span className="discussion-date">
-                                            {formatDate(discussion.last_message.message_date_create)}
+                                            {formatDate(
+                                                discussion.last_message
+                                                    .message_date_create
+                                            )}
                                         </span>
                                     )}
                                 </div>
                                 <p className="discussion-preview">
-                                    {discussion?.last_message?.message_content ||
-                                        "Pas de messages"
-                                    }
+                                    {discussion?.last_message
+                                        ?.message_content || "Pas de messages"}
                                 </p>
                             </div>
                         </div>

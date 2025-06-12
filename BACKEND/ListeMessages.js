@@ -9,6 +9,7 @@ export const ListeMessagesEmis = [
     "users_list_request", // No data
     "messages_get_request", // { userEmail: string | undefined, otherUserEmail: string }
     "message_send_request", // { userEmail: string, otherUserEmail: string, text: string }
+    "message_received", // { message: Message } - Message reçu en temps réel
     "upload_request", // { media: string }
     "update_user_status_request", // {user_id : ObjectId, action : string}
     "update_user_roles_request", // {user_id : ObjectId, roles : Role._id[]}
@@ -65,7 +66,15 @@ export const ListeMessagesEmis = [
     "team_add_member_request", // { teamId: string, userId: string }
     "team_remove_member_request", // { teamId: string, userId: string }
     "all_teams_request", // No data
-]
+    //---- NOTIFICATIONS ----
+    "notifications_list_request", // { limit?: number, unreadOnly?: boolean, type?: string }
+    "notification_create_request", // { userId: string, type: string, title: string, message: string, data?: any, isPersistent?: boolean, priority?: string, actionUrl?: string, actionText?: string, expiresAt?: Date }
+    "notification_mark_read_request", // { notificationIds: string[] }
+    "notification_delete_request", // { notificationId: string }
+    "notification_settings_request", // No data
+    "notification_settings_update_request", // { any notification settings fields }
+    "notification_count_request", // No data
+];
 
 /**
  * Liste des messages reçus
@@ -78,6 +87,7 @@ export const ListeMessagesRecus = [
     "users_list_response", // { etat: boolean, users?: User[], error?: string }=
     "messages_get_response", // { etat: boolean, messages?: Message[], error?: string }
     "message_send_response", // { etat: boolean, error?: string }
+    "message_received", // { message: Message } - Message reçu en temps réel
     "upload_response", // { etat: boolean, error?: string, url?: string }
     "update_user_response", // { etat: boolean, newUserInfo: User | null,  error?: string }
     "update_user_status_response", // {etat: boolean, action : string}
@@ -136,4 +146,13 @@ export const ListeMessagesRecus = [
     "team_add_member_response", // { etat: boolean, teamId?: string, member?: TeamMember, error?: string }
     "team_remove_member_response", // { etat: boolean, teamId?: string, userId?: string, error?: string }
     "all_teams_response", // No data
-]
+    //---- NOTIFICATIONS ----
+    "notifications_list_response", // { etat: boolean, notifications?: Notification[], error?: string }
+    "notification_create_response", // { etat: boolean, notification?: Notification, error?: string }
+    "notification_mark_read_response", // { etat: boolean, notificationIds?: string[], error?: string }
+    "notification_delete_response", // { etat: boolean, notificationId?: string, error?: string }
+    "notification_settings_response", // { etat: boolean, settings?: NotificationSettings, error?: string }
+    "notification_settings_update_response", // { etat: boolean, settings?: NotificationSettings, error?: string }
+    "notification_count_response", // { etat: boolean, count?: NotificationCount, error?: string }
+    "notification_received", // { notification: Notification }
+];

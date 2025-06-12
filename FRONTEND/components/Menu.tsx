@@ -1,17 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import styles from "./Menu.module.css"
-import { useAppContext } from "@/context/AppContext"
-import ProfilPopUp from "../components/ProfilPopUp"
-import { UserRoundCog } from "lucide-react"
-import { getProfilePictureUrl } from "@/utils/fileHelpers"
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import styles from "./Menu.module.css";
+import { useAppContext } from "@/context/AppContext";
+import ProfilPopUp from "../components/ProfilPopUp";
+import { UserRoundCog } from "lucide-react";
+import { getProfilePictureUrl } from "@/utils/fileHelpers";
+import { NotificationSystem } from "./notifications/NotificationSystem";
 
 export default function Menu({ children }: { children: React.ReactNode }) {
-    const { currentUser } = useAppContext()
-    const [collapsed, setCollapsed] = useState(true)
+    const { currentUser } = useAppContext();
+    const [collapsed, setCollapsed] = useState(true);
     return (
         <div className={styles.mainLayout}>
             <div
@@ -131,8 +132,27 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                                 </Link>
                             )}
                     </nav>
-                    <div className={styles.profileContainer}>
-                        {currentUser && <ProfilPopUp user={currentUser} />}
+                    <div className={styles.userSection}>
+                        <div className={styles.userInfo}>
+                            <Image
+                                src={getProfilePictureUrl(currentUser)}
+                                alt="Profile"
+                                width={32}
+                                height={32}
+                                className={styles.profilePicture}
+                            />
+                            {!collapsed && (
+                                <span className={styles.userName}>
+                                    {currentUser?.firstname}
+                                </span>
+                            )}
+                        </div>
+                        <div className={styles.userActions}>
+                            <NotificationSystem
+                                className={styles.notificationBell}
+                            />
+                            <ProfilPopUp />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,5 +164,5 @@ export default function Menu({ children }: { children: React.ReactNode }) {
                 {children}
             </div>
         </div>
-    )
+    );
 }

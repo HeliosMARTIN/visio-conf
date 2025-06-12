@@ -1,9 +1,14 @@
-import type { Metadata } from "next"
-import "./globals.css"
-import "../styles/scrollbar.css"
+"use client"
 
+import "../styles/scrollbar.css"
+import { Providers } from "@/providers"
 import { AppContextProvider } from "@/context/AppContext"
+import { NotificationProvider } from "@/context/NotificationContext"
+import { Provider } from "react-redux"
+import { store } from "@/store/store"
 import LayoutClient from "@/components/layoutClient"
+import { GlobalStyles } from "@/components/GlobalStyles"
+import { Metadata } from "next"
 
 export const metadata: Metadata = {
     title: "VisioConf",
@@ -17,15 +22,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
     children,
-}: Readonly<{
+}: {
     children: React.ReactNode
-}>) {
+}) {
     return (
-        <html lang="fr">
+        <html lang="fr" suppressHydrationWarning>
             <body>
-                <AppContextProvider>
-                    <LayoutClient>{children}</LayoutClient>
-                </AppContextProvider>
+                <GlobalStyles />
+                <Provider store={store}>
+                    <Providers>
+                        <AppContextProvider>
+                            <NotificationProvider>
+                                <LayoutClient>{children}</LayoutClient>
+                            </NotificationProvider>
+                        </AppContextProvider>
+                    </Providers>
+                </Provider>
             </body>
         </html>
     )

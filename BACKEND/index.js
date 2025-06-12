@@ -17,6 +17,7 @@ import SocketIdentificationService from "./services/SocketIdentification.js"
 import LocalFileService from "./services/LocalFileService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
+import NotificationsService from "./services/NotificationsService.js"
 import fileRoutes from "./routes/files.js"
 import User from "./models/user.js"
 
@@ -66,7 +67,7 @@ const io = new Server(server, {
 })
 
 io.on("connection", (socket) => {
-    socket.on("authenticate", async (token) => {
+    socket.on("authenticate", async (token, callback) => {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET)
             const userId = decoded.userId
@@ -81,19 +82,45 @@ io.on("connection", (socket) => {
 
             if (!userInfo) {
                 console.error(`Utilisateur non trouvé pour ID: ${userId}`)
+                if (callback) callback({ etat: false, error: "User not found" })
                 return
             }
 
-            await SocketIdentificationService.updateUserSocket(
-                userId,
-                socket.id,
-                userInfo // Passer les informations complètes de l'utilisateur
-            )
+            // Mettre à jour le socket et le statut de l'utilisateur
+            const updatedUserInfo =
+                await SocketIdentificationService.updateUserSocket(
+                    userId,
+                    socket.id,
+                    userInfo
+                )
+
+            if (!updatedUserInfo) {
+                console.error(
+                    `Échec de la mise à jour du socket pour l'utilisateur ${userId}`
+                )
+                if (callback)
+                    callback({ etat: false, error: "Failed to update socket" })
+                return
+            }
+
             console.log(
                 `Socket authentifié avec succès pour utilisateur ${userInfo.firstname} ${userInfo.lastname} (${userInfo.uuid}) avec socket id ${socket.id}`
             )
+
+            // Envoyer la confirmation avec les informations mises à jour
+            if (callback) {
+                callback({
+                    etat: true,
+                    newUserInfo: {
+                        ...updatedUserInfo,
+                        is_online: true,
+                        disturb_status: "available",
+                    },
+                })
+            }
         } catch (err) {
             console.error("Authentication failed:", err.message)
+            if (callback) callback({ etat: false, error: err.message })
         }
     })
 
@@ -140,6 +167,7 @@ new CanalSocketio(io, controleur, "canalsocketio")
 new LocalFileService(controleur, "LocalFileService") // New local file service
 new ChannelsService(controleur, "ChannelService")
 new TeamsService(controleur, "TeamsService")
+new NotificationsService(controleur, "NotificationsService")
 
 main().catch((err) => console.error("Error during startup:", err))
 

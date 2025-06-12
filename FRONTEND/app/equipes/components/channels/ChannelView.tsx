@@ -1,6 +1,6 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-import styles from "./ChannelView.module.css"
+"use client";
+import { useState, useEffect, useRef } from "react";
+import styles from "./ChannelView.module.css";
 import {
     Users,
     Send,
@@ -8,17 +8,18 @@ import {
     Lock,
     MessageSquare,
     Settings,
-} from "lucide-react"
-import PostItem from "./PostItem"
-import type { Channel } from "@/types/Channel"
-import { useAppContext } from "@/context/AppContext"
-import { getProfilePictureUrl } from "@/utils/fileHelpers"
+} from "lucide-react";
+import PostItem from "./PostItem";
+import type { Channel } from "@/types/Channel";
+import { useAppContext } from "@/context/AppContext";
+import { getProfilePictureUrl } from "@/utils/fileHelpers";
+import { useNotifications } from "@/components/notifications/NotificationSystem";
 
 interface ChannelViewProps {
-    channel: Channel
-    userId: string
-    onEditChannel: () => void
-    onChannelDeleted?: () => void
+    channel: Channel;
+    userId: string;
+    onEditChannel: () => void;
+    onChannelDeleted?: () => void;
 }
 
 export default function ChannelView({
@@ -27,20 +28,21 @@ export default function ChannelView({
     onEditChannel,
     onChannelDeleted,
 }: ChannelViewProps) {
-    const { controleur, canal } = useAppContext()
-    const [posts, setPosts] = useState<any[]>([])
-    const [members, setMembers] = useState<any[]>([])
-    const [newPostContent, setNewPostContent] = useState("")
-    const [isLoading, setIsLoading] = useState(true)
-    const [showMembers, setShowMembers] = useState(false)
+    const { controleur, canal } = useAppContext();
+    const { createNotification } = useNotifications();
+    const [posts, setPosts] = useState<any[]>([]);
+    const [members, setMembers] = useState<any[]>([]);
+    const [newPostContent, setNewPostContent] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [showMembers, setShowMembers] = useState(false);
     const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>(
         {}
-    )
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLInputElement>(null)
+    );
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-    const nomDInstance = "ChannelView"
-    const verbose = false
+    const nomDInstance = "ChannelView";
+    const verbose = false;
 
     const listeMessageEmis = [
         "channel_posts_request",
@@ -48,17 +50,17 @@ export default function ChannelView({
         "channel_post_create_request",
         "channel_post_response_create_request",
         "channel_delete_request",
-    ]
+    ];
     const listeMessageRecus = [
         "channel_posts_response",
         "channel_members_response",
         "channel_post_create_response",
         "channel_post_response_create_response",
         "channel_delete_response",
-    ]
+    ];
 
     // Assurons-nous que nous utilisons l'ID correct
-    const channelId = channel.id
+    const channelId = channel.id;
 
     // Ajout de la fonction utilitaire pour trier par createdAt (ordre décroissant)
     function sortByCreatedAtAsc<T extends { createdAt: string | Date }>(
@@ -68,7 +70,7 @@ export default function ChannelView({
             (a, b) =>
                 new Date(a.createdAt).getTime() -
                 new Date(b.createdAt).getTime()
-        )
+        );
     }
 
     const handler = {
@@ -78,7 +80,7 @@ export default function ChannelView({
                 console.log(
                     `INFO: (${nomDInstance}) - traitementMessage - `,
                     msg
-                )
+                );
 
             if (msg.channel_posts_response) {
                 if (msg.channel_posts_response.etat) {
@@ -86,38 +88,69 @@ export default function ChannelView({
                         sortByCreatedAtAsc(
                             msg.channel_posts_response.posts || []
                         )
-                    )
+                    );
                 } else {
                     console.error(
                         "Erreur lors de la récupération des posts:",
                         msg.channel_posts_response.error
-                    )
+                    );
+                    createNotification({
+                        type: "system",
+                        title: "Erreur",
+                        message: "Impossible de charger les posts du canal",
+                        priority: "high",
+                    });
                 }
-                setIsLoading(false)
+                setIsLoading(false);
             }
 
             if (msg.channel_members_response) {
                 if (msg.channel_members_response.etat) {
-                    setMembers(msg.channel_members_response.members || [])
+                    setMembers(msg.channel_members_response.members || []);
                 } else {
                     console.error(
                         "Erreur lors de la récupération des membres:",
                         msg.channel_members_response.error
-                    )
+                    );
                 }
             }
 
             if (msg.channel_post_create_response) {
                 if (msg.channel_post_create_response.etat) {
-                    const { post } = msg.channel_post_create_response
+                    const { post } = msg.channel_post_create_response;
                     setPosts((prevPosts) =>
                         sortByCreatedAtAsc([post, ...prevPosts])
-                    )
-                    setNewPostContent("")
+                    );
+                    setNewPostContent("");
+
+                    // Notifier les membres du canal du nouveau post
+                    const postAuthor = members.find((m) => m.id === userId);
+                    if (postAuthor) {
+                        members.forEach((member) => {
+                            if (member.id !== userId) {
+                                createNotification({
+                                    type: "channel_post",
+                                    title: `Nouveau post dans ${channel.name}`,
+                                    message: `${
+                                        postAuthor.firstname
+                                    } a posté : ${post.content.substring(
+                                        0,
+                                        100
+                                    )}${
+                                        post.content.length > 100 ? "..." : ""
+                                    }`,
+                                    priority: "medium",
+                                    actionUrl: `/equipes/channel/${channel.id}`,
+                                    actionText: "Voir le post",
+                                });
+                            }
+                        });
+                    }
+
                     if (messagesEndRef.current) {
                         messagesEndRef.current.scrollIntoView({
                             behavior: "smooth",
-                        })
+                        });
                     }
                 }
             }
@@ -125,7 +158,9 @@ export default function ChannelView({
             if (msg.channel_post_response_create_response) {
                 if (msg.channel_post_response_create_response.etat) {
                     const { postId, response } =
-                        msg.channel_post_response_create_response
+                        msg.channel_post_response_create_response;
+                    const post = posts.find((p) => p.id === postId);
+
                     setPosts((prevPosts) =>
                         prevPosts.map((post) => {
                             if (post.id === postId) {
@@ -135,42 +170,79 @@ export default function ChannelView({
                                         ...(post.responses || []),
                                         response,
                                     ]),
-                                }
+                                };
                             }
-                            return post
+                            return post;
                         })
-                    )
+                    );
+
+                    // Notifier l'auteur du post de la nouvelle réponse
+                    if (post && post.authorId !== userId) {
+                        const responder = members.find((m) => m.id === userId);
+                        if (responder) {
+                            createNotification({
+                                type: "channel_post",
+                                title: `Nouvelle réponse dans ${channel.name}`,
+                                message: `${
+                                    responder.firstname
+                                } a répondu à votre post : ${response.content.substring(
+                                    0,
+                                    100
+                                )}${
+                                    response.content.length > 100 ? "..." : ""
+                                }`,
+                                priority: "medium",
+                                actionUrl: `/equipes/channel/${channel.id}`,
+                                actionText: "Voir la réponse",
+                            });
+                        }
+                    }
                 }
             }
 
             if (msg.channel_delete_response) {
                 if (msg.channel_delete_response.etat) {
-                    console.log("Canal supprimé avec succès.")
-                    // Call the callback to notify parent component
+                    console.log("Canal supprimé avec succès.");
+                    createNotification({
+                        type: "system",
+                        title: "Canal supprimé",
+                        message: `Le canal ${channel.name} a été supprimé`,
+                        priority: "medium",
+                    });
                     if (onChannelDeleted) {
-                        onChannelDeleted()
+                        onChannelDeleted();
                     }
                 } else {
                     console.error(
                         "Erreur lors de la suppression du canal:",
                         msg.channel_delete_response.error
-                    )
+                    );
+                    createNotification({
+                        type: "system",
+                        title: "Erreur",
+                        message: "Impossible de supprimer le canal",
+                        priority: "high",
+                    });
                 }
             }
         },
-    }
+    };
 
     useEffect(() => {
         if (controleur && canal && channelId) {
-            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            controleur.inscription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            );
 
             // Récupérer les membres du canal
-            const membersRequest = { channel_members_request: { channelId } }
-            controleur.envoie(handler, membersRequest)
+            const membersRequest = { channel_members_request: { channelId } };
+            controleur.envoie(handler, membersRequest);
 
             // Récupérer les posts du canal
-            const postsRequest = { channel_posts_request: { channelId } }
-            controleur.envoie(handler, postsRequest)
+            const postsRequest = { channel_posts_request: { channelId } };
+            controleur.envoie(handler, postsRequest);
         }
 
         return () => {
@@ -179,59 +251,59 @@ export default function ChannelView({
                     handler,
                     listeMessageEmis,
                     listeMessageRecus
-                )
+                );
             }
-        }
-    }, [channelId, controleur, canal, onChannelDeleted])
+        };
+    }, [channelId, controleur, canal, onChannelDeleted]);
 
     // Focus sur l'input quand le composant est monté
     useEffect(() => {
         if (inputRef.current) {
-            inputRef.current.focus()
+            inputRef.current.focus();
         }
-    }, [])
+    }, []);
 
     // Scroll automatiquement vers le bas quand les posts changent
     useEffect(() => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [posts])
+    }, [posts]);
 
     const handleSubmitPost = () => {
-        if (!newPostContent.trim() || !userId) return
+        if (!newPostContent.trim() || !userId) return;
 
         const postRequest = {
             channel_post_create_request: {
                 channelId,
                 content: newPostContent,
             },
-        }
-        controleur?.envoie(handler, postRequest)
-    }
+        };
+        controleur?.envoie(handler, postRequest);
+    };
 
     const handleAddResponse = (postId: string, content: string) => {
-        if (!content.trim() || !userId) return
+        if (!content.trim() || !userId) return;
 
         const responseRequest = {
             channel_post_response_create_request: {
                 postId,
                 content,
             },
-        }
-        controleur?.envoie(handler, responseRequest)
-    }
+        };
+        controleur?.envoie(handler, responseRequest);
+    };
 
     const handleToggleResponses = (postId: string) => {
         setExpandedPosts((prev) => ({
             ...prev,
             [postId]: !prev[postId],
-        }))
-    }
+        }));
+    };
 
-    const isChannelCreator = channel.createdBy === userId
+    const isChannelCreator = channel.createdBy === userId;
 
-    const canPostMessage = isChannelCreator // Seul le créateur peut créer des posts
+    const canPostMessage = isChannelCreator; // Seul le créateur peut créer des posts
 
     return (
         <div className={styles.container}>
@@ -383,8 +455,8 @@ export default function ChannelView({
                         onChange={(e) => setNewPostContent(e.target.value)}
                         onKeyPress={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault()
-                                handleSubmitPost()
+                                e.preventDefault();
+                                handleSubmitPost();
                             }
                         }}
                     />
@@ -399,5 +471,5 @@ export default function ChannelView({
                 </div>
             )}
         </div>
-    )
+    );
 }

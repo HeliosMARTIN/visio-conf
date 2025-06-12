@@ -1,4 +1,4 @@
-import type { NextConfig } from "next"
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     eslint: {
@@ -6,6 +6,19 @@ const nextConfig: NextConfig = {
     },
     typescript: {
         ignoreBuildErrors: true,
+    },
+
+    // Configuration des images
+    images: {
+        domains: ["localhost"],
+        remotePatterns: [
+            {
+                protocol: "http",
+                hostname: "localhost",
+                port: "3220",
+                pathname: "/api/files/**",
+            },
+        ],
     },
 
     // Configuration pour supporter les adresses IP
@@ -28,8 +41,8 @@ const nextConfig: NextConfig = {
                     },
                 ],
             },
-        ]
+        ];
     },
-}
+};
 
-export default nextConfig
+export default nextConfig;

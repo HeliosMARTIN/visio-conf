@@ -1,31 +1,31 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-import FileExplorer from "./FileExplorer"
-import TeamSelector from "./TeamSelector"
-import { useAppContext } from "../../../context/AppContext"
-import type { FileItem } from "../../../types/File"
-import type { Team } from "../../../types/Team"
-import styles from "./TabbedFileExplorer.module.css"
+"use client";
+import { useState, useEffect, useRef } from "react";
+import FileExplorer from "./FileExplorer";
+import TeamSelector from "./TeamSelector";
+import { useAppContext } from "../../../context/AppContext";
+import type { FileItem } from "../../../types/File";
+import type { Team } from "../../../types/Team";
+import styles from "./TabbedFileExplorer.module.css";
 
 export default function TabbedFileExplorer() {
-    const { controleur, canal, currentUser } = useAppContext()
+    const { controleur, canal, currentUser } = useAppContext();
     const [activeTab, setActiveTab] = useState<"personal" | "shared">(
         "personal"
-    )
-    const [selectedTeamId, setSelectedTeamId] = useState<string>("")
+    );
+    const [selectedTeamId, setSelectedTeamId] = useState<string>("");
 
     // State for files and UI
-    const [files, setFiles] = useState<FileItem[]>([])
-    const [sharedFiles, setSharedFiles] = useState<FileItem[]>([])
-    const [isLoading, setIsLoading] = useState(false)
-    const [isSharedLoading, setIsSharedLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [files, setFiles] = useState<FileItem[]>([]);
+    const [sharedFiles, setSharedFiles] = useState<FileItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSharedLoading, setIsSharedLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [currentPath, setCurrentPath] = useState<
         { id?: string; name: string }[]
-    >([{ name: "Mes fichiers" }])
-    const [userTeams, setUserTeams] = useState<Team[]>([])
-    const [isTeamsLoading, setIsTeamsLoading] = useState(false) // Refs
-    const isInitialMount = useRef(true)
+    >([{ name: "Mes fichiers" }]);
+    const [userTeams, setUserTeams] = useState<Team[]>([]);
+    const [isTeamsLoading, setIsTeamsLoading] = useState(false); // Refs
+    const isInitialMount = useRef(true);
 
     // Message handlers
     const listeMessageEmis = [
@@ -38,7 +38,7 @@ export default function TabbedFileExplorer() {
         "file_share_to_team_request",
         "folder_create_request",
         "folders_list_request",
-    ]
+    ];
 
     const listeMessageRecus = [
         "files_list_response",
@@ -50,83 +50,87 @@ export default function TabbedFileExplorer() {
         "file_share_to_team_response",
         "folder_create_response",
         "folders_list_response",
-    ]
+    ];
 
     const handler = {
         nomDInstance: "TabbedFileExplorer",
         traitementMessage: (msg: any) => {
-            console.log("TabbedFileExplorer received message:", msg)
+            console.log("TabbedFileExplorer received message:", msg);
 
             // Handle files list response
             if (msg.files_list_response) {
-                setIsLoading(false)
+                setIsLoading(false);
                 if (msg.files_list_response.etat) {
-                    setFiles(msg.files_list_response.files || [])
-                    setError(null)
+                    setFiles(msg.files_list_response.files || []);
+                    setError(null);
                 } else {
                     setError(
                         `Échec de la récupération des fichiers: ${msg.files_list_response.error}`
-                    )
+                    );
                 }
             }
 
             // Handle shared files list response
             if (msg.shared_files_list_response) {
-                setIsSharedLoading(false)
+                setIsSharedLoading(false);
                 if (msg.shared_files_list_response.etat) {
-                    setSharedFiles(msg.shared_files_list_response.files || [])
-                    setError(null)
+                    setSharedFiles(msg.shared_files_list_response.files || []);
+                    setError(null);
                 } else {
                     setError(
                         `Échec de la récupération des fichiers partagés: ${msg.shared_files_list_response.error}`
-                    )
+                    );
                 }
             }
 
             // Handle teams list response
             if (msg.teams_list_response) {
-                setIsTeamsLoading(false)
+                setIsTeamsLoading(false);
                 if (msg.teams_list_response.etat) {
-                    setUserTeams(msg.teams_list_response.teams || [])
+                    setUserTeams(msg.teams_list_response.teams || []);
                 } else {
                     setError(
                         `Échec de la récupération des équipes: ${msg.teams_list_response.error}`
-                    )
+                    );
                 }
             }
 
             // Handle other responses
             if (msg.file_delete_response && msg.file_delete_response.etat) {
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             }
             if (msg.file_rename_response && msg.file_rename_response.etat) {
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             }
             if (msg.file_move_response && msg.file_move_response.etat) {
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             }
             if (
                 msg.file_share_to_team_response &&
                 msg.file_share_to_team_response.etat
             ) {
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             }
             if (msg.folder_create_response && msg.folder_create_response.etat) {
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             }
         },
-    } // Initialize handler and fetch initial data
+    }; // Initialize handler and fetch initial data
     useEffect(() => {
         if (controleur && canal && currentUser) {
-            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            controleur.inscription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            );
 
             // Fetch initial data only when user is authenticated
             if (isInitialMount.current) {
                 setTimeout(() => {
-                    fetchFiles()
-                    fetchTeams()
-                }, 200) // Slightly longer delay to ensure authentication is complete
-                isInitialMount.current = false
+                    fetchFiles();
+                    fetchTeams();
+                }, 200); // Slightly longer delay to ensure authentication is complete
+                isInitialMount.current = false;
             }
         }
 
@@ -136,90 +140,90 @@ export default function TabbedFileExplorer() {
                     handler,
                     listeMessageEmis,
                     listeMessageRecus
-                )
+                );
             }
-        }
-    }, [controleur, canal, currentUser]) // Add currentUser as dependency    // File management functions
+        };
+    }, [controleur, canal, currentUser]); // Add currentUser as dependency    // File management functions
     const fetchFiles = (folderId?: string) => {
-        if (!controleur || !currentUser) return
+        if (!controleur || !currentUser) return;
 
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
         try {
-            const message = { files_list_request: { folderId } }
-            controleur.envoie(handler, message)
+            const message = { files_list_request: { folderId } };
+            controleur.envoie(handler, message);
         } catch (err) {
             setError(
                 "Échec de la récupération des fichiers. Veuillez réessayer."
-            )
-            setIsLoading(false)
+            );
+            setIsLoading(false);
         }
-    }
+    };
 
     const fetchSharedFiles = (teamId?: string) => {
-        if (!controleur || !currentUser) return
+        if (!controleur || !currentUser) return;
 
-        setIsSharedLoading(true)
-        setError(null)
+        setIsSharedLoading(true);
+        setError(null);
 
         try {
-            const message = { shared_files_list_request: { teamId } }
-            controleur.envoie(handler, message)
+            const message = { shared_files_list_request: { teamId } };
+            controleur.envoie(handler, message);
         } catch (err) {
             setError(
                 "Échec de la récupération des fichiers partagés. Veuillez réessayer."
-            )
-            setIsSharedLoading(false)
+            );
+            setIsSharedLoading(false);
         }
-    }
+    };
 
     const fetchTeams = () => {
-        if (!controleur || !currentUser) return
+        if (!controleur || !currentUser) return;
 
-        setIsTeamsLoading(true)
+        setIsTeamsLoading(true);
         try {
-            const message = { teams_list_request: {} }
-            controleur.envoie(handler, message)
+            const message = { teams_list_request: {} };
+            controleur.envoie(handler, message);
         } catch (err) {
-            setError("Échec de la récupération des équipes.")
-            setIsTeamsLoading(false)
+            setError("Échec de la récupération des équipes.");
+            setIsTeamsLoading(false);
         }
-    }
+    };
 
     const navigateToFolder = (folderId?: string, folderName?: string) => {
         if (folderId && folderName) {
             setCurrentPath((prev) => [
                 ...prev,
                 { id: folderId, name: folderName },
-            ])
+            ]);
         }
-        fetchFiles(folderId)
-    }
+        fetchFiles(folderId);
+    };
 
     const navigateBack = () => {
         if (currentPath.length > 1) {
-            const newPath = currentPath.slice(0, -1)
-            setCurrentPath(newPath)
-            fetchFiles(newPath[newPath.length - 1]?.id)
+            const newPath = currentPath.slice(0, -1);
+            setCurrentPath(newPath);
+            fetchFiles(newPath[newPath.length - 1]?.id);
         }
-    }
+    };
 
     const navigateToPath = (index: number) => {
         if (index === -1) {
             // Navigate to root
-            setCurrentPath([{ name: "Mes fichiers" }])
-            fetchFiles()
+            setCurrentPath([{ name: "Mes fichiers" }]);
+            fetchFiles();
         } else {
             // Navigate to specific path index
-            const newPath = currentPath.slice(0, index + 1)
-            setCurrentPath(newPath)
-            fetchFiles(newPath[newPath.length - 1]?.id)
+            const newPath = currentPath.slice(0, index + 1);
+            setCurrentPath(newPath);
+            fetchFiles(newPath[newPath.length - 1]?.id);
         }
-    }
+    };
 
     const createFolder = (name: string) => {
-        if (!controleur) return
+        if (!controleur) return;
 
         try {
             const message = {
@@ -230,31 +234,31 @@ export default function TabbedFileExplorer() {
                             ? currentPath[currentPath.length - 1].id
                             : undefined,
                 },
-            }
-            controleur.envoie(handler, message)
+            };
+            controleur.envoie(handler, message);
         } catch (err) {
-            setError("Échec de la création du dossier. Veuillez réessayer.")
+            setError("Échec de la création du dossier. Veuillez réessayer.");
         }
-    }
+    };
 
     const uploadFile = async (file: File) => {
         if (!currentUser) {
-            setError("Utilisateur non connecté")
-            return
+            setError("Utilisateur non connecté");
+            return;
         }
 
         try {
-            const formData = new FormData()
-            formData.append("file", file)
+            const formData = new FormData();
+            formData.append("file", file);
 
             // Add parent folder ID if we're inside a folder
             const parentId =
                 currentPath.length > 1
                     ? currentPath[currentPath.length - 1].id
-                    : undefined
+                    : undefined;
 
             if (parentId) {
-                formData.append("parentId", parentId)
+                formData.append("parentId", parentId);
             }
 
             const response = await fetch(
@@ -264,140 +268,140 @@ export default function TabbedFileExplorer() {
                     body: formData,
                     credentials: "include",
                 }
-            )
+            );
 
             if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`)
+                throw new Error(`Erreur HTTP: ${response.status}`);
             }
 
-            const result = await response.json()
+            const result = await response.json();
 
             if (result.success) {
                 // Refresh the file list
-                fetchFiles(currentPath[currentPath.length - 1]?.id)
+                fetchFiles(currentPath[currentPath.length - 1]?.id);
             } else {
-                setError(result.error || "Erreur lors de l'upload")
+                setError(result.error || "Erreur lors de l'upload");
             }
         } catch (err) {
-            console.error("Upload error:", err)
-            setError("Échec du téléversement du fichier. Veuillez réessayer.")
+            console.error("Upload error:", err);
+            setError("Échec du téléversement du fichier. Veuillez réessayer.");
         }
-    }
+    };
 
     const deleteFile = (fileId: string) => {
-        if (!controleur) return // Check if user is owner of the file
+        if (!controleur) return; // Check if user is owner of the file
         const file =
             files.find((f) => f.id === fileId) ||
-            sharedFiles.find((f) => f.id === fileId)
+            sharedFiles.find((f) => f.id === fileId);
         if (file && currentUser && file.ownerId !== currentUser.uuid) {
-            setError("Vous n'avez pas l'autorisation de supprimer ce fichier.")
-            return
+            setError("Vous n'avez pas l'autorisation de supprimer ce fichier.");
+            return;
         }
 
         try {
-            const message = { file_delete_request: { fileId } }
-            controleur.envoie(handler, message)
+            const message = { file_delete_request: { fileId } };
+            controleur.envoie(handler, message);
         } catch (err) {
-            setError("Échec de la suppression du fichier. Veuillez réessayer.")
+            setError("Échec de la suppression du fichier. Veuillez réessayer.");
         }
-    }
+    };
 
     const renameFile = (fileId: string, newName: string) => {
-        if (!controleur) return // Check if user is owner of the file
+        if (!controleur) return; // Check if user is owner of the file
         const file =
             files.find((f) => f.id === fileId) ||
-            sharedFiles.find((f) => f.id === fileId)
+            sharedFiles.find((f) => f.id === fileId);
         if (file && currentUser && file.ownerId !== currentUser.uuid) {
-            setError("Vous n'avez pas l'autorisation de renommer ce fichier.")
-            return
+            setError("Vous n'avez pas l'autorisation de renommer ce fichier.");
+            return;
         }
 
         try {
-            const message = { file_rename_request: { fileId, newName } }
-            controleur.envoie(handler, message)
+            const message = { file_rename_request: { fileId, newName } };
+            controleur.envoie(handler, message);
         } catch (err) {
-            setError("Échec du renommage du fichier. Veuillez réessayer.")
+            setError("Échec du renommage du fichier. Veuillez réessayer.");
         }
-    }
+    };
 
     const moveFile = (fileId: string, newParentId: string) => {
-        if (!controleur) return // Check if user is owner of the file
+        if (!controleur) return; // Check if user is owner of the file
         const file =
             files.find((f) => f.id === fileId) ||
-            sharedFiles.find((f) => f.id === fileId)
+            sharedFiles.find((f) => f.id === fileId);
         if (file && currentUser && file.ownerId !== currentUser.uuid) {
-            setError("Vous n'avez pas l'autorisation de déplacer ce fichier.")
-            return
+            setError("Vous n'avez pas l'autorisation de déplacer ce fichier.");
+            return;
         }
 
         try {
-            const message = { file_move_request: { fileId, newParentId } }
-            controleur.envoie(handler, message)
+            const message = { file_move_request: { fileId, newParentId } };
+            controleur.envoie(handler, message);
         } catch (err) {
-            setError("Échec du déplacement du fichier. Veuillez réessayer.")
+            setError("Échec du déplacement du fichier. Veuillez réessayer.");
         }
-    }
+    };
 
     const shareToTeam = (fileId: string, teamId: string) => {
-        if (!controleur) return // Check if user is owner of the file
+        if (!controleur) return; // Check if user is owner of the file
         const file =
             files.find((f) => f.id === fileId) ||
-            sharedFiles.find((f) => f.id === fileId)
-        console.log("file:", file, "currentUser:", currentUser)
+            sharedFiles.find((f) => f.id === fileId);
+        console.log("file:", file, "currentUser:", currentUser);
         if (file && currentUser && file.ownerId !== currentUser.uuid) {
-            setError("Vous n'avez pas l'autorisation de partager ce fichier.")
-            return
+            setError("Vous n'avez pas l'autorisation de partager ce fichier.");
+            return;
         }
 
         try {
-            const message = { file_share_to_team_request: { fileId, teamId } }
-            controleur.envoie(handler, message)
+            const message = { file_share_to_team_request: { fileId, teamId } };
+            controleur.envoie(handler, message);
         } catch (err) {
             setError(
                 "Échec du partage du fichier à l'équipe. Veuillez réessayer."
-            )
+            );
         }
-    }
+    };
 
     const clearError = () => {
-        setError(null)
-    }
+        setError(null);
+    };
 
     const handleTabChange = (tab: "personal" | "shared") => {
-        setActiveTab(tab)
+        setActiveTab(tab);
         if (tab === "shared") {
-            fetchSharedFiles(selectedTeamId || undefined)
+            fetchSharedFiles(selectedTeamId || undefined);
         } else if (tab === "personal") {
-            fetchFiles()
+            fetchFiles();
         }
-    }
+    };
 
     const handleTeamFilter = (teamId: string) => {
-        setSelectedTeamId(teamId)
-        fetchSharedFiles(teamId || undefined)
-    }
+        setSelectedTeamId(teamId);
+        fetchSharedFiles(teamId || undefined);
+    };
 
     const handleOpenFile = (file: any) => {
         if (file.type === "folder") {
-            navigateToFolder(file.id, file.name)
+            navigateToFolder(file.id, file.name);
         }
-    }
+    };
 
     const handleNavigate = (folderId?: string) => {
         if (folderId) {
             // Find folder name from files
-            const folder = files.find((f) => f.id === folderId)
+            const folder = files.find((f) => f.id === folderId);
             if (folder) {
-                navigateToFolder(folderId, folder.name)
+                navigateToFolder(folderId, folder.name);
             }
         } else {
             // Navigate to root
-            setCurrentPath([{ name: "Mes fichiers" }])
-            fetchFiles()
+            setCurrentPath([{ name: "Mes fichiers" }]);
+            fetchFiles();
         }
         // Refresh files after navigation
-        setTimeout(() => fetchFiles(folderId), 100)
-    }
+        setTimeout(() => fetchFiles(folderId), 100);
+    };
 
     return (
         <div className={styles.container}>
@@ -481,39 +485,39 @@ export default function TabbedFileExplorer() {
                             // Only allow if user is owner
                             const file = sharedFiles.find(
                                 (f) => f.id === fileId
-                            )
+                            );
                             if (
                                 file &&
                                 currentUser &&
                                 file.ownerId === currentUser._id
                             ) {
-                                deleteFile(fileId)
+                                deleteFile(fileId);
                             }
                         }}
                         onRenameFile={(fileId: string, newName: string) => {
                             // Only allow if user is owner
                             const file = sharedFiles.find(
                                 (f) => f.id === fileId
-                            )
+                            );
                             if (
                                 file &&
                                 currentUser &&
                                 file.ownerId === currentUser._id
                             ) {
-                                renameFile(fileId, newName)
+                                renameFile(fileId, newName);
                             }
                         }}
                         onMoveFile={(fileId: string, newParentId: string) => {
                             // Only allow if user is owner
                             const file = sharedFiles.find(
                                 (f) => f.id === fileId
-                            )
+                            );
                             if (
                                 file &&
                                 currentUser &&
                                 file.ownerId === currentUser._id
                             ) {
-                                moveFile(fileId, newParentId)
+                                moveFile(fileId, newParentId);
                             }
                         }}
                         onNavigate={handleOpenFile}
@@ -522,13 +526,13 @@ export default function TabbedFileExplorer() {
                             // Only allow if user is owner
                             const file = sharedFiles.find(
                                 (f) => f.id === fileId
-                            )
+                            );
                             if (
                                 file &&
                                 currentUser &&
                                 file.ownerId === currentUser._id
                             ) {
-                                shareToTeam(fileId, teamId)
+                                shareToTeam(fileId, teamId);
                             }
                         }}
                         showUploadActions={false}
@@ -537,5 +541,5 @@ export default function TabbedFileExplorer() {
                 )}
             </div>
         </div>
-    )
+    );
 }

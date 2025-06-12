@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import styles from "./page.module.css"
-import { useAppContext } from "@/context/AppContext"
-import type { User } from "@/types/User"
-import type { Message } from "@/types/Message"
-import type { Call } from "@/types/Call"
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import styles from "./page.module.css";
+import { useAppContext } from "@/context/AppContext";
+import type { User } from "@/types/User";
+import type { Message } from "@/types/Message";
+import type { Call } from "@/types/Call";
 import {
     Bell,
     Clock,
@@ -24,54 +24,54 @@ import {
     FileText,
     Activity,
     Zap,
-} from "lucide-react"
-import { motion } from "framer-motion"
-import UserListAmis from "@/components/home/UserListAmis"
+} from "lucide-react";
+import { motion } from "framer-motion";
+import UserListAmis from "@/components/home/UserListAmis";
 
 // Type étendu pour inclure le statut
 interface ExtendedUser extends User {
-    status: "online" | "away" | "offline"
+    status: "online" | "away" | "offline";
 }
 
 export default function Home() {
-    const pathname = usePathname()
-    const router = useRouter()
-    const { controleur, canal, currentUser } = useAppContext()
-    const [users, setUsers] = useState<User[]>([])
-    const [error, setError] = useState("")
-    const [isLoading, setIsLoading] = useState(true)
-    const [messages, setMessages] = useState<Message[]>([])
-    const [calls, setCalls] = useState<Call[]>([])
-    const [searchQuery, setSearchQuery] = useState("")
-    const [filteredUsers, setFilteredUsers] = useState<ExtendedUser[]>([])
-    const [discussions, setDiscussions] = useState<any[]>([])
+    const pathname = usePathname();
+    const router = useRouter();
+    const { controleur, canal, currentUser } = useAppContext();
+    const [users, setUsers] = useState<User[]>([]);
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [calls, setCalls] = useState<Call[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filteredUsers, setFilteredUsers] = useState<ExtendedUser[]>([]);
+    const [discussions, setDiscussions] = useState<any[]>([]);
 
-    const nomDInstance = "HomePage"
-    const verbose = false
+    const nomDInstance = "HomePage";
+    const verbose = false;
 
     const listeMessageEmis = [
         "users_list_request",
         "messages_get_request",
         "calls_get_request",
         "discuss_list_request",
-    ]
+    ];
 
     const listeMessageRecus = [
         "users_list_response",
         "messages_get_response",
         "calls_get_response",
         "discuss_list_response",
-    ] // Fonction pour obtenir le statut réel des utilisateurs
+    ]; // Fonction pour obtenir le statut réel des utilisateurs
     const getActualStatus = (user: User): "online" | "away" | "offline" => {
-        if (user.disturb_status === "available") return "online"
-        if (user.disturb_status === "dnd") return "away"
-        return "offline"
-    } // Fonction pour extraire les contacts (utilisateurs avec qui on a des discussions)
+        if (user.disturb_status === "available") return "online";
+        if (user.disturb_status === "dnd") return "away";
+        return "offline";
+    }; // Fonction pour extraire les contacts (utilisateurs avec qui on a des discussions)
     const getContactsFromDiscussions = (allUsers: User[]) => {
         if (!currentUser || !discussions.length || !allUsers.length) {
-            return []
+            return [];
         }
-        const contactIds = new Set<string>()
+        const contactIds = new Set<string>();
 
         // Parcourir toutes les discussions pour trouver les contacts
         discussions.forEach((discussion: any) => {
@@ -80,28 +80,28 @@ export default function Home() {
                 Array.isArray(discussion.discussion_members)
             ) {
                 discussion.discussion_members.forEach((member: any) => {
-                    const memberId = member.id || member.uuid // Utiliser d'abord id (uuid), puis uuid en fallback
+                    const memberId = member.id || member.uuid; // Utiliser d'abord id (uuid), puis uuid en fallback
                     if (memberId && memberId !== currentUser.id) {
-                        contactIds.add(memberId)
+                        contactIds.add(memberId);
                     }
-                })
+                });
             }
-        })
+        });
 
         // Filtrer les utilisateurs pour ne garder que les contacts en utilisant les IDs
         const contacts = allUsers
             .filter((user: User) => {
                 // Vérifier avec id (uuid) pour compatibilité
-                const isContact = contactIds.has(user.id)
-                return isContact
+                const isContact = contactIds.has(user.id);
+                return isContact;
             })
             .map((user: User) => ({
                 ...user,
                 status: getActualStatus(user),
-            }))
+            }));
 
-        return contacts
-    } // Gestionnaire de messages du contrôleur
+        return contacts;
+    }; // Gestionnaire de messages du contrôleur
     const handler = {
         nomDInstance,
         traitementMessage: (msg: any) => {
@@ -110,22 +110,22 @@ export default function Home() {
                     console.log(
                         `INFO: (${nomDInstance}) - traitementMessage - `,
                         msg
-                    )
+                    );
                 }
 
                 if (msg.users_list_response) {
-                    setIsLoading(false)
+                    setIsLoading(false);
                     if (!msg.users_list_response.etat) {
                         setError(
                             `Erreur lors de la récupération des utilisateurs: ${msg.users_list_response.error}`
-                        )
+                        );
                     } else {
-                        const usersList = msg.users_list_response.users || []
-                        setUsers(usersList) // Mettre à jour les contacts si on a déjà les discussions
+                        const usersList = msg.users_list_response.users || [];
+                        setUsers(usersList); // Mettre à jour les contacts si on a déjà les discussions
                         if (currentUser && discussions.length > 0) {
                             const contactsWithDiscussions =
-                                getContactsFromDiscussions(usersList)
-                            setFilteredUsers(contactsWithDiscussions)
+                                getContactsFromDiscussions(usersList);
+                            setFilteredUsers(contactsWithDiscussions);
                         }
                     }
                 }
@@ -133,22 +133,22 @@ export default function Home() {
                     if (!msg.discuss_list_response.etat) {
                         setError(
                             `Erreur lors de la récupération des discussions: ${msg.discuss_list_response.error}`
-                        )
-                        setIsLoading(false)
-                        return
+                        );
+                        setIsLoading(false);
+                        return;
                     }
 
-                    setDiscussions(msg.discuss_list_response.messages || [])
+                    setDiscussions(msg.discuss_list_response.discussList || []);
 
                     // Mettre à jour les contacts après avoir reçu les discussions
                     if (users.length > 0) {
                         const contactsWithDiscussions =
-                            getContactsFromDiscussions(users)
-                        setFilteredUsers(contactsWithDiscussions)
+                            getContactsFromDiscussions(users);
+                        setFilteredUsers(contactsWithDiscussions);
                     }
 
                     // Pour chaque discussion, récupère les messages récents pour construire les contacts
-                    ;(msg.discuss_list_response.messages || []).forEach(
+                    (msg.discuss_list_response.discussList || []).forEach(
                         (discussion: any) => {
                             if (
                                 discussion.discussion_members &&
@@ -158,78 +158,81 @@ export default function Home() {
                                     messages_get_request: {
                                         convId: discussion.discussion_uuid,
                                     },
-                                })
+                                });
                             }
                         }
-                    )
+                    );
                 }
 
                 if (msg.messages_get_response) {
                     // Fusionne les messages de toutes les discussions privées, sans doublons
                     setMessages((prev) => {
-                        const newMsgs = msg.messages_get_response.messages || []
-                        const allMsgs = [...prev, ...newMsgs]
+                        const newMsgs =
+                            msg.messages_get_response.messages || [];
+                        const allMsgs = [...prev, ...newMsgs];
                         // Dédoublonnage par message_uuid si présent
                         const unique = allMsgs.filter(
                             (msg, idx, arr) =>
                                 arr.findIndex(
                                     (m) => m.message_uuid === msg.message_uuid
                                 ) === idx
-                        )
-                        return unique
-                    })
+                        );
+                        return unique;
+                    });
                 }
 
                 if (msg.calls_get_response) {
                     if (!msg.calls_get_response.etat) {
                         console.error(
                             `Erreur lors de la récupération des appels: ${msg.calls_get_response.error}`
-                        )
+                        );
                     } else {
-                        setCalls(msg.calls_get_response.calls || [])
+                        setCalls(msg.calls_get_response.calls || []);
                     }
                 }
             } catch (error) {
-                console.error("Erreur dans le traitement du message:", error)
-                setIsLoading(false)
+                console.error("Erreur dans le traitement du message:", error);
+                setIsLoading(false);
             }
         },
-    } // Récupération des données - simplifié
+    }; // Récupération des données - simplifié
     const fetchData = () => {
         if (!controleur || !currentUser) {
-            return
+            return;
         }
 
         if (canal?.socket?.connected) {
-            controleur.envoie(handler, { users_list_request: {} })
-            controleur.envoie(handler, { calls_get_request: {} })
-            controleur.envoie(handler, { discuss_list_request: currentUser.id })
+            controleur.envoie(handler, { users_list_request: {} });
+            controleur.envoie(handler, { calls_get_request: {} });
+            controleur.envoie(handler, {
+                discuss_list_request: currentUser.id,
+            });
         } else {
             setTimeout(() => {
                 if (canal?.socket?.connected) {
-                    controleur.envoie(handler, { users_list_request: {} })
-                    controleur.envoie(handler, { calls_get_request: {} })
+                    controleur.envoie(handler, { users_list_request: {} });
+                    controleur.envoie(handler, { calls_get_request: {} });
                     controleur.envoie(handler, {
                         discuss_list_request: currentUser.id,
-                    })
+                    });
                 } else {
-                    setIsLoading(false)
+                    setIsLoading(false);
                 }
-            }, 1000)
+            }, 1000);
         }
-    }
+    };
     // Fonction de recherche parmi les contacts
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const query = e.target.value.toLowerCase()
-        setSearchQuery(query)
+        const query = e.target.value.toLowerCase();
+        setSearchQuery(query);
 
-        if (!currentUser) return
+        if (!currentUser) return;
 
-        const allContacts = getContactsFromDiscussions(users)
+        const allContacts = getContactsFromDiscussions(users);
 
         if (query.trim() === "") {
             // Si la recherche est vide, afficher tous les contacts
-            setFilteredUsers(allContacts)
+            setFilteredUsers(allContacts);
         } else {
             // Filtrer les contacts en fonction de la recherche
             const filtered = allContacts.filter(
@@ -238,56 +241,56 @@ export default function Home() {
                     user.lastname.toLowerCase().includes(query) ||
                     user.email.toLowerCase().includes(query) ||
                     (user.phone && user.phone.includes(query))
-            )
-            setFilteredUsers(filtered)
+            );
+            setFilteredUsers(filtered);
         }
-    }
+    };
     // Effacer la recherche
     const clearSearch = () => {
-        setSearchQuery("")
+        setSearchQuery("");
         if (currentUser) {
-            const allContacts = getContactsFromDiscussions(users)
-            setFilteredUsers(allContacts)
+            const allContacts = getContactsFromDiscussions(users);
+            setFilteredUsers(allContacts);
         }
-    }
+    };
     // Statistiques basées sur les données réelles
     const getUnreadReceivedMessagesCount = () => {
-        if (!currentUser) return 0
+        if (!currentUser) return 0;
         const unread = messages.filter((msg) => {
-            if (msg.message_status !== "sent") return false
+            if (msg.message_status !== "sent") return false;
             // Récupère l'id de l'expéditeur
-            let senderId = undefined
+            let senderId = undefined;
             if (typeof msg.message_sender === "string") {
-                senderId = msg.message_sender
+                senderId = msg.message_sender;
             } else if (
                 typeof msg.message_sender === "object" &&
                 msg.message_sender
             ) {
-                senderId = msg.message_sender.id || msg.message_sender._id
+                senderId = msg.message_sender.id || msg.message_sender._id;
             } // On ne compte que les messages envoyés par quelqu'un d'autre
-            return senderId && senderId !== currentUser.id
-        })
-        return unread.length
-    }
+            return senderId && senderId !== currentUser.id;
+        });
+        return unread.length;
+    };
 
     const getMissedCallsCount = () => {
-        return calls.filter((call) => call.call_type === "missed").length
-    }
+        return calls.filter((call) => call.call_type === "missed").length;
+    };
 
     const getActiveContactsCount = () => {
         // Compter les contacts réellement actifs (online) en excluant l'utilisateur courant
         return filteredUsers.filter(
             (user) =>
                 user.status === "online" && user.email !== currentUser?.email
-        ).length
-    } // Activités récentes basées sur les vraies discussions
+        ).length;
+    }; // Activités récentes basées sur les vraies discussions
     const getRecentActivities = () => {
-        if (!discussions.length || !users.length || !currentUser) return []
+        if (!discussions.length || !users.length || !currentUser) return [];
 
         const activities = discussions
             .map((discussion: any) => {
-                const lastMsg = discussion.last_message
-                if (!lastMsg) return null
+                const lastMsg = discussion.last_message;
+                if (!lastMsg) return null;
 
                 // Ne pas afficher les messages envoyés par l'utilisateur courant
                 // Comparer avec l'UUID (currentUser.id) et l'ObjectId (lastMsg.message_sender)
@@ -295,7 +298,7 @@ export default function Home() {
                     lastMsg.message_sender === currentUser.id ||
                     lastMsg.message_sender === currentUser._id
                 )
-                    return null
+                    return null;
 
                 // Trouver l'expéditeur dans les membres OU dans la liste users
                 const sender = (discussion.discussion_members &&
@@ -313,7 +316,7 @@ export default function Home() {
                         firstname: "Inconnu",
                         lastname: "",
                         picture: "",
-                    }
+                    };
 
                 return {
                     type: "message",
@@ -330,65 +333,69 @@ export default function Home() {
                     content:
                         lastMsg.message_content ||
                         "A envoyé un nouveau message",
-                }
+                };
             })
             .filter(Boolean)
             .sort(
                 (a, b) =>
                     new Date(b!.time).getTime() - new Date(a!.time).getTime()
             )
-            .slice(0, 10)
+            .slice(0, 10);
 
-        return activities
-    } // Fonctions de navigation pour les actions rapides
+        return activities;
+    }; // Fonctions de navigation pour les actions rapides
     const handleNewDiscussion = () => {
-        router.push("/discussion")
-    }
+        router.push("/discussion");
+    };
 
     const handleStartCall = () => {
-        router.push("/discussion")
-    } // Effet pour l'inscription/désinscription au contrôleur
+        router.push("/discussion");
+    }; // Effet pour l'inscription/désinscription au contrôleur
     useEffect(() => {
         if (controleur && canal) {
-            controleur.inscription(handler, listeMessageEmis, listeMessageRecus)
+            controleur.inscription(
+                handler,
+                listeMessageEmis,
+                listeMessageRecus
+            );
             return () => {
                 controleur.desincription(
                     handler,
                     listeMessageEmis,
                     listeMessageRecus
-                )
-            }
+                );
+            };
         }
-    }, [controleur, canal]) // Effet principal - fetch des données dès que currentUser est disponible
+    }, [controleur, canal]); // Effet principal - fetch des données dès que currentUser est disponible
     useEffect(() => {
         if (currentUser && controleur) {
-            setIsLoading(true)
-            fetchData()
+            setIsLoading(true);
+            fetchData();
 
             // Timeout de sécurité
             const timeout = setTimeout(() => {
-                setIsLoading(false)
-            }, 15000)
+                setIsLoading(false);
+            }, 15000);
 
-            return () => clearTimeout(timeout)
+            return () => clearTimeout(timeout);
         } else if (!currentUser) {
             // Réinitialiser les données si pas d'utilisateur
-            setUsers([])
-            setDiscussions([])
-            setMessages([])
-            setCalls([])
-            setFilteredUsers([])
-            setIsLoading(true)
+            setUsers([]);
+            setDiscussions([]);
+            setMessages([]);
+            setCalls([]);
+            setFilteredUsers([]);
+            setIsLoading(true);
         }
-    }, [currentUser?.id, controleur])
+    }, [currentUser?.id, controleur]);
 
     // Effet pour mettre à jour les contacts quand les données arrivent
     useEffect(() => {
         if (currentUser && users.length > 0 && discussions.length > 0) {
-            const contacts = getContactsFromDiscussions(users)
-            setFilteredUsers(contacts)
+            const contacts = getContactsFromDiscussions(users);
+            setFilteredUsers(contacts);
         }
-    }, [users, discussions, currentUser])
+    }, [users, discussions, currentUser]);
 
     // Affichage du chargement
     if (isLoading)
@@ -396,7 +403,7 @@ export default function Home() {
             <div className="flex items-center justify-center h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
-        )
+        );
 
     // Affichage si non connecté
     if (!currentUser)
@@ -412,8 +419,8 @@ export default function Home() {
                     Se connecter
                 </a>
             </div>
-        )
-    const recentActivities = getRecentActivities()
+        );
+    const recentActivities = getRecentActivities();
 
     return (
         <div className={styles.page}>
@@ -680,5 +687,5 @@ export default function Home() {
                 </motion.section>
             </main>
         </div>
-    )
+    );
 }

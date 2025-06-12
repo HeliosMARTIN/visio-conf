@@ -1,20 +1,20 @@
 export default class Controleur {
-    listeEmission = new Object()
-    listeAbonnement = new Object()
-    verbose = false
-    verboseall = true
+    listeEmission = new Object();
+    listeAbonnement = new Object();
+    verbose = false;
+    verboseall = true;
     constructor() {}
 
     inscription(emetteur, liste_emission, liste_abonnement) {
         for (var key in liste_emission) {
             if (typeof this.listeEmission[liste_emission[key]] == "undefined") {
-                this.listeEmission[liste_emission[key]] = new Object()
+                this.listeEmission[liste_emission[key]] = new Object();
             } else {
                 if (this.verboseall || this.verbose) {
                     console.log(
                         "INFO(controleur: liste des instances qui ont déjà enegistré ce message en émission:"
-                    )
-                    console.log(this.listeEmission[liste_emission[key]])
+                    );
+                    console.log(this.listeEmission[liste_emission[key]]);
                 }
             }
             if (
@@ -27,10 +27,10 @@ export default class Controleur {
                         emetteur.nomDInstance +
                         " essaie de s'enregistrer une nouvelle fois pour le message en émission: " +
                         liste_emission[key]
-                )
+                );
             } else {
                 this.listeEmission[liste_emission[key]][emetteur.nomDInstance] =
-                    emetteur
+                    emetteur;
             }
         }
         for (var key in liste_abonnement) {
@@ -38,13 +38,13 @@ export default class Controleur {
                 typeof this.listeAbonnement[liste_abonnement[key]] ==
                 "undefined"
             ) {
-                this.listeAbonnement[liste_abonnement[key]] = new Object()
+                this.listeAbonnement[liste_abonnement[key]] = new Object();
             } else {
                 if (this.verboseall || this.verbose) {
                     console.log(
                         "INFO(controleur: liste des instances qui ont déjà enegistré ce message en émission:"
-                    )
-                    console.log(this.listeAbonnement[liste_abonnement[key]])
+                    );
+                    console.log(this.listeAbonnement[liste_abonnement[key]]);
                 }
             }
             if (
@@ -57,11 +57,11 @@ export default class Controleur {
                         emetteur.nomDInstance +
                         " essaie de s'enregistrer une nouvelle fois pour le message en émission: " +
                         liste_abonnement[key]
-                )
+                );
             } else {
                 this.listeAbonnement[liste_abonnement[key]][
                     emetteur.nomDInstance
-                ] = emetteur
+                ] = emetteur;
             }
         }
     }
@@ -72,7 +72,7 @@ export default class Controleur {
                 console.log(
                     "ERREUR(controleur: le message en émission n'existe plus, on ne peut pas l'enlever: " +
                         liste_emission[key]
-                )
+                );
             } else {
                 if (
                     typeof this.listeEmission[liste_emission[key]][
@@ -84,18 +84,18 @@ export default class Controleur {
                             liste_emission[key] +
                             " n'était pas enregistré par " +
                             emetteur.nomDInstance
-                    )
+                    );
                 } else {
                     delete this.listeEmission[liste_emission[key]][
                         emetteur.nomDInstance
-                    ]
+                    ];
                     if (this.verboseall || this.verbose) {
                         console.log(
                             "INFO(controleur: le message en émission " +
                                 liste_emission[key] +
                                 " a été enlevé de la liste pour " +
                                 emetteur.nomDInstance
-                        )
+                        );
                     }
                 }
             }
@@ -109,7 +109,7 @@ export default class Controleur {
                 console.log(
                     "ERREUR(controleur: le message en émission n'existe plus, on ne peut pas l'enlever: " +
                         liste_abonnement[key]
-                )
+                );
             } else {
                 if (
                     typeof this.listeAbonnement[liste_abonnement[key]][
@@ -121,18 +121,18 @@ export default class Controleur {
                             liste_abonnement[key] +
                             " n'était pas enregistré par " +
                             emetteur.nomDInstance
-                    )
+                    );
                 } else {
                     delete this.listeAbonnement[liste_abonnement[key]][
                         emetteur.nomDInstance
-                    ]
+                    ];
                     if (this.verboseall || this.verbose) {
                         console.log(
                             "INFO(controleur: le message en abonnement " +
                                 liste_emission[key] +
                                 " a été enlevé de la liste pour " +
                                 emetteur.nomDInstance
-                        )
+                        );
                     }
                 }
             }
@@ -145,12 +145,24 @@ export default class Controleur {
                 "INFO (controleur):le controleur a reçu de " +
                     emetteur.nomDInstance +
                     " :"
-            )
-            console.log(t)
+            );
+            console.log(t);
         }
 
         for (var item in t) {
             if (item != "id") {
+                if (
+                    item === "message_received" &&
+                    emetteur.nomDInstance === "canalsocketio"
+                ) {
+                    if (this.verboseall || this.verbose) {
+                        console.log(
+                            "INFO (controleur): Ignoring echoed message_received from client"
+                        );
+                    }
+                    continue;
+                }
+
                 if (typeof this.listeEmission[item] == "undefined") {
                     console.log(
                         "ERREUR (controleur): Le message " +
@@ -158,8 +170,8 @@ export default class Controleur {
                             " envoyé par " +
                             emetteur.nomDInstance +
                             " n'est pas enregistré par le contrôleur"
-                    )
-                    return
+                    );
+                    return;
                 }
                 if (
                     this.listeEmission[item][emetteur.nomDInstance] ==
@@ -171,24 +183,24 @@ export default class Controleur {
                             " envoyé par " +
                             emetteur.nomDInstance +
                             " n'a pas déjà enregistré par "
-                    )
-                    return
+                    );
+                    return;
                 }
                 for (var recepteurkey in this.listeAbonnement[item]) {
-                    let T = new Object()
-                    T[item] = t[item]
-                    if (typeof t.id != "undefined") T.id = t.id
+                    let T = new Object();
+                    T[item] = t[item];
+                    if (typeof t.id != "undefined") T.id = t.id;
                     if (this.verboseall || this.verbose) {
                         console.log(
                             "INFO (controleur): on envoie " +
                                 item +
                                 " à " +
                                 recepteurkey
-                        )
+                        );
                     }
                     this.listeAbonnement[item][recepteurkey].traitementMessage(
                         T
-                    )
+                    );
                 }
             }
         }
