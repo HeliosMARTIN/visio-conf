@@ -14,6 +14,8 @@ export default function LoginForm() {
     const listeMessageEmis = ["login_request"]
     const listeMessageRecus = ["login_response"]
 
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
+
     const nomDInstance = "LoginForm"
     const verbose = false
 
