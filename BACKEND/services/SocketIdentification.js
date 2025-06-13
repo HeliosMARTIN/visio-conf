@@ -59,14 +59,6 @@ class SocketIdentificationService {
                         .lean()
                     if (userInfo) {
                         this.socketToUser.set(socketId, userInfo)
-                        console.log(
-                            `DEBUG (SocketIdentificationService): Utilisateur rechargé depuis DB pour socket ${socketId}:`,
-                            {
-                                uuid: userInfo.uuid,
-                                email: userInfo.email,
-                                _id: userInfo._id,
-                            }
-                        )
                     }
                 }
             }
@@ -118,22 +110,10 @@ class SocketIdentificationService {
                 return null
             }
 
-            console.log(
-                `DEBUG (SocketIdentificationService): Mise à jour socket pour user ${userId} avec socket ${socketId}`
-            )
-
             let updatedUserInfo = userInfo
             if (!updatedUserInfo) {
                 // Cherche l'ancien socket pour ce user
                 const oldSocketId = this.userToSocket.get(userId)
-                console.log(
-                    `DEBUG (SocketIdentificationService): Ancien socket pour user ${userId}:`,
-                    oldSocketId
-                )
-                console.log(
-                    "DEBUG (SocketIdentificationService): userToSocket Map:",
-                    Array.from(this.userToSocket.entries())
-                )
 
                 if (oldSocketId) {
                     updatedUserInfo = await this.getUserInfoBySocketId(
@@ -143,17 +123,10 @@ class SocketIdentificationService {
                 // Si toujours rien, charger depuis la DB
                 if (!updatedUserInfo) {
                     updatedUserInfo = await User.findById(userId).lean()
-                    console.log(
-                        `DEBUG (SocketIdentificationService): Chargé depuis DB pour ${userId}:`,
-                        updatedUserInfo ? "trouvé" : "non trouvé"
-                    )
                 }
                 // Si toujours rien, objet minimal
                 if (!updatedUserInfo) {
                     updatedUserInfo = { _id: userId }
-                    console.log(
-                        `DEBUG (SocketIdentificationService): Objet minimal créé pour ${userId}`
-                    )
                 }
             }
 
@@ -161,30 +134,9 @@ class SocketIdentificationService {
             if (this.userToSocket.has(userId)) {
                 const oldSocketId = this.userToSocket.get(userId)
                 this.socketToUser.delete(oldSocketId)
-                console.log(
-                    `DEBUG (SocketIdentificationService): Supprimé ancien socket ${oldSocketId} pour user ${userId}`
-                )
             } // Mettre à jour les associations
             this.userToSocket.set(userId, socketId)
             this.socketToUser.set(socketId, updatedUserInfo)
-
-            console.log(
-                `DEBUG (SocketIdentificationService): Socket mis à jour avec succès pour l'utilisateur ${userId}. Associations: userToSocket=${this.userToSocket.size}, socketToUser=${this.socketToUser.size}`
-            )
-            console.log(
-                `DEBUG (SocketIdentificationService): UserInfo stocké:`,
-                JSON.stringify(
-                    {
-                        _id: updatedUserInfo._id,
-                        uuid: updatedUserInfo.uuid,
-                        email: updatedUserInfo.email,
-                        firstname: updatedUserInfo.firstname,
-                        lastname: updatedUserInfo.lastname,
-                    },
-                    null,
-                    2
-                )
-            )
 
             if (this.verbose) {
                 console.log(

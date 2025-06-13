@@ -27,7 +27,7 @@
 }
 
 .icon {
-  color: #4f46e5;
+  color: #1e3664;
 }
 
 .title {
@@ -77,13 +77,13 @@
 }
 
 .tab:hover {
-  color: #4f46e5;
+  color: #1e3664;
   background-color: #f3f4f6;
 }
 
 .activeTab {
-  color: #4f46e5;
-  border-bottom-color: #4f46e5;
+  color: #1e3664;
+  border-bottom-color: #1e3664;
   background-color: #eff6ff;
 }
 
@@ -134,7 +134,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1e3664;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -154,7 +154,7 @@
 
 .textarea:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1e3664;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -202,7 +202,7 @@
 }
 
 .picturePreview:hover {
-  border-color: #4f46e5;
+  border-color: #1e3664;
 }
 
 .pictureImage {
@@ -251,8 +251,8 @@
 }
 
 .picturePlaceholder:hover {
-  border-color: #4f46e5;
-  color: #4f46e5;
+  border-color: #1e3664;
+  color: #1e3664;
   background-color: #eff6ff;
 }
 
@@ -275,7 +275,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background-color: #4f46e5;
+  background-color: #1e3664;
   color: white;
   border: none;
   border-radius: 6px;
@@ -367,7 +367,7 @@
 }
 
 .submitButton {
-  background-color: #4f46e5;
+  background-color: #1e3664;
   border: none;
   color: white;
 }
@@ -431,7 +431,7 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1e3664;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -563,7 +563,7 @@
   font-size: 11px;
   font-weight: 500;
   color: white;
-  background-color: #4f46e5;
+  background-color: #1e3664;
   padding: 2px 6px;
   border-radius: 10px;
 }

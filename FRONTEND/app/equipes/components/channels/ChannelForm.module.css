@@ -27,7 +27,7 @@
 }
 
 .icon {
-  color: #4f46e5;
+  color: #1e3664;
 }
 
 .title {
@@ -110,7 +110,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1e3664;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -137,13 +137,13 @@
 }
 
 .visibilityOption.selected {
-  border-color: #4f46e5;
+  border-color: #1e3664;
   background-color: #f5f3ff;
 }
 
 .visibilityIcon {
   margin-right: 12px;
-  color: #4f46e5;
+  color: #1e3664;
 }
 
 .optionContent {
@@ -164,7 +164,7 @@
 }
 
 .checkIcon {
-  color: #4f46e5;
+  color: #1e3664;
 }
 
 .membersSelection {
@@ -201,7 +201,7 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #1e3664;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -376,7 +376,7 @@
 }
 
 .submitButton {
-  background-color: #4f46e5;
+  background-color: #1e3664;
   border: none;
   color: white;
 }

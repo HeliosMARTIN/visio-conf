@@ -101,6 +101,7 @@ export default function UserListAmis({
                                 </div>
                             </div>{" "}
                             <div className={styles.userActions}>
+                                {" "}
                                 <button
                                     onClick={() =>
                                         handleMessageUser(user.email)

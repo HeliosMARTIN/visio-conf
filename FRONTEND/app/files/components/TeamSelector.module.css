@@ -65,7 +65,7 @@
 
 .selector:focus {
     outline: none;
-    border-color: #4f46e5;
+    border-color: #1e3664;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
@@ -120,7 +120,7 @@
 
 .dropdownItem.active {
     background-color: #eff6ff;
-    color: #4f46e5;
+    color: #1e3664;
 }
 
 .teamContent {
@@ -138,11 +138,11 @@
 }
 
 .dropdownItem.active .teamContent {
-    color: #4f46e5;
+    color: #1e3664;
 }
 
 .dropdownItem.active .teamContent svg {
-    color: #4f46e5;
+    color: #1e3664;
 }
 
 .teamInfo {
@@ -161,7 +161,7 @@
 }
 
 .dropdownItem.active .teamName {
-    color: #4f46e5;
+    color: #1e3664;
 }
 
 .teamDescription {
@@ -177,7 +177,7 @@
 }
 
 .checkIcon {
-    color: #4f46e5;
+    color: #1e3664;
     flex-shrink: 0;
 }
 
