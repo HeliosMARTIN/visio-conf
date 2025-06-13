@@ -106,9 +106,7 @@ class MessagesService {
                 })
 
                 let members = []
-                let socketIds = []
-
-                // Cas d'une nouvelle discussion
+                let socketIds = [] // Cas d'une nouvelle discussion
                 if (otherUserEmail) {
                     const discussionEmails = [userEmail, ...otherUserEmail]
                     console.log(
@@ -157,6 +155,65 @@ class MessagesService {
                     }
                     members = users.map((user) => user._id)
 
+                    // NOUVELLE VÉRIFICATION : Empêcher les conversations privées en double
+                    if (members.length === 2) {
+                        // Pour les conversations privées (exactement 2 membres)
+                        const existingDiscussion = await Discussion.findOne({
+                            discussion_members: {
+                                $all: members,
+                                $size: 2,
+                            },
+                            discussion_type: { $ne: "group" },
+                        })
+
+                        if (existingDiscussion) {
+                            console.log(
+                                "Discussion privée existante trouvée:",
+                                existingDiscussion.discussion_uuid
+                            )
+
+                            // Ajouter le message à la discussion existante au lieu de créer une nouvelle discussion
+                            existingDiscussion.discussion_messages.push({
+                                message_uuid: message_uuid,
+                                message_sender: sender._id,
+                                message_content: message_content,
+                                message_date_create:
+                                    message_date_create || new Date(),
+                            })
+
+                            await existingDiscussion.save()
+
+                            // Utiliser l'ID de la discussion existante pour la réponse
+                            members = existingDiscussion.discussion_members
+
+                            // Utiliser SocketIdentificationService pour obtenir les socket ids
+                            const socketIdPromises = members.map(
+                                async (userId) => {
+                                    return SocketIdentificationService.getUserSocketId(
+                                        userId.toString()
+                                    )
+                                }
+                            )
+                            socketIds = (
+                                await Promise.all(socketIdPromises)
+                            ).filter(Boolean)
+
+                            // Envoyer la réponse avec l'UUID de la discussion existante
+                            const message = {
+                                message_send_response: {
+                                    etat: true,
+                                    discussion_uuid:
+                                        existingDiscussion.discussion_uuid, // UUID de la discussion existante
+                                    message:
+                                        "Message ajouté à la discussion existante",
+                                },
+                                id: socketIds,
+                            }
+                            this.controleur.envoie(this, message)
+                            return // Sortir de la fonction car on a utilisé une discussion existante
+                        }
+                    }
+
                     // Utiliser SocketIdentificationService pour obtenir les socket ids
                     const socketIdPromises = members.map(async (userId) => {
                         return SocketIdentificationService.getUserSocketId(
@@ -167,10 +224,12 @@ class MessagesService {
                         Boolean
                     )
 
-                    // Utiliser l'ID de l'expéditeur comme discussion_creator
+                    // Créer une nouvelle discussion seulement si aucune discussion privée n'existe
                     const newDiscussion = {
                         discussion_uuid: discussion_uuid,
                         discussion_creator: sender._id, // Utiliser l'ID au lieu de l'email
+                        discussion_type:
+                            members.length === 2 ? "unique" : "group", // Définir le type de discussion
                         discussion_members: members,
                         discussion_messages: [
                             {

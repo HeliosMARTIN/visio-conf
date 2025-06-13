@@ -65,7 +65,6 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
     const removeSelectedUser = (userId: string) => {
         setSelectedUsers(selectedUsers.filter((user) => user.id !== userId))
     }
-
     const handleCreateDiscussion = async () => {
         if (!currentUser || selectedUsers.length === 0 || !message.trim()) {
             setError(
@@ -76,10 +75,110 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
 
         try {
             setIsCreating(true)
+            setError("") // Effacer les erreurs précédentes
 
             // Compatibilité avec les deux types d'ID
             const currentUserId = currentUser.email
             const otherUserIds = selectedUsers.map((user) => user.email)
+
+            // Vérification pour les conversations privées (exactement 1 autre utilisateur)
+            if (selectedUsers.length === 1) {
+                // Demander la liste des discussions existantes pour vérifier s'il existe déjà une conversation
+                const userId =
+                    currentUser.id || currentUser.uuid || currentUser._id
+                const discussListMessage = {
+                    discuss_list_request: userId,
+                }
+
+                // Créer une promesse pour attendre la réponse de la liste des discussions
+                const checkExistingDiscussion = new Promise<boolean>(
+                    (resolve) => {
+                        const tempHandler = {
+                            nomDInstance: "TempCreateDiscussionHandler",
+                            traitementMessage: (msg: any) => {
+                                if (
+                                    msg.discuss_list_response &&
+                                    msg.discuss_list_response.etat
+                                ) {
+                                    const discussions =
+                                        msg.discuss_list_response.messages || []
+
+                                    // Vérifier s'il existe déjà une conversation privée avec cet utilisateur
+                                    const targetUserEmail =
+                                        selectedUsers[0].email
+                                    const existingPrivateDiscussion =
+                                        discussions.find((discussion: any) => {
+                                            // Vérifier que c'est une discussion privée (2 membres exactement)
+                                            if (
+                                                !discussion.discussion_members ||
+                                                discussion.discussion_members
+                                                    .length !== 2
+                                            ) {
+                                                return false
+                                            }
+
+                                            // Vérifier que l'utilisateur cible est dans cette discussion
+                                            const hasTargetUser =
+                                                discussion.discussion_members.some(
+                                                    (member: any) =>
+                                                        member.email ===
+                                                        targetUserEmail
+                                                )
+
+                                            // Vérifier que l'utilisateur actuel est aussi dans cette discussion
+                                            const hasCurrentUser =
+                                                discussion.discussion_members.some(
+                                                    (member: any) =>
+                                                        member.email ===
+                                                        currentUser.email
+                                                )
+
+                                            return (
+                                                hasTargetUser && hasCurrentUser
+                                            )
+                                        })
+
+                                    if (existingPrivateDiscussion) {
+                                        // Une conversation privée existe déjà
+                                        setError(
+                                            `Une conversation privée avec ${selectedUsers[0].firstname} ${selectedUsers[0].lastname} existe déjà.`
+                                        )
+                                        resolve(true) // Conversation existe
+                                    } else {
+                                        resolve(false) // Pas de conversation existante
+                                    }
+                                } else {
+                                    resolve(false) // Erreur ou pas de réponse, on continue
+                                }
+
+                                // Désinscrire le handler temporaire
+                                controleur.desincription(
+                                    tempHandler,
+                                    ["discuss_list_request"],
+                                    ["discuss_list_response"]
+                                )
+                            },
+                        }
+
+                        // Inscrire le handler temporaire
+                        controleur.inscription(
+                            tempHandler,
+                            ["discuss_list_request"],
+                            ["discuss_list_response"]
+                        )
+                        controleur.envoie(tempHandler, discussListMessage)
+                    }
+                )
+
+                // Attendre la vérification
+                const conversationExists = await checkExistingDiscussion
+
+                if (conversationExists) {
+                    return // Arrêter la création si une conversation existe déjà
+                }
+            }
+
+            // Si on arrive ici, on peut créer la discussion
             const discussionUuid = generateUUID()
 
             const message_request = {
@@ -217,9 +316,7 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Écrivez votre premier message..."
                     />
-
-                    {error && <div className="error-message">{error}</div>}
-
+                    {error && <div className="error-message">{error}</div>}{" "}
                     <button
                         onClick={handleCreateDiscussion}
                         disabled={
@@ -234,7 +331,11 @@ export const CreateDiscussion: React.FC<CreateDiscussionProps> = ({
                         ) : (
                             <>
                                 <Send size={16} />
-                                <span>Créer la discussion</span>
+                                <span>
+                                    {selectedUsers.length === 1
+                                        ? "Créer la conversation privée"
+                                        : "Créer la discussion de groupe"}
+                                </span>
                             </>
                         )}
                     </button>
