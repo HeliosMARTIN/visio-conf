@@ -136,14 +136,12 @@ La page de profil de VisioConf permet à l'utilisateur de visualiser et modifier
 
 ### Messages émis
 
-| Message             | Format                                        | Exemple de contenu                                        | Émetteur   | Récepteur              |
-| ------------------- | --------------------------------------------- | --------------------------------------------------------- | ---------- | ---------------------- |
-| upload_request      | { media: { name: string, fileType: string } } | { media: { name: "photo.jpg", fileType: "image/jpeg" } }  | ProfilPage | AwsS3Service (backend) |
-| update_user_request | { id: string, picture: string }               | { id: "user123", picture: "uploads/photo-timestamp.jpg" } | ProfilPage | UsersService (backend) |
+| Message             | Format                          | Exemple de contenu                                        | Émetteur   | Récepteur              |
+| ------------------- | ------------------------------- | --------------------------------------------------------- | ---------- | ---------------------- |
+| update_user_request | { id: string, picture: string } | { id: "user123", picture: "uploads/photo-timestamp.jpg" } | ProfilPage | UsersService (backend) |
 
 ### Messages reçus
 
-| Message              | Format                                                                   | Exemple de contenu                                                                           | Émetteur               | Récepteur  |
-| -------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ---------------------- | ---------- |
-| upload_response      | { etat: boolean, fileName?: string, signedUrl?: string, error?: string } | { etat: true, fileName: "uploads/photo-123.jpg", signedUrl: "https://s3.amazonaws.com/..." } | AwsS3Service (backend) | ProfilPage |
-| update_user_response | { etat: boolean, newUserInfo: User\|null, error?: string }               | { etat: true, newUserInfo: { id: "123", picture: "uploads/photo-123.jpg", ... } }            | UsersService (backend) | ProfilPage |
+| Message              | Format                                                     | Exemple de contenu                                                                | Émetteur               | Récepteur  |
+| -------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------- | ---------- |
+| update_user_response | { etat: boolean, newUserInfo: User\|null, error?: string } | { etat: true, newUserInfo: { id: "123", picture: "uploads/photo-123.jpg", ... } } | UsersService (backend) | ProfilPage |
