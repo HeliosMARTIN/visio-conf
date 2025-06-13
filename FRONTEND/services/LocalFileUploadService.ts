@@ -1,7 +1,10 @@
 export class LocalFileUploadService {
     private baseUrl: string
 
-    constructor(baseUrl: string = "http://localhost:3220") {
+    constructor(
+        baseUrl: string = process.env.NEXT_PUBLIC_API_URL ||
+            "http://localhost:3220"
+    ) {
         this.baseUrl = baseUrl
     }
 

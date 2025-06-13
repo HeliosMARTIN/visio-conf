@@ -1,12 +1,12 @@
-# Documentation de la classe LocalFileService
+# Documentation de la classe DriveService
 
 ## Vue d'ensemble
 
-La classe `LocalFileService` est responsable de la gestion des fichiers et dossiers dans l'application Visioconf avec un système de stockage local sur le serveur. Elle gère les requêtes de type CRUD pour les fichiers et dossiers, ainsi que les opérations comme le partage, le déplacement, le renommage ou le téléchargement. Contrairement à l'ancienne version qui utilisait AWS S3, cette implémentation stocke tous les fichiers localement dans le répertoire `uploads/` du serveur.
+La classe `DriveService` est responsable de la gestion des fichiers et dossiers dans l'application Visioconf avec un système de stockage local sur le serveur. Elle gère les requêtes de type CRUD pour les fichiers et dossiers, ainsi que les opérations comme le partage, le déplacement, le renommage ou le téléchargement. Contrairement à l'ancienne version qui utilisait AWS S3, cette implémentation stocke tous les fichiers localement dans le répertoire `uploads/` du serveur.
 
 ## Architecture
 
-`LocalFileService` suit le modèle orienté messages où il s'enregistre auprès d'un contrôleur central pour recevoir et émettre des messages liés aux fichiers. Il s'appuie sur des identifiants de socket pour récupérer l'utilisateur associé aux requêtes. Le service gère également l'infrastructure de fichiers locale en créant automatiquement les répertoires nécessaires.
+`DriveService` suit le modèle orienté messages où il s'enregistre auprès d'un contrôleur central pour recevoir et émettre des messages liés aux fichiers. Il s'appuie sur des identifiants de socket pour récupérer l'utilisateur associé aux requêtes. Le service gère également l'infrastructure de fichiers locale en créant automatiquement les répertoires nécessaires.
 
 ## Propriétés
 
@@ -150,14 +150,14 @@ Les routes utilisent le middleware `authenticateToken` qui supporte :
 ### Téléchargement d'un fichier
 
 1. **Frontend** : Demande `file_download_request` via WebSocket
-2. **LocalFileService** : Vérification des permissions
+2. **DriveService** : Vérification des permissions
 3. **Response** : URL locale `/api/files/download/[fileId]`
 4. **Frontend** : Accès direct via l'URL fournie
 
 ### Suppression d'un fichier
 
 1. **Frontend** : Envoi de `file_delete_request`
-2. **LocalFileService** : Soft delete en base + suppression physique
+2. **DriveService** : Soft delete en base + suppression physique
 3. **Système** : Fichier marqué comme `deleted` et retiré du stockage
 4. **Response** : Confirmation de suppression
 

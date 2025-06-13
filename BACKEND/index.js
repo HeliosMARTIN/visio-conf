@@ -14,7 +14,7 @@ import MessagesService from "./services/Messages.js"
 import RolesService from "./services/Roles.js"
 import PermsService from "./services/Perms.js"
 import SocketIdentificationService from "./services/SocketIdentification.js"
-import LocalFileService from "./services/LocalFileService.js"
+import DriveService from "./services/DriveService.js"
 import ChannelsService from "./services/ChannelsService.js"
 import TeamsService from "./services/TeamsService.js"
 import fileRoutes from "./routes/files.js"
@@ -34,12 +34,9 @@ const server = createServer(app)
 const corsOptions = {
     origin: (origin, callback) => {
         // Autoriser les requêtes sans origin (applications mobiles, Postman, etc.)
-        if (!origin) return callback(null, true)
-
-        // Liste des origines autorisées
+        if (!origin) return callback(null, true) // Liste des origines autorisées
         const allowedOrigins = [
             process.env.FRONTEND_URL || "http://localhost:3000",
-            "http://localhost:3000",
             "http://127.0.0.1:3000",
         ]
 
@@ -137,7 +134,7 @@ new MessagesService(controleur, "MessagesService")
 new RolesService(controleur, "RolesService")
 new PermsService(controleur, "PermsService")
 new CanalSocketio(io, controleur, "canalsocketio")
-new LocalFileService(controleur, "LocalFileService") // New local file service
+new DriveService(controleur, "DriveService")
 new ChannelsService(controleur, "ChannelService")
 new TeamsService(controleur, "TeamsService")
 

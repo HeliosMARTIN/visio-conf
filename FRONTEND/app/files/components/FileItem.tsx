@@ -78,11 +78,12 @@ export default function FileItem({
             console.error("No current user available to download the file.")
             return
         }
-
         try {
             // Use cookie for authentication
             const response = await fetch(
-                `http://localhost:3220/api/files/download/${file.id}`,
+                `${
+                    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3220"
+                }/api/files/download/${file.id}`,
                 {
                     credentials: "include", // Include cookies
                 }
@@ -248,7 +249,10 @@ export default function FileItem({
                 {" "}
                 {shouldShowThumbnail ? (
                     <img
-                        src={`http://localhost:3220/api/files/view/${file.id}`}
+                        src={`${
+                            process.env.NEXT_PUBLIC_API_URL ||
+                            "http://localhost:3220"
+                        }/api/files/view/${file.id}`}
                         alt={file.name}
                         className={styles.thumbnail}
                         onError={(e) => {

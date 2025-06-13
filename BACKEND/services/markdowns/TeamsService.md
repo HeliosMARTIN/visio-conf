@@ -275,4 +275,4 @@ Récupère toutes les équipes du système (fonction administrative).
 -   **ChannelsService**: Création automatique de canaux lors de la création d'équipe
 -   **UsersService**: Récupération des informations utilisateur pour les membres
 -   **SocketIdentificationService**: Identification de l'utilisateur connecté via socketId
--   **LocalFileService**: Partage de fichiers au niveau équipe
+-   **DriveService**: Partage de fichiers au niveau équipe

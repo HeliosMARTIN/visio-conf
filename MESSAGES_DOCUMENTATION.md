@@ -99,22 +99,22 @@ Ce document décrit l'ensemble des messages utilisés dans l'application VisioCo
 
 ### Table des messages liés aux fichiers et dossiers
 
-| **Message**                     | **Format**                                                                                             | **Exemple de contenu**                                                                     | **Émetteur**               | **Récepteur**              |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | -------------------------- | -------------------------- |
-| **files_list_request**          | { folderId?: string }                                                                                  | { folderId: "folder123" } ou Aucun contenu                                                 | FilesPage (frontend)       | LocalFileService (backend) |
-| **files_list_response**         | { etat: boolean, files?: File[], error?: string }                                                      | { etat: true, files: [ { id:"f1", name:"doc.pdf" } ] }                                     | LocalFileService (backend) | FilesPage (frontend)       |
-| **file_upload_request**         | { userId: string, name: string, size: number, mimeType: string, extension: string, parentId?: number } | { name: "image.png", size: 2048, mimeType: "image/png", extension: ".png"}                 | FilePage (frontend)        | LocalFileService (backend) |
-| **file_upload_response**        | { etat: boolean, error?: string, signedUrl? }                                                          | { etat: true, signedUrl: "https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/..." } | LocalFileService (backend) | FilePage (frontend)        |
-| **file_delete_request**         | { fileId: string }                                                                                     | { fileId: "f123" }                                                                         | FilesPage (frontend)       | LocalFileService (backend) |
-| **file_delete_response**        | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | LocalFileService (backend) | FilesPage (frontend)       |
-| **file_rename_request**         | { fileId: string, newName: string }                                                                    | { fileId: "f123", newName: "Nouveau nom" }                                                 | FilesPage (frontend)       | LocalFileService (backend) |
-| **file_rename_response**        | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | LocalFileService (backend) | FilesPage (frontend)       |
-| **file_move_request**           | { fileId: string, newParentId: string }                                                                | { fileId: "f123" }                                                                         | FilesPage (frontend)       | LocalFileService (backend) |
-| **file_move_response**          | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | LocalFileService (backend) | FilesPage (frontend)       |
-| **file_share_to_team_request**  | { fileId: string, teamId: string }                                                                     | { fileId: "f123", teamId: "t456" }                                                         | FilesPage (frontend)       | LocalFileService (backend) |
-| **file_share_to_team_response** | { etat: boolean, fileId?: string, teamId?: string, error?: string }                                    | { etat: true, fileId: "f123", teamId: "t456" }                                             | LocalFileService (backend) | FilesPage (frontend)       |
-| **folder_create_request**       | { name: string, parentId?: string }                                                                    | { name: "Mon dossier" }                                                                    | LocalFileService (backend) | FilesPage (frontend)       |
-| **folder_create_response**      | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | LocalFileService (backend) | FilesPage (frontend)       |
+| **Message**                     | **Format**                                                                                             | **Exemple de contenu**                                                                     | **Émetteur**           | **Récepteur**          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------- | ---------------------- |
+| **files_list_request**          | { folderId?: string }                                                                                  | { folderId: "folder123" } ou Aucun contenu                                                 | FilesPage (frontend)   | DriveService (backend) |
+| **files_list_response**         | { etat: boolean, files?: File[], error?: string }                                                      | { etat: true, files: [ { id:"f1", name:"doc.pdf" } ] }                                     | DriveService (backend) | FilesPage (frontend)   |
+| **file_upload_request**         | { userId: string, name: string, size: number, mimeType: string, extension: string, parentId?: number } | { name: "image.png", size: 2048, mimeType: "image/png", extension: ".png"}                 | FilePage (frontend)    | DriveService (backend) |
+| **file_upload_response**        | { etat: boolean, error?: string, signedUrl? }                                                          | { etat: true, signedUrl: "https://visioconfbucket.s3.eu-north-1.amazonaws.com/files/..." } | DriveService (backend) | FilePage (frontend)    |
+| **file_delete_request**         | { fileId: string }                                                                                     | { fileId: "f123" }                                                                         | FilesPage (frontend)   | DriveService (backend) |
+| **file_delete_response**        | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | DriveService (backend) | FilesPage (frontend)   |
+| **file_rename_request**         | { fileId: string, newName: string }                                                                    | { fileId: "f123", newName: "Nouveau nom" }                                                 | FilesPage (frontend)   | DriveService (backend) |
+| **file_rename_response**        | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | DriveService (backend) | FilesPage (frontend)   |
+| **file_move_request**           | { fileId: string, newParentId: string }                                                                | { fileId: "f123" }                                                                         | FilesPage (frontend)   | DriveService (backend) |
+| **file_move_response**          | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | DriveService (backend) | FilesPage (frontend)   |
+| **file_share_to_team_request**  | { fileId: string, teamId: string }                                                                     | { fileId: "f123", teamId: "t456" }                                                         | FilesPage (frontend)   | DriveService (backend) |
+| **file_share_to_team_response** | { etat: boolean, fileId?: string, teamId?: string, error?: string }                                    | { etat: true, fileId: "f123", teamId: "t456" }                                             | DriveService (backend) | FilesPage (frontend)   |
+| **folder_create_request**       | { name: string, parentId?: string }                                                                    | { name: "Mon dossier" }                                                                    | DriveService (backend) | FilesPage (frontend)   |
+| **folder_create_response**      | { etat: boolean, error?: string }                                                                      | { etat: true }                                                                             | DriveService (backend) | FilesPage (frontend)   |
 
 > **Note :** Ces messages gèrent l'accès aux fichiers et dossiers des utilisateurs. Les fichiers sont identifiés par des ID uniques.
 
@@ -124,12 +124,12 @@ Ce document décrit l'ensemble des messages utilisés dans l'application VisioCo
 
 ### Table des messages liés à la page Admin
 
-| **Message**               | **Format**           | **Exemple de contenu** | **Émetteur**               | **Récepteur**              |
-| ------------------------- | -------------------- | ---------------------- | -------------------------- | -------------------------- |
-| **ban_user_request**      | { userId?: string }  | { userId: "1" }        | FilesPage (frontend)       | LocalFileService (backend) |
-| **disable_user_request**  | { userId?: string }  | { userId: "1" }        | LocalFileService (backend) | FilesPage (frontend)       |
-| **ban_user_response**     | { success: boolean } | { success: true }      | FilePage (frontend)        | LocalFileService (backend) |
-| **disable_user_response** | { success: boolean } | { success: true }      | LocalFileService (backend) | FilePage (frontend)        |
+| **Message**               | **Format**           | **Exemple de contenu** | **Émetteur**           | **Récepteur**          |
+| ------------------------- | -------------------- | ---------------------- | ---------------------- | ---------------------- |
+| **ban_user_request**      | { userId?: string }  | { userId: "1" }        | FilesPage (frontend)   | DriveService (backend) |
+| **disable_user_request**  | { userId?: string }  | { userId: "1" }        | DriveService (backend) | FilesPage (frontend)   |
+| **ban_user_response**     | { success: boolean } | { success: true }      | FilePage (frontend)    | DriveService (backend) |
+| **disable_user_response** | { success: boolean } | { success: true }      | DriveService (backend) | FilePage (frontend)    |
 
 > **Note :** Ces messages gèrent l'accès aux fichiers et dossiers des utilisateurs. Les fichiers sont identifiés par des ID uniques.
 

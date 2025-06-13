@@ -12,13 +12,15 @@ class CanalSocketio {
 
     constructor(c, nom) {
         this.controleur = c
-
         this.nomDInstance = nom
 
-        this.socket = io("http://localhost:3220", {
-            autoConnect: true,
-            reconnection: true,
-        })
+        this.socket = io(
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:3220",
+            {
+                autoConnect: true,
+                reconnection: true,
+            }
+        )
 
         this.socket.on("message", (msg) => {
             if (this.controleur.verboseall || this.verbose)

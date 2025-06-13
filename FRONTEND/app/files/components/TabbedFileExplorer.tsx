@@ -256,9 +256,10 @@ export default function TabbedFileExplorer() {
             if (parentId) {
                 formData.append("parentId", parentId)
             }
-
             const response = await fetch(
-                "http://localhost:3220/api/files/upload",
+                `${
+                    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3220"
+                }/api/files/upload`,
                 {
                     method: "POST",
                     body: formData,

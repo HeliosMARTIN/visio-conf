@@ -47,7 +47,7 @@ La fonctionnalité "Gestionnaire de Fichiers" permet aux utilisateurs de gérer 
 -   Affiche deux onglets : "Mes Fichiers" et "Fichiers Partagés"
 -   Gère le changement d'onglet et le rechargement des données
 -   Sélection d'équipe pour les fichiers partagés via TeamSelector
--   Communication avec LocalFileService pour toutes les opérations
+-   Communication avec DriveService pour toutes les opérations
 
 **Dépendances**:
 
@@ -140,29 +140,29 @@ La fonctionnalité "Gestionnaire de Fichiers" permet aux utilisateurs de gérer 
 
 ### Messages émis
 
-| Message                    | Format                                  | Exemple de contenu                                 | Émetteur           | Récepteur        |
-| -------------------------- | --------------------------------------- | -------------------------------------------------- | ------------------ | ---------------- |
-| files_list_request         | { folderId?: string }                   | { folderId: "f1" }                                 | TabbedFileExplorer | LocalFileService |
-| folders_list_request       | { excludeFolderId?: string }            | { excludeFolderId: "f2" }                          | FileMoveModal      | LocalFileService |
-| file_delete_request        | { fileId: string }                      | { fileId: "file123" }                              | FileExplorer       | LocalFileService |
-| file_rename_request        | { fileId: string, newName: string }     | { fileId: "file123", newName: "nouveau_nom.pdf" }  | FileItem           | LocalFileService |
-| file_move_request          | { fileId: string, newParentId: string } | { fileId: "file123", newParentId: "folder456" }    | FileMoveModal      | LocalFileService |
-| file_share_to_team_request | { fileId: string, teamId: string }      | { fileId: "file123", teamId: "team789" }           | ShareToTeamModal   | LocalFileService |
-| folder_create_request      | { name: string, parentId?: string }     | { name: "Nouveau Dossier", parentId: "folder456" } | FileExplorer       | LocalFileService |
-| file_download_request      | { fileId: string }                      | { fileId: "file123" }                              | FileItem           | LocalFileService |
+| Message                    | Format                                  | Exemple de contenu                                 | Émetteur           | Récepteur    |
+| -------------------------- | --------------------------------------- | -------------------------------------------------- | ------------------ | ------------ |
+| files_list_request         | { folderId?: string }                   | { folderId: "f1" }                                 | TabbedFileExplorer | DriveService |
+| folders_list_request       | { excludeFolderId?: string }            | { excludeFolderId: "f2" }                          | FileMoveModal      | DriveService |
+| file_delete_request        | { fileId: string }                      | { fileId: "file123" }                              | FileExplorer       | DriveService |
+| file_rename_request        | { fileId: string, newName: string }     | { fileId: "file123", newName: "nouveau_nom.pdf" }  | FileItem           | DriveService |
+| file_move_request          | { fileId: string, newParentId: string } | { fileId: "file123", newParentId: "folder456" }    | FileMoveModal      | DriveService |
+| file_share_to_team_request | { fileId: string, teamId: string }      | { fileId: "file123", teamId: "team789" }           | ShareToTeamModal   | DriveService |
+| folder_create_request      | { name: string, parentId?: string }     | { name: "Nouveau Dossier", parentId: "folder456" } | FileExplorer       | DriveService |
+| file_download_request      | { fileId: string }                      | { fileId: "file123" }                              | FileItem           | DriveService |
 
 ### Messages reçus
 
-| Message                     | Format                                                                                        | Exemple de contenu                                                                                                | Émetteur         | Récepteur          |
-| --------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------ |
-| files_list_response         | { etat: boolean, files?: File[], error?: string }                                             | { etat: true, files: [{ id: "f1", name: "document.pdf", size: 1024, type: "pdf" }] }                              | LocalFileService | TabbedFileExplorer |
-| folders_list_response       | { etat: boolean, folders?: Folder[], error?: string }                                         | { etat: true, folders: [{ id: "folder1", name: "Documents", parentId: null }] }                                   | LocalFileService | FileMoveModal      |
-| file_delete_response        | { etat: boolean, fileId?: string, error?: string }                                            | { etat: true, fileId: "file123" }                                                                                 | LocalFileService | FileExplorer       |
-| file_rename_response        | { etat: boolean, error?: string }                                                             | { etat: true }                                                                                                    | LocalFileService | FileItem           |
-| file_move_response          | { etat: boolean, fileId?: string, newParentId?: string, error?: string }                      | { etat: true, fileId: "file123", newParentId: "folder456" }                                                       | LocalFileService | FileMoveModal      |
-| file_share_to_team_response | { etat: boolean, fileId?: string, teamId?: string, error?: string }                           | { etat: true, fileId: "file123", teamId: "team789" }                                                              | LocalFileService | ShareToTeamModal   |
-| folder_create_response      | { etat: boolean, error?: string }                                                             | { etat: true }                                                                                                    | LocalFileService | FileExplorer       |
-| file_download_response      | { etat: boolean, downloadUrl?: string, fileName?: string, mimeType?: string, error?: string } | { etat: true, downloadUrl: "/api/files/download/file123", fileName: "document.pdf", mimeType: "application/pdf" } | LocalFileService | FileItem           |
+| Message                     | Format                                                                                        | Exemple de contenu                                                                                                | Émetteur     | Récepteur          |
+| --------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | ------------------ |
+| files_list_response         | { etat: boolean, files?: File[], error?: string }                                             | { etat: true, files: [{ id: "f1", name: "document.pdf", size: 1024, type: "pdf" }] }                              | DriveService | TabbedFileExplorer |
+| folders_list_response       | { etat: boolean, folders?: Folder[], error?: string }                                         | { etat: true, folders: [{ id: "folder1", name: "Documents", parentId: null }] }                                   | DriveService | FileMoveModal      |
+| file_delete_response        | { etat: boolean, fileId?: string, error?: string }                                            | { etat: true, fileId: "file123" }                                                                                 | DriveService | FileExplorer       |
+| file_rename_response        | { etat: boolean, error?: string }                                                             | { etat: true }                                                                                                    | DriveService | FileItem           |
+| file_move_response          | { etat: boolean, fileId?: string, newParentId?: string, error?: string }                      | { etat: true, fileId: "file123", newParentId: "folder456" }                                                       | DriveService | FileMoveModal      |
+| file_share_to_team_response | { etat: boolean, fileId?: string, teamId?: string, error?: string }                           | { etat: true, fileId: "file123", teamId: "team789" }                                                              | DriveService | ShareToTeamModal   |
+| folder_create_response      | { etat: boolean, error?: string }                                                             | { etat: true }                                                                                                    | DriveService | FileExplorer       |
+| file_download_response      | { etat: boolean, downloadUrl?: string, fileName?: string, mimeType?: string, error?: string } | { etat: true, downloadUrl: "/api/files/download/file123", fileName: "document.pdf", mimeType: "application/pdf" } | DriveService | FileItem           |
 
 ## Fonctionnalités principales
 
@@ -201,7 +201,7 @@ La fonctionnalité "Gestionnaire de Fichiers" permet aux utilisateurs de gérer 
 
 ## Intégration avec d'autres services
 
-### LocalFileService
+### DriveService
 
 -   Communication via WebSocket pour toutes les opérations CRUD
 -   Gestion du stockage physique sur le serveur

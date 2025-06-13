@@ -10,7 +10,7 @@ import { fileURLToPath } from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-class LocalFileService {
+class DriveService {
     constructor(controleur, nom) {
         this.controleur = controleur
         this.nomDInstance = nom
@@ -794,4 +794,4 @@ class LocalFileService {
     }
 }
 
-export default LocalFileService
+export default DriveService
