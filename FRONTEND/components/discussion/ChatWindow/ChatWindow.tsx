@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useAppContext } from "@/context/AppContext"
 import { v4 as uuidv4 } from "uuid"
+import styles from "./ChatWindow.module.css"
 
 interface ChatWindowProps {
     discussion?: Discussion
@@ -46,16 +47,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // Fonction utilitaire pour vérifier si un message provient de l'utilisateur actuel
     const isCurrentUserMessage = (message: Message): boolean => {
-        const senderId = message.message_sender._id
+        const senderId = message.message_sender.uuid
 
         const currentUserId = currentUser.id
 
         // Si l'email est disponible, c'est la méthode la plus fiable pour comparer
         if (message.message_sender.email && currentUser.email) {
             return message.message_sender.email === currentUser.email
-        }
-
-        // Sinon, essayer les différents IDs
+        } // Sinon, essayer les différents IDs
         return senderId === currentUserId
     }
 
@@ -88,7 +87,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     }
                 }
             }
-
             if (msg.messages_get_response) {
                 if (msg.messages_get_response.etat) {
                     setLocalMessages(msg.messages_get_response.messages || [])
@@ -153,9 +151,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             },
             message_date_create: currentDate.toISOString(),
             message_status: "sent",
-        }
-
-        // Ajouter le message temporaire à l'état local
+        } // Ajouter le message temporaire à l'état local
         setLocalMessages((prev) => [...prev, tempMessage])
 
         const message = {
@@ -175,26 +171,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             console.error("Erreur lors de l'envoi du message:", error)
         }
     }
-
     return (
-        <div className="chat-window">
-            <div className="chat-header">
+        <div className={styles["chat-window"]}>
+            <div className={styles["chat-header"]}>
                 <h2>{discussion.discussion_name || "Discussion"}</h2>
             </div>
 
-            <div className="messages-container">
+            <div className={styles["messages-container"]}>
                 {localMessages.map((message) => (
                     <div
                         key={message.message_uuid}
-                        className={`message ${
-                            isCurrentUserMessage(message) ? "sent" : "received"
+                        className={`${styles.message} ${
+                            isCurrentUserMessage(message)
+                                ? styles.sent
+                                : styles.received
                         }`}
                     >
-                        <div className="message-content">
+                        <div className={styles["message-content"]}>
                             {message.message_content}
                         </div>
-                        <div className="message-info">
-                            <span className="sender-name">
+                        <div className={styles["message-info"]}>
+                            <span className={styles["sender-name"]}>
                                 {isCurrentUserMessage(message)
                                     ? "Vous"
                                     : `${
@@ -203,7 +200,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                           message.message_sender.lastname || ""
                                       }`}
                             </span>
-                            <span className="message-time">
+                            <span className={styles["message-time"]}>
                                 {formatDistanceToNow(
                                     new Date(message.message_date_create),
                                     {
@@ -218,7 +215,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={handleSendMessage} className="message-input">
+            <form
+                onSubmit={handleSendMessage}
+                className={styles["message-input"]}
+            >
                 <input
                     type="text"
                     value={newMessage}

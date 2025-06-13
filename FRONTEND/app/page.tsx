@@ -263,7 +263,7 @@ export default function Home() {
                 typeof msg.message_sender === "object" &&
                 msg.message_sender
             ) {
-                senderId = msg.message_sender.id || msg.message_sender._id
+                senderId = msg.message_sender.uuid
             } // On ne compte que les messages envoyés par quelqu'un d'autre
             return senderId && senderId !== currentUser.id
         })
@@ -388,7 +388,7 @@ export default function Home() {
             const contacts = getContactsFromDiscussions(users)
             setFilteredUsers(contacts)
         }
-    }, [users, discussions, currentUser])
+    }, [users, discussions, currentUser]) // Calcul des messages non lus - SUPPRIMÉ
 
     // Affichage du chargement
     if (isLoading)
@@ -616,7 +616,6 @@ export default function Home() {
                     <h2 className={styles.sectionTitle}>
                         <Users size={20} /> Contacts
                     </h2>
-
                     <div className={styles.searchContainer}>
                         <Search className={styles.searchIcon} size={16} />
                         <input
@@ -634,8 +633,7 @@ export default function Home() {
                                 <X size={16} />
                             </button>
                         )}
-                    </div>
-
+                    </div>{" "}
                     {filteredUsers.length > 0 ? (
                         <UserListAmis
                             users={filteredUsers}

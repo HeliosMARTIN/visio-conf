@@ -26,7 +26,7 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background-color: #4f46e5;
+  background-color: #1e3664;
   color: white;
   border: none;
   cursor: pointer;
@@ -62,7 +62,7 @@
 }
 
 .searchInput:focus {
-  border-color: #4f46e5;
+  border-color: #1e3664;
 }
 
 .teamsList {
@@ -102,7 +102,7 @@
 }
 
 .teamIcon {
-  color: #4f46e5;
+  color: #1e3664;
   margin-right: 12px;
   display: flex;
   align-items: center;
@@ -137,7 +137,7 @@
 .adminBadge {
   font-size: 11px;
   padding: 2px 6px;
-  background-color: #4f46e5;
+  background-color: #1e3664;
   color: #ffffff;
   border-radius: 10px;
   margin-top: 4px;
@@ -176,7 +176,7 @@
 
 .teamActionButton:hover {
   background-color: #e5e7eb;
-  color: #4f46e5;
+  color: #1e3664;
 }
 
 .loading {
@@ -201,7 +201,7 @@
 .createTeamButton {
   margin-top: 12px;
   padding: 8px 16px;
-  background-color: #4f46e5;
+  background-color: #1e3664;
   color: white;
   border: none;
   border-radius: 6px;
