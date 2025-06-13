@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useAppContext } from "@/context/AppContext"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { Discussion } from "@/types/Discussion"
 import type { Message } from "@/types/Message"
 import { CreateDiscussion } from "@/components/discussion/Create/page"
@@ -11,9 +11,10 @@ import ChatWindow from "@/components/discussion/ChatWindow/ChatWindow"
 import { sortDiscussionsByLatestMessage } from "@/utils/discussion"
 import "./discussion.css"
 
-export default function DiscussionPage() {
+function DiscussionPageContent() {
     const { controleur, canal, currentUser } = useAppContext()
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [discussions, setDiscussions] = useState<Discussion[]>([])
     const [selectedDiscussion, setSelectedDiscussion] = useState<string | null>(
         null
@@ -158,8 +159,7 @@ export default function DiscussionPage() {
             fetchDiscussions()
 
             // Récupérer l'ID de discussion depuis l'URL si présent
-            const urlParams = new URLSearchParams(window.location.search)
-            const discussionId = urlParams.get("id")
+            const discussionId = searchParams.get("id")
 
             if (discussionId) {
                 setSelectedDiscussion(discussionId)
@@ -181,7 +181,30 @@ export default function DiscussionPage() {
                 )
             }
         }
-    }, [controleur, canal, currentUser])
+    }, [controleur, canal, currentUser, searchParams])
+
+    // useEffect pour gérer les changements de paramètres d'URL
+    useEffect(() => {
+        const discussionId = searchParams.get("id")
+
+        if (discussionId && discussionId !== selectedDiscussion) {
+            console.log(
+                "🔗 Paramètre d'URL détecté, sélection de la discussion:",
+                discussionId
+            )
+            setSelectedDiscussion(discussionId)
+
+            // Charger les messages de cette discussion
+            if (controleur) {
+                const message = {
+                    messages_get_request: {
+                        convId: discussionId,
+                    },
+                }
+                controleur.envoie(handler, message)
+            }
+        }
+    }, [searchParams, selectedDiscussion, controleur])
 
     // Ajout d'un nouvel useEffect pour gérer les mises à jour des discussions
     useEffect(() => {
@@ -351,5 +374,40 @@ export default function DiscussionPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+// Composant de fallback pendant le chargement des paramètres d'URL
+function DiscussionPageFallback() {
+    return (
+        <div className="discussionContainer">
+            <div className="sidebar">
+                <div style={{ padding: "20px", textAlign: "center" }}>
+                    Chargement...
+                </div>
+            </div>
+            <div className="main-content">
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                        color: "#666",
+                    }}
+                >
+                    Chargement de la discussion...
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// Composant principal exporté avec Suspense boundary
+export default function DiscussionPage() {
+    return (
+        <Suspense fallback={<DiscussionPageFallback />}>
+            <DiscussionPageContent />
+        </Suspense>
     )
 }
